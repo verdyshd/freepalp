@@ -1,211 +1,102 @@
-# 🐙 FreePalp AI Orchestrator
+<p align="center">
+  <img src="freepalp/web/static/freepalp-logo.svg" alt="FreePalp" width="520">
+</p>
 
-**Multi-agent AI система с самокоррекцией, ReAct loop и автономным использованием инструментов.**
+<p align="center">
+  <b>Multi-agent AI orchestrator that runs on free models.</b><br>
+  Self-improving · persistent memory · autonomous tool use · WebUI
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/providers-10%2B-green.svg" alt="10+ providers">
+  <a href="README.ru.md"><img src="https://img.shields.io/badge/lang-Русский-red.svg" alt="Russian"></a>
+</p>
+
+---
+
+## What is it
+
+FreePalp is a multi-agent orchestrator that gets real work done using **free and
+local LLMs**. A router picks the best available model per task across 10+
+providers (Groq, OpenRouter, Cerebras, Gemini, Mistral, Together, the
+[models.dev](https://models.dev) catalog, and local **Ollama**), a worker agent
+executes via a ReAct tool loop, and a two-tier critic verifies the result —
+cheap deterministic checks first, an LLM critic only when needed.
+
+The differentiator: **corrections accumulate**. When a cheap model fails and a
+stronger one succeeds, the working procedure is distilled into memory so the
+cheap model handles it next time. Free students, paid teachers, growing skill.
 
 ```
-User Input
+User input
     ↓
-Task Parser  →  определяет тип задачи (coding / research / text / ...)
+Task Parser   → classifies the task (coding / research / chat / ...)
     ↓
-Router       →  live discovery: 40+ моделей, 8 провайдеров
+Router        → live discovery across 10+ providers, picks best available model
     ↓
-[Architect]  →  планирование сложных задач (DAG)
+[Architect]   → plans complex tasks (DAG)
     ↓
-Worker       →  выполняет через LLM + ReAct loop (вызывает инструменты сам)
+Worker        → executes via LLM + ReAct loop (calls tools itself)
     ↓
-Critic       →  проверяет качество (score 0–1)
-    ↓ retry если score < 0.7 (max 3 итерации)
+Critic        → tier 1: deterministic checks · tier 2: LLM score (0–1)
+    ↓ retry if it actually failed (max 3)
 Result
 ```
 
-## Быстрый старт
-
-### 1. Установка
+## Quick start
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/dmitrychaiko/freepalp
+cd freepalp
+pip install -e .          # installs the `freepalp` command
+freepalp                  # launches the WebUI at http://localhost:28800
 ```
 
-### 2. Настройка .env
+First run with **no keys** still works through local Ollama. To add a free cloud
+model, drop a key into `.env` (a free Groq key gives 500k tokens/day):
 
 ```bash
 cp .env.example .env
+# put GROQ_API_KEY=gsk_... in .env  — get one at https://console.groq.com/keys
 ```
 
-Минимум — достаточно одного ключа:
+Any OpenAI-compatible provider from the models.dev catalog activates just by
+adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
 
-| Провайдер | Переменная | Ключ |
-|-----------|-----------|------|
-| **Groq** (рекомендую) | `GROQ_API_KEY` | [console.groq.com](https://console.groq.com/keys) — бесплатно |
-| OpenRouter | `OPENROUTER_API_KEY` | [openrouter.ai](https://openrouter.ai) — бесплатно |
-| Cerebras | `CEREBRAS_API_KEY` | [inference.cerebras.ai](https://inference.cerebras.ai) — бесплатно |
-| Gemini | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com/apikey) — бесплатно |
-| SambaNova | `SAMBANOVA_API_KEY` | [cloud.sambanova.ai](https://cloud.sambanova.ai) — бесплатно |
-| GitHub Models | `GITHUB_TOKEN` | [github.com/settings/tokens](https://github.com/settings/tokens) — бесплатно |
-| Ollama (локально) | — | [ollama.ai](https://ollama.ai) — установить локально |
+## Features
 
-### 3. Запуск
+- **10+ providers, 50+ models** with automatic routing by task type and live
+  quota/cooldown awareness.
+- **Local-first** via Ollama — unlimited fallback, fully offline-capable.
+- **Persistent memory** — HOT / WARM / COLD tiers + a vector index you can
+  explore as a real graph in the UI.
+- **Self-improvement** — proposes prompt versions, gated by a held-out metric,
+  auto-rollback on regression.
+- **Reliability over LLM trust** — deterministic detectors catch hallucinated
+  file writes, identity slips, blind rewrites, and leaked tool calls before they
+  reach you.
+- **WebUI** — chat, live token/quota meters, memory graph, metrics, settings.
+- **Stop button** — interrupt the agent mid-task (UI and Ctrl+C in CLI).
+
+## Security
+
+FreePalp uses tools, shell, and self-modifies its own source, so security is
+taken seriously: sandboxed file access, a shell whitelist that blocks
+metacharacter injection, and a deterministic test suite (`test_security.py`,
+29 cases). See [THREAT_MODEL.md](THREAT_MODEL.md) for the honest picture,
+including residual risks.
+
+## Development
 
 ```bash
-# CLI — интерактивный режим
-python freepalp/app.py
-
-# Одна задача
-python freepalp/app.py "напиши async HTTP клиент на Python"
-
-# WebUI (Neo-minimal интерфейс)
-python freepalp/app.py --web
+python test_mvp.py        # deterministic gate (parser, router, tools, memory)
+python test_security.py   # security suite
 ```
 
----
+CI runs both on Ubuntu and Windows (Python 3.11 / 3.12).
 
-## Что умеет FreePalp
+## License
 
-### 🤖 ReAct Loop — агент сам вызывает инструменты
-
-Worker не просто генерирует текст — он **автономно работает** с инструментами:
-
-```
-Задача: "найди топ issues в репо microsoft/vscode и создай дайджест"
-
-Worker думает → вызывает github_list_issues() → получает данные
-             → вызывает memory_write() → сохраняет результат
-             → формирует финальный ответ
-```
-
-### 🛠️ 41 инструмент из коробки
-
-| Категория | Инструменты |
-|-----------|-------------|
-| **Файлы** | read_file, write_file, list_files, delete_file |
-| **Shell** | run_command (whitelist) |
-| **Web** | web_search, fetch_url |
-| **Браузер** | browser_open, browser_click, browser_fill, browser_screenshot, browser_extract, browser_eval |
-| **GitHub** | github_get_repo, github_list_issues, github_create_issue, github_get_file, github_create_file, github_list_prs, github_search_code, github_get_commits |
-| **Уведомления** | email_send, slack_send, notion_create, notion_search, notion_get_page |
-| **Система** | memory_read, memory_write, memory_search, memory_forget, cron_list, cron_add, cron_remove, providers_list, models_list, mcp_list, skills_list, skill_run, metrics_summary |
-
-### 🧠 Трёхуровневая память
-
-- **HOT** — активная память, до 100 строк, инжектируется в каждый промпт
-- **WARM** — авто-демоция после 30 дней без обращений
-- **COLD** — архив с полнотекстовым поиском (`/memory search <запрос>`)
-
-### 📈 Самоулучшение
-
-- Метрики по каждой задаче (score, tokens, cost, retry rate)
-- Авто-цикл улучшения каждые 10 задач
-- Версионирование конфига с откатом (`/version rollback`)
-- Еженедельный дайджест (cron)
-
----
-
-## CLI Команды
-
-```
-/help              — справка
-/models            — 40+ моделей (live discovery)
-/providers         — все провайдеры: статус, лимиты, ссылки
-/cron list         — периодические задачи
-/cron add "1д" ... — добавить задачу
-/mcp list          — MCP-серверы
-/mcp build python  — создать MCP-сервер
-/skill list        — навыки
-/skill create ...  — создать навык
-/memory            — HOT память
-/memory stats      — статистика (HOT/WARM/COLD)
-/memory search <q> — поиск по архиву
-/forget <слово>    — удалить из памяти
-/improve           — цикл самоулучшения
-/improve status    — статистика метрик
-/version rollback  — откат версии
-/exit              — выход
-```
-
----
-
-## Структура
-
-```
-freepalp/
-├── core/
-│   ├── orchestrator.py     # Главный контроллер
-│   ├── router.py           # Routing + live model discovery
-│   ├── model_discovery.py  # 8 провайдеров, 40+ моделей
-│   ├── task_parser.py      # Определение типа задачи
-│   ├── cron_manager.py     # Периодические задачи
-│   ├── mcp_discovery.py    # MCP-серверы
-│   ├── mcp_builder.py      # Генератор MCP-серверов
-│   ├── prompt_loader.py    # Горячая перезагрузка конфига
-│   └── self_improvement/   # Метрики → улучшение → версии
-│
-├── agents/
-│   ├── worker_agent.py     # Worker + ReAct loop
-│   ├── critic_agent.py     # Оценка качества (0–1)
-│   ├── architect_agent.py  # DAG планирование
-│   └── tool_agent.py       # Прокси инструментов (41 tool)
-│
-├── tools/
-│   ├── file_tools.py       # Файловые операции (sandbox)
-│   ├── shell_tools.py      # Shell (whitelist)
-│   ├── web_tools.py        # Поиск + загрузка страниц
-│   ├── browser_tools.py    # Playwright автоматизация
-│   ├── github_tools.py     # GitHub API
-│   ├── notification_tools.py # Email + Slack + Notion
-│   └── system_tools.py     # Системные (память, cron, MCP...)
-│
-├── skills/
-│   ├── coding.py           # Экспертный код-помощник
-│   ├── research.py         # Исследование с поиском
-│   ├── writing.py          # Тексты, документация
-│   ├── data_analysis.py    # pandas, SQL, ML
-│   └── architect.py        # Проектирование систем
-│
-├── memory/
-│   ├── hot_memory.md       # Активная память (HOT)
-│   ├── corrections.md      # Исправления критика
-│   ├── sessions/           # История сессий (JSONL)
-│   ├── warm/               # Демотированные записи
-│   └── archive/            # Архив (COLD)
-│
-├── config/
-│   ├── prompts.json        # Системные промпты (горячая перезагрузка)
-│   ├── models.json         # Fallback конфиг моделей
-│   └── versions/           # История версий конфига
-│
-├── web/                    # Neo-minimal WebUI
-│   └── static/
-│
-├── state/                  # Состояние задач и cron
-├── sandbox/                # Изолированная среда
-├── app.py                  # CLI entrypoint
-└── gateway.py              # FastAPI HTTP Gateway
-```
-
----
-
-## Провайдеры (все бесплатные)
-
-| Провайдер | Модели | Лимиты |
-|-----------|--------|--------|
-| **Groq** | llama-3.3-70b, llama-3.1-8b, qwen2.5-coder | 30 req/min, 6K TPM |
-| **OpenRouter** | 200+ моделей | $0 кредиты при регистрации |
-| **Cerebras** | llama-3.1-70b (быстро) | 60 req/min |
-| **Gemini** | gemini-1.5-flash, gemini-2.0-flash | 15 req/min |
-| **SambaNova** | llama-3.1-405b | 10 req/min |
-| **GitHub Models** | GPT-4o, Phi-4, Llama | 150 req/day |
-| **Ollama** | любые локальные | без лимитов |
-
----
-
-## Безопасность
-
-- **Файловые операции** ограничены `sandbox/` — path traversal заблокирован
-- **Shell whitelist** — только безопасные команды
-- **API ключи** только в `.env`, никогда в логах
-- **MAX_ITERATIONS = 3** — защита от бесконечных циклов
-- **MAX_TOOL_CALLS = 6** — лимит ReAct шагов за задачу
-
----
-
-_FreePalp v1.0 | [github.com/freepalp](https://github.com) | MIT License_
+MIT — see [LICENSE](LICENSE).
