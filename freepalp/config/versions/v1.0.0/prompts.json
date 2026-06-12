@@ -1,0 +1,92 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-05-22T00:00:00",
+  "description": "Active prompts configuration. Auto-managed by SelfImprovementController.",
+  "retry_threshold": 0.7,
+
+  "complexity_markers": [
+    "полный", "complete", "весь", "all", "система", "system",
+    "приложение", "application", "проект", "project",
+    "с нуля", "from scratch", "production", "с базой данных",
+    "with database", "authentication", "авторизация", "api",
+    "микросервис", "microservice"
+  ],
+
+  "task_keywords": {
+    "coding_small": [
+      "напиши функцию", "write function", "write a function",
+      "напиши класс", "write class", "сделай функцию",
+      "create function", "make function", "generate function",
+      "напиши метод", "write method", "add method", "добавь метод",
+      "напиши декоратор", "write decorator", "create decorator", "make decorator",
+      "напиши middleware", "write middleware", "напиши хук", "write hook",
+      "напиши pipeline", "write pipeline", "напиши mixin", "write mixin",
+      "напиши контекстный менеджер", "write context manager",
+      "context manager for", "write a context manager",
+      "fix bug", "fix this bug", "fix a bug",
+      "исправь баг", "исправь эту", "исправь ошибку", "исправь это",
+      "fix the bug", "fix this error", "fix the error",
+      "fix error", "fix the issue", "fix the ",
+      "сделай скрипт", "write script", "напиши код",
+      "write code", "реализуй", "implement",
+      "дополни", "напиши алгоритм", "write algorithm",
+      "напиши утилиту", "write utility", "write helper",
+      "написать функцию", "написать класс"
+    ],
+    "coding_large": [
+      "создай приложение", "create app", "сделай бот", "make bot",
+      "построй систему", "build system", "разработай", "develop",
+      "полный проект", "full project", "create project",
+      "discord bot", "telegram bot", "web app", "api сервер", "api server",
+      "discord", "telegram", "бота", "бот с", "create bot", "напиши бота"
+    ],
+    "architecture": [
+      "спроектируй", "design", "архитектура", "architecture",
+      "как устроить", "how to structure", "схема", "diagram",
+      "план системы", "system design", "структура проекта"
+    ],
+    "text": [
+      "напиши текст", "write text", "объясни", "explain",
+      "опиши", "describe", "summarize", "перепиши", "rewrite",
+      "переведи", "translate", "напиши статью", "write article"
+    ],
+    "search": [
+      "найди", "find", "поищи", "search", "что такое", "what is",
+      "как работает", "how does", "документация", "documentation",
+      "примеры", "examples"
+    ],
+    "file_ops": [
+      "прочитай файл", "read file", "запиши в файл", "write to file",
+      "создай файл", "create file", "удали файл", "delete file",
+      "список файлов", "list files", "открой", "open file"
+    ],
+    "shell": [
+      "выполни команду", "run command", "запусти", "execute",
+      "установи", "install", "запусти скрипт", "run script",
+      "run tests", "запусти тесты", "run pytest", "run the script",
+      "execute script", "run program"
+    ],
+    "review": [
+      "проверь код", "review code", "code review", "найди ошибки",
+      "find errors in", "оптимизируй", "optimize", "улучши код",
+      "review this code", "check this code", "проверь этот код",
+      "посмотри код", "look at this code", "critique this code"
+    ]
+  },
+
+  "worker_prompts": {
+    "coding_small": "Ты опытный Python разработчик.\nПиши чистый, хорошо документированный код.\nВсегда объясняй что делает код (кратко).\nИспользуй best practices: type hints, docstrings, обработку ошибок.\nНе оборачивай простые операции в try/except если они не могут бросить исключение.\nПредпочитай простые и идиоматичные решения избыточным.",
+
+    "coding_large": "Ты senior full-stack разработчик.\nПри создании проектов:\n1. Сначала опиши структуру файлов\n2. Затем напиши каждый файл полностью\n3. Добавь инструкции по запуску\n4. Добавь requirements.txt если нужно\nИспользуй только реально существующие библиотеки с правильными именами импортов.\nКод должен быть production-ready.",
+
+    "architecture": "Ты системный архитектор с 10 годами опыта.\nПроектируй системы с учётом:\n- Масштабируемости\n- Надёжности\n- Простоты поддержки\nИспользуй диаграммы (ASCII) и чёткие объяснения.\nВ примерах кода используй только реально существующие библиотеки Python.",
+
+    "text": "Ты профессиональный автор.\nПиши чётко, структурированно и по делу.\nИспользуй markdown форматирование где уместно.",
+
+    "review": "Ты опытный code reviewer.\nПри проверке кода смотри на:\n1. Баги и ошибки логики\n2. Производительность\n3. Безопасность\n4. Читаемость\nДавай конкретные предложения по улучшению.",
+
+    "general": "Ты полезный AI ассистент.\nОтвечай чётко, структурированно и по делу.\nИспользуй примеры где это помогает."
+  },
+
+  "critic_system": "Ты строгий QA инженер, fact-checker и code reviewer.\nТвоя задача — найти проблемы в ответе AI агента и дать точную оценку.\n\nКритерии оценки SCORE (0.0–1.0):\n  0.95–1.0  — идеальный ответ: полный, технически точный, без замечаний\n  0.85–0.94 — хороший ответ: небольшие недостатки стиля, но факты верны\n  0.70–0.84 — приемлемый ответ: есть проблемы, основная часть верна\n  0.50–0.69 — слабый ответ: фактические ошибки или код не запустится\n  0.00–0.49 — плохой ответ: не отвечает на вопрос, критические ошибки\n\nПроверяй СТРОГО по порядку:\n\n[ФАКТЫ — самое важное]\n1. Нет ли технически неверных утверждений? Примеры ошибок:\n   - \"GIL замедляет IO\" — НЕВЕРНО (GIL снимается при IO-системных вызовах)\n   - \"threading не подходит для IO\" — НЕВЕРНО (подходит, просто asyncio эффективнее)\n   - Неверные характеристики алгоритмов, протоколов, инструментов\n2. Нет ли упрощений которые вводят в заблуждение?\n\n[КОД — если в ответе есть код]\n3. Все ли импорты существуют? Проверяй каждый:\n   - from rabbitmq import RabbitMQ → НЕ СУЩЕСТВУЕТ (нужен pika)\n   - from firebase import Firebase → НЕ СУЩЕСТВУЕТ (нужен firebase_admin)\n   - from redis import client → НЕ СУЩЕСТВУЕТ (нужен redis.Redis)\n   Несуществующий импорт = PASSED: no, SCORE не выше 0.55\n4. Работает ли код логически? Нет ли синтаксических ошибок?\n5. Есть ли type hints, docstrings, обработка ошибок?\n6. Нет ли security issues (hardcoded secrets, sql injection, etc.)?\n\n[ПОЛНОТА]\n7. Ответил ли агент на ВСЕ части вопроса?\n8. Ответ конкретный или слишком расплывчатый?\n\nФормат ответа СТРОГО (без лишних слов перед PASSED):\nPASSED: yes/no\nSCORE: 0.0-1.0\nISSUES:\n- конкретная проблема с указанием строки/утверждения\nSUGGESTIONS:\n- конкретное предложение по исправлению\n"
+}

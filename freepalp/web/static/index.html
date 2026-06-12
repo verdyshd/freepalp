@@ -1,0 +1,2945 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreePalp AI Orchestrator</title>
+  <!-- SVG favicon (приоритет) → fallback .ico для старых браузеров -->
+  <link rel="icon" type="image/svg+xml"   href="/static/freepalp-icon.svg" />
+  <link rel="icon" type="image/x-icon"    href="/static/freepalp.ico" />
+  <link rel="apple-touch-icon"            href="/static/freepalp-icon.svg" />
+  <style>
+    /* ═══════════════════════════════════════════════
+       DESIGN SYSTEM — Neo-minimal + Soft Neumorphism
+       ═══════════════════════════════════════════════ */
+    :root {
+      --bg:           #0f1117;
+      --bg-2:         #151820;
+      --bg-3:         #1c2030;
+      --bg-glass:     rgba(255,255,255,0.04);
+      --bg-glass-h:   rgba(255,255,255,0.07);
+      --border:       rgba(255,255,255,0.08);
+      --border-glow:  rgba(99,179,237,0.5);
+      --text:         #e8eaf0;
+      --text-2:       #8b9ab8;
+      --text-3:       #5a6580;
+      --accent:       #63b3ed;
+      --accent-2:     #7c6fcd;
+      --accent-3:     #48bb78;
+      --accent-warn:  #f6ad55;
+      --accent-err:   #fc8181;
+      --glow:         0 0 20px rgba(99,179,237,0.25);
+      --glow-sm:      0 0 10px rgba(99,179,237,0.15);
+      --shadow-neu:   4px 4px 12px rgba(0,0,0,0.5), -2px -2px 8px rgba(255,255,255,0.03);
+      --shadow-card:  0 4px 24px rgba(0,0,0,0.4);
+      --radius:       14px;
+      --radius-sm:    8px;
+      --radius-lg:    20px;
+      --transition:   0.2s cubic-bezier(.4,0,.2,1);
+      --font:         'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono:    'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      font-size: 14px;
+    }
+
+    /* ═══════════════════ SIDEBAR ═══════════════════ */
+    .sidebar {
+      width: 64px;
+      background: var(--bg-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0;
+      gap: 4px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      filter: drop-shadow(0 0 8px rgba(99,179,237,0.35));
+    }
+    .logo img {
+      width: 42px;
+      height: 42px;
+      display: block;
+      border-radius: 10px;
+    }
+
+    .nav-btn {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-3);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      transition: var(--transition);
+      position: relative;
+    }
+    .nav-btn:hover { background: var(--bg-glass-h); color: var(--text); }
+    .nav-btn.active {
+      background: var(--bg-glass-h);
+      color: var(--accent);
+      border-color: var(--border-glow);
+      box-shadow: var(--glow-sm);
+    }
+    .nav-btn .tooltip {
+      position: absolute; left: 58px;
+      background: var(--bg-3);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px; white-space: nowrap;
+      border: 1px solid var(--border);
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 100;
+    }
+    .nav-btn:hover .tooltip { opacity: 1; }
+
+    .sidebar-bottom { margin-top: auto; }
+
+    /* ═══════════════════ LAYOUT ═══════════════════ */
+    .main { flex: 1; display: flex; overflow: hidden; }
+
+    .panel {
+      display: none; flex: 1; flex-direction: column;
+      overflow: hidden;
+    }
+    .panel.active { display: flex; }
+
+    /* ═══════════════════ CHAT PANEL ═══════════════════ */
+    .chat-layout {
+      display: flex; flex: 1; overflow: hidden; gap: 0;
+    }
+
+    /* ── Chat list column ───────────────────────────── */
+    .chat-list-col {
+      width: 210px; min-width: 180px; max-width: 220px;
+      border-right: 1px solid var(--border);
+      background: var(--bg-2);
+      display: flex; flex-direction: column;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .chat-list-header {
+      padding: 14px 12px 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-2);
+    }
+    .chat-list-title {
+      font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text-3);
+    }
+    .chat-new-btn {
+      width: 26px; height: 26px; border-radius: 6px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      color: var(--accent); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; line-height: 1;
+      transition: var(--transition);
+    }
+    .chat-new-btn:hover {
+      background: rgba(99,179,237,0.1);
+      border-color: rgba(99,179,237,0.3);
+      box-shadow: var(--glow-sm);
+    }
+    .chat-list-scroll {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+    }
+    .chat-list-scroll::-webkit-scrollbar { width: 3px; }
+    .chat-list-scroll::-webkit-scrollbar-thumb { background: var(--border); }
+    .chat-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      transition: background var(--transition);
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .chat-item:hover { background: var(--bg-glass-h); }
+    .chat-item.active {
+      background: rgba(99,179,237,0.06);
+      border-left: 2px solid var(--accent);
+    }
+    .chat-item-title {
+      font-size: 12px; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      padding-right: 20px;
+    }
+    .chat-item-meta {
+      font-size: 10px; color: var(--text-3);
+    }
+    .chat-item-del {
+      position: absolute; right: 8px; top: 50%;
+      transform: translateY(-50%);
+      opacity: 0; font-size: 11px;
+      color: var(--text-3); cursor: pointer;
+      padding: 3px 6px; border-radius: 4px;
+      background: var(--bg-3);
+      transition: var(--transition);
+    }
+    .chat-item:hover .chat-item-del { opacity: 1; }
+    .chat-item-del:hover { color: var(--accent-err) !important; }
+    .chat-list-empty {
+      padding: 20px 12px; font-size: 12px;
+      color: var(--text-3); text-align: center;
+    }
+
+    .chat-area {
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg-2);
+    }
+    /* wordmark SVG заменяет h1+subtitle — оставляем только flex выравнивание */
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-3);
+      box-shadow: 0 0 8px var(--accent-3);
+      flex-shrink: 0;
+    }
+    .status-dot.loading { background: var(--accent-warn); box-shadow: 0 0 8px var(--accent-warn); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .model-badge {
+      margin-left: auto;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px; color: var(--text-2);
+      font-family: var(--font-mono);
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1; overflow-y: auto;
+      padding: 24px;
+      display: flex; flex-direction: column; gap: 20px;
+      scroll-behavior: smooth;
+    }
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .msg {
+      display: flex; gap: 12px; max-width: 85%;
+      animation: fadeUp 0.25s ease;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .msg.user { margin-left: auto; flex-direction: row-reverse; }
+
+    .msg-avatar {
+      width: 32px; height: 32px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .msg.user .msg-avatar { background: linear-gradient(135deg, var(--accent-2), var(--accent)); }
+    .msg.assistant .msg-avatar { background: var(--bg-3); }
+
+    .msg-content {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      line-height: 1.6;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .msg.user .msg-content {
+      background: linear-gradient(135deg, rgba(99,179,237,0.12), rgba(124,111,205,0.12));
+      border-color: rgba(99,179,237,0.2);
+    }
+    .msg.assistant .msg-content { border-color: var(--border); }
+
+    .msg-meta {
+      font-size: 11px; color: var(--text-3);
+      margin-top: 4px;
+      display: flex; gap: 8px; align-items: center;
+    }
+
+    /* Code blocks */
+    .msg-content pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px; margin: 10px 0;
+      overflow-x: auto; font-family: var(--font-mono);
+      font-size: 12.5px; line-height: 1.5;
+    }
+    .msg-content code:not(pre code) {
+      background: var(--bg-3); padding: 2px 6px;
+      border-radius: 4px; font-family: var(--font-mono);
+      font-size: 12px; color: var(--accent);
+    }
+
+    /* Tool call badge */
+    .tool-call-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(99,179,237,0.08);
+      border: 1px solid rgba(99,179,237,0.2);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 11px; color: var(--accent);
+      margin: 6px 0; font-family: var(--font-mono);
+    }
+    .tool-call-badge.success { color: var(--accent-3); border-color: rgba(72,187,120,0.3); background: rgba(72,187,120,0.06); }
+    .tool-call-badge.error { color: var(--accent-err); border-color: rgba(252,129,129,0.3); background: rgba(252,129,129,0.06); }
+
+    /* Typing indicator */
+    .typing { display: flex; gap: 4px; align-items: center; padding: 4px; }
+    .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); animation: blink 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,80%,100% { opacity: 0.3; } 40% { opacity: 1; } }
+
+    /* Input area */
+    .input-area {
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-2);
+    }
+    .input-row {
+      display: flex; gap: 10px; align-items: flex-end;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      transition: border-color var(--transition);
+      backdrop-filter: blur(8px);
+    }
+    .input-row:focus-within {
+      border-color: var(--border-glow);
+      box-shadow: var(--glow-sm);
+    }
+    #user-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: var(--font); font-size: 14px;
+      resize: none; max-height: 140px; line-height: 1.5;
+      scrollbar-width: none;
+    }
+    #user-input::placeholder { color: var(--text-3); }
+    /* attach button */
+    #attach-btn {
+      width: 30px; height: 30px; background: none; border: none;
+      color: var(--text-3); cursor: pointer; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: var(--transition);
+    }
+    #attach-btn:hover { color: var(--accent); background: rgba(99,179,237,0.08); }
+    #file-input { display: none; }
+
+    /* attachment preview chips */
+    #attach-preview {
+      display: none; flex-wrap: wrap; gap: 6px;
+      padding: 6px 0 2px; min-height: 0;
+    }
+    #attach-preview.has-files { display: flex; }
+    .attach-chip {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(99,179,237,0.08); border: 1px solid rgba(99,179,237,0.2);
+      border-radius: 6px; padding: 3px 8px 3px 6px; font-size: 11px; color: var(--text-2);
+      max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    }
+    .attach-chip img.thumb {
+      width: 18px; height: 18px; object-fit: cover; border-radius: 3px; flex-shrink: 0;
+    }
+    .attach-chip .chip-icon { font-size: 13px; line-height: 1; flex-shrink: 0; }
+    .attach-chip .chip-name { overflow: hidden; text-overflow: ellipsis; }
+    .attach-chip .chip-del {
+      cursor: pointer; color: var(--text-3); font-size: 12px; flex-shrink: 0;
+      transition: color 0.15s; margin-left: 2px;
+    }
+    .attach-chip .chip-del:hover { color: #fc8181; }
+
+    /* drag-and-drop overlay */
+    #drop-overlay {
+      display: none; position: absolute; inset: 0; z-index: 100;
+      background: rgba(99,179,237,0.06); border: 2px dashed rgba(99,179,237,0.5);
+      border-radius: var(--radius); align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    #drop-overlay.active { display: flex; }
+    #drop-overlay span {
+      font-size: 15px; color: var(--accent); font-weight: 600;
+    }
+
+    #send-btn {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border: none; border-radius: var(--radius-sm);
+      color: white; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: var(--transition);
+      box-shadow: 0 0 12px rgba(99,179,237,0.3);
+    }
+    #send-btn:hover { transform: scale(1.05); box-shadow: 0 0 18px rgba(99,179,237,0.5); }
+    #send-btn:disabled { opacity: 0.4; transform: none; cursor: not-allowed; }
+    .input-hints {
+      margin-top: 8px; font-size: 11px; color: var(--text-3);
+      display: flex; gap: 16px; flex-wrap: wrap;
+    }
+    .hint-chip {
+      cursor: pointer; transition: color var(--transition);
+    }
+    .hint-chip:hover { color: var(--accent); }
+
+    /* ═══════════════════ RIGHT PANEL ═══════════════════ */
+    .right-panel {
+      width: 280px; border-left: 1px solid var(--border);
+      background: var(--bg-2);
+      display: flex; flex-direction: column;
+      overflow-y: auto; overflow-x: hidden;
+      flex-shrink: 0;
+    }
+    .right-panel::-webkit-scrollbar { width: 3px; }
+    .right-panel::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .rp-section {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .rp-title {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-3); margin-bottom: 12px;
+    }
+
+    /* Metrics */
+    .metrics-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .metric-card {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      transition: var(--transition);
+    }
+    .metric-card:hover { border-color: rgba(99,179,237,0.3); }
+    .metric-value { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1; }
+    .metric-value.accent { color: var(--accent); }
+    .metric-value.green { color: var(--accent-3); }
+    .metric-label { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+
+    /* Score bar */
+    .score-bar-wrap { margin-top: 8px; }
+    .score-bar-label { font-size: 11px; color: var(--text-2); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .score-bar {
+      height: 4px; background: var(--bg-3); border-radius: 4px; overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%; border-radius: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 6px rgba(99,179,237,0.4);
+      transition: width 0.6s ease;
+    }
+
+    /* Models list */
+    .model-list { display: flex; flex-direction: column; gap: 6px; }
+    .model-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+    }
+    .model-item .dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+      background: var(--accent-3);
+      box-shadow: 0 0 6px var(--accent-3);
+    }
+    .model-item .name { font-family: var(--font-mono); color: var(--text-2); flex: 1; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
+    .model-item .provider { color: var(--text-3); font-size: 10px; }
+
+    /* Cron tasks */
+    .cron-list { display: flex; flex-direction: column; gap: 6px; }
+    .cron-item {
+      padding: 8px 10px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+    }
+    .cron-item .cron-name { color: var(--text); }
+    .cron-item .cron-next { color: var(--text-3); margin-top: 2px; }
+
+    /* ═══════════════════ PROVIDERS PANEL ═══════════════════ */
+    .providers-grid {
+      padding: 24px; overflow-y: auto; flex: 1;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px; align-content: start;
+    }
+
+    .provider-card {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      transition: var(--transition);
+      backdrop-filter: blur(8px);
+    }
+    .provider-card:hover { border-color: rgba(99,179,237,0.3); box-shadow: var(--glow-sm); }
+    .provider-card.active { border-color: rgba(72,187,120,0.4); }
+
+    .provider-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .provider-icon { font-size: 22px; width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .provider-logo-chip {
+      width: 36px; height: 36px; border-radius: 8px; background: #fff;
+      padding: 4px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity var(--transition);
+    }
+    .provider-logo-chip.dim { opacity: 0.65; filter: grayscale(0.4); }
+    .provider-logo { width: 28px; height: 28px; object-fit: contain; }
+    .provider-name { font-size: 14px; font-weight: 700; }
+    .provider-tag {
+      margin-left: auto; font-size: 10px; padding: 2px 8px;
+      border-radius: 20px; font-weight: 600;
+    }
+    .provider-tag.active  { background: rgba(72,187,120,0.15); color: var(--accent-3); border: 1px solid rgba(72,187,120,0.3); }
+    .provider-tag.inactive{ background: var(--bg-3); color: var(--text-3); border: 1px solid var(--border); }
+
+    .provider-detail { font-size: 12px; color: var(--text-2); margin: 3px 0; line-height: 1.5; }
+    .provider-detail span { color: var(--text-3); }
+
+    /* Keys list */
+    .provider-keys { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+    .key-slot {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg-3); border-radius: 6px; padding: 5px 8px;
+      font-size: 11px;
+    }
+    .key-slot .key-num  { color: var(--text-3); font-weight: 600; min-width: 14px; }
+    .key-slot .key-val  { flex: 1; font-family: var(--font-mono); color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .key-slot .key-del  { cursor: pointer; color: var(--text-3); font-size: 15px; padding: 2px 5px; transition: all .15s; flex-shrink: 0; border-radius: 4px; line-height: 1; }
+    .key-slot .key-del:hover { color: var(--accent-err); background: rgba(252,129,129,.12); }
+
+    /* Add key area */
+    .add-key-wrap {
+      margin-top: 8px; display: flex; gap: 5px;
+    }
+    .add-key-wrap input {
+      flex: 1; background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 8px; font-size: 11px;
+      font-family: var(--font-mono); color: var(--text); outline: none;
+      transition: border-color .15s;
+    }
+    .add-key-wrap input:focus { border-color: var(--accent); }
+    .add-key-wrap input::placeholder { color: var(--text-3); }
+    .btn-add-key {
+      padding: 5px 10px; font-size: 11px; border-radius: 6px; cursor: pointer;
+      background: rgba(99,179,237,.15); border: 1px solid rgba(99,179,237,.3);
+      color: var(--accent); transition: background .15s;
+    }
+    .btn-add-key:hover { background: rgba(99,179,237,.25); }
+    .btn-test-key {
+      padding: 5px 8px; font-size: 11px; border-radius: 6px; cursor: pointer;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border);
+      color: var(--text-3); transition: background .15s;
+    }
+    .btn-test-key:hover { background: rgba(255,255,255,.1); }
+    .key-test-result {
+      margin-top: 4px; font-size: 11px; padding: 4px 8px;
+      border-radius: 4px; display: none;
+    }
+    .key-test-result.ok  { background: rgba(72,187,120,.12); color: var(--accent-3); }
+    .key-test-result.err { background: rgba(252,129,129,.12); color: var(--accent-err); }
+
+    .provider-signup {
+      display: inline-block; margin-top: 8px; font-size: 11px;
+      color: var(--accent); text-decoration: none;
+    }
+    .provider-signup:hover { text-decoration: underline; }
+
+    /* ═══════════════════ MEMORY PANEL ═══════════════════ */
+    .memory-layout { display: flex; flex: 1; overflow: hidden; }
+    .memory-content { flex: 1; overflow-y: auto; padding: 24px; }
+
+    .memory-tabs {
+      display: flex; gap: 4px;
+      padding: 16px 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .mem-tab {
+      padding: 8px 16px;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      cursor: pointer; font-size: 13px;
+      border: 1px solid transparent;
+      color: var(--text-3);
+      transition: var(--transition);
+    }
+    .mem-tab.active {
+      color: var(--accent); border-color: var(--border);
+      border-bottom-color: var(--bg-2);
+      background: var(--bg-2);
+    }
+    .mem-tab:hover:not(.active) { color: var(--text); }
+
+    .hot-memory-text {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px; font-family: var(--font-mono);
+      font-size: 12px; line-height: 1.7;
+      color: var(--text-2); white-space: pre-wrap;
+      min-height: 200px;
+    }
+
+    .memory-stats-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    .mem-stat {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px; text-align: center;
+    }
+    .mem-stat-value { font-size: 28px; font-weight: 700; }
+    .mem-stat-value.hot { color: var(--accent-err); }
+    .mem-stat-value.warm { color: var(--accent-warn); }
+    .mem-stat-value.cold { color: var(--accent); }
+    .mem-stat-label { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+    /* ═══════════════════ METRICS PANEL ═══════════════════ */
+    .metrics-content { flex: 1; overflow-y: auto; padding: 24px; }
+    .metrics-big-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .big-metric {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: var(--transition);
+    }
+    .big-metric:hover { border-color: rgba(99,179,237,0.3); box-shadow: var(--glow-sm); }
+    .big-metric .val { font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1; }
+    .big-metric .lbl { font-size: 12px; color: var(--text-3); margin-top: 6px; }
+
+    /* ═══════════════════ PANEL HEADER ═══════════════════ */
+    .panel-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-2);
+    }
+    .panel-header h2 { font-size: 18px; font-weight: 600; }
+    .panel-header p { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+    /* ═══════════════════ TOKEN BUDGET ═══════════════════ */
+    .budget-row {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; margin-bottom: 7px;
+    }
+    .budget-row:last-child { margin-bottom: 0; }
+    .budget-provider {
+      width: 76px; flex-shrink: 0; font-weight: 600;
+      color: var(--text-2); text-transform: capitalize;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .budget-bar-wrap {
+      flex: 1; background: rgba(255,255,255,.06);
+      border-radius: 3px; height: 6px; overflow: hidden;
+    }
+    .budget-bar { height: 100%; border-radius: 3px; background: var(--accent-3); transition: width .4s; }
+    .budget-bar.warn { background: var(--accent-2); }
+    .budget-bar.crit { background: var(--accent-err); }
+    .budget-remaining { width: 44px; text-align:right; flex-shrink:0; color:var(--text-3); font-size:10px; }
+    .budget-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; background:var(--accent-3); }
+    .budget-dot.offline    { background: var(--accent-err); }
+    .budget-dot.cooldown   { background: var(--accent-2); }
+    .budget-dot.unverified { background: var(--accent-warn); }  /* жёлтый: ключ есть, но не активен */
+    .budget-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:4px; }
+    .budget-table th { text-align:left; padding:6px 8px; color:var(--text-3); font-weight:500; border-bottom:1px solid var(--border); }
+    .budget-table td { padding:7px 8px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; }
+    .budget-table .bar-cell { width:120px; }
+    .budget-keys-badge { font-size:10px; background:rgba(72,187,120,.15); color:var(--accent-3); padding:1px 5px; border-radius:8px; margin-left:4px; }
+
+    /* ═══════════════════ CHART ═══════════════════ */
+    .chart-wrap {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px; margin-bottom: 16px;
+      height: 200px;          /* фиксированная высота — иначе Chart.js растянет до ∞ */
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-wrap.chart-tall { height: 240px; }
+    .chart-wrap canvas { flex: 1; min-height: 0; }
+    .chart-title { font-size: 12px; color: var(--text-3); margin-bottom: 12px; }
+    /* type detail table */
+    .type-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .type-table th { color: var(--text-3); font-weight: 500; text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+    .type-table td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text-2); }
+    .type-table tr:last-child td { border-bottom: none; }
+    .type-table .score-cell { font-weight: 600; }
+    .score-hi { color: #68d391; } .score-mid { color: #63b3ed; } .score-lo { color: #fc8181; }
+
+    /* ══ Progress panel ══ */
+    .progress-panel {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      min-width: 240px;
+      max-width: 420px;
+    }
+    .progress-steps { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+    .progress-step  {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 12.5px; color: var(--text-2); line-height: 1.4;
+      animation: fadeInStep .2s ease;
+    }
+    @keyframes fadeInStep { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+    .progress-step.good .ps-text { color: #68d391; }
+    .progress-step.ok   .ps-text { color: #63b3ed; }
+    .progress-step.bad  .ps-text { color: #fc8181; }
+    .ps-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .ps-text { flex: 1; }
+    .ps-issues { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; font-size: 11px; color: var(--text-3); padding-left: 22px; }
+    .ps-issues span { opacity: .8; }
+    .progress-spinner {
+      display: flex; gap: 4px; align-items: center; padding-top: 2px;
+    }
+    .progress-spinner::before {
+      content: '';
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    .progress-spinner::after {
+      content: 'обрабатываю...';
+      font-size: 11px;
+      color: var(--text-3);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══ Пометки / sticky notes ══ */
+    .note-card {
+      background: #1e2235;
+      border-radius: 10px;
+      padding: 12px 14px;
+      min-width: 200px;
+      max-width: 280px;
+      flex: 1 1 200px;
+      border-left: 4px solid var(--clr, #63b3ed);
+      position: relative;
+      font-size: 12px;
+    }
+    .note-card .note-tag {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--clr, #63b3ed);
+      margin-bottom: 6px;
+    }
+    .note-card .note-body {
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+    .note-card .note-priority {
+      position: absolute;
+      top: 10px; right: 12px;
+      font-size: 10px;
+      color: var(--text-3);
+    }
+    .note-card .note-stat {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    /* ═══════════════════ BUTTONS ═══════════════════ */
+    .btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-glass);
+      color: var(--text);
+      cursor: pointer; font-size: 13px;
+      transition: var(--transition);
+    }
+    .btn:hover { border-color: rgba(99,179,237,0.4); color: var(--accent); }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(99,179,237,0.15), rgba(124,111,205,0.15));
+      border-color: rgba(99,179,237,0.3); color: var(--accent);
+    }
+    .btn.primary:hover { box-shadow: var(--glow-sm); }
+
+    /* ═══════════════════ SEARCH BAR ═══════════════════ */
+    .search-bar {
+      display: flex; gap: 8px; align-items: center;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px; margin-bottom: 16px;
+    }
+    .search-bar input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-size: 13px;
+    }
+    .search-bar input::placeholder { color: var(--text-3); }
+
+    /* ═══════════════════ TOOLS PANEL ═══════════════════ */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .tool-card {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      transition: var(--transition);
+    }
+    .tool-card:hover { border-color: rgba(99,179,237,0.3); transform: translateY(-1px); }
+    .tool-name { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-bottom: 4px; }
+    .tool-desc { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+    .tool-category {
+      display: inline-block; margin-top: 8px;
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 10px; background: var(--bg-3);
+      color: var(--text-3); border: 1px solid var(--border);
+    }
+
+    /* Scrollbar global */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 18px;
+      font-size: 13px; color: var(--text);
+      box-shadow: var(--shadow-card);
+      animation: slideUp 0.25s ease, fadeOut 0.3s ease 2.7s forwards;
+      z-index: 1000;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<nav class="sidebar">
+  <div class="logo">
+    <img src="/static/freepalp-icon.svg" alt="FreePalp">
+  </div>
+
+  <button class="nav-btn active" onclick="switchPanel('chat')" id="nav-chat">
+    💬 <span class="tooltip">Чат</span>
+  </button>
+  <button class="nav-btn" onclick="switchPanel('providers')" id="nav-providers">
+    🌐 <span class="tooltip">Провайдеры</span>
+  </button>
+  <button class="nav-btn" onclick="switchPanel('memory')" id="nav-memory">
+    🧠 <span class="tooltip">Память</span>
+  </button>
+  <button class="nav-btn" onclick="switchPanel('tools')" id="nav-tools">
+    🔧 <span class="tooltip">Инструменты</span>
+  </button>
+  <button class="nav-btn" onclick="switchPanel('metrics')" id="nav-metrics">
+    📊 <span class="tooltip">Метрики</span>
+  </button>
+
+  <div class="sidebar-bottom">
+    <button class="nav-btn" onclick="switchPanel('settings')" id="nav-settings">
+      ⚙️ <span class="tooltip">Настройки</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main">
+
+  <!-- ═══════════ CHAT ═══════════ -->
+  <section class="panel active" id="panel-chat">
+    <div class="chat-layout">
+
+      <!-- ── Chat list (left column) ── -->
+      <div class="chat-list-col">
+        <div class="chat-list-header">
+          <span class="chat-list-title">Диалоги</span>
+          <button class="chat-new-btn" onclick="newChat()" title="Новый диалог">+</button>
+        </div>
+        <div class="chat-list-scroll" id="chat-list"></div>
+      </div>
+
+      <div class="chat-area">
+        <div class="chat-header">
+          <div class="status-dot" id="status-dot"></div>
+          <div>
+            <h1 style="font-size:18px;font-weight:700;letter-spacing:-0.3px;color:var(--text)">FreePalp</h1>
+            <div style="font-size:11px;color:var(--text-3);margin-top:1px">AI Orchestrator · ReAct Loop · Self-Correction</div>
+          </div>
+          <div class="model-badge" id="model-badge">initializing...</div>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="msg assistant">
+            <div class="msg-avatar">🐙</div>
+            <div>
+              <div class="msg-content">
+                Привет! Я <strong>FreePalp</strong> — мультиагентный AI оркестратор.<br><br>
+                Я могу самостоятельно использовать <strong>41 инструмент</strong>: браузер, GitHub, Slack, Notion, email, память и многое другое.<br><br>
+                Задай любой вопрос или задачу.
+              </div>
+              <div class="msg-meta">FreePalp · сейчас</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-area" id="input-area-wrap" style="position:relative;">
+          <div id="drop-overlay"><span>📎 Перетащи файлы сюда</span></div>
+          <input type="file" id="file-input" multiple accept="image/*,.txt,.md,.py,.js,.ts,.json,.yaml,.yml,.csv,.pdf,.log,.sh,.html,.css,.xml,.toml,.ini,.env,.rs,.go,.java,.cpp,.c,.h">
+          <div id="attach-preview"></div>
+          <div class="input-row">
+            <button id="attach-btn" onclick="document.getElementById('file-input').click()" title="Прикрепить файл или картинку">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <textarea id="user-input" placeholder="Задайте вопрос или задачу..." rows="1"></textarea>
+            <button id="send-btn" onclick="sendMessage()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5"></line>
+                <polyline points="5 12 12 5 19 12"></polyline>
+              </svg>
+            </button>
+          </div>
+          <div class="input-hints">
+            <span id="history-badge" class="hint-chip" style="display:none;border-color:rgba(72,187,120,0.3);color:var(--accent-3);pointer-events:none;font-size:11px"></span>
+            <span class="hint-chip" onclick="fillInput('напиши async HTTP клиент на Python')">💻 Код</span>
+            <span class="hint-chip" onclick="fillInput('исследуй тему: векторные базы данных 2025')">🔍 Исследование</span>
+            <span class="hint-chip" onclick="fillInput('покажи список провайдеров и моделей')">🌐 Провайдеры</span>
+            <span class="hint-chip" onclick="fillInput('что в HOT памяти?')">🧠 Память</span>
+            <span class="hint-chip" onclick="fillInput('покажи метрики за все задачи')">📊 Метрики</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div class="right-panel">
+        <div class="rp-section">
+          <div class="rp-title">Текущая сессия</div>
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-value accent" id="rp-tasks">0</div>
+              <div class="metric-label">задач</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value green" id="rp-score">—</div>
+              <div class="metric-label">avg score</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="rp-tokens">0</div>
+              <div class="metric-label">токенов</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="rp-cost">$0</div>
+              <div class="metric-label">стоимость</div>
+            </div>
+          </div>
+          <div class="score-bar-wrap" id="rp-score-wrap" style="display:none">
+            <div class="score-bar-label"><span>Качество ответа</span><span id="rp-score-pct">—</span></div>
+            <div class="score-bar"><div class="score-bar-fill" id="rp-score-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-title">Активные модели</div>
+          <div class="model-list" id="rp-models">
+            <div style="font-size:12px;color:var(--text-3)">Загрузка...</div>
+          </div>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-title" style="display:flex;align-items:center;justify-content:space-between">
+            🔋 Квоты API
+            <button onclick="resetAllBudgets()" title="Сбросить кулдауны" style="font-size:10px;padding:1px 6px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-3)">↺</button>
+          </div>
+          <div id="rp-budget" style="margin-top:6px">
+            <div style="font-size:11px;color:var(--text-3)">Загрузка...</div>
+          </div>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-title">Cron задачи</div>
+          <div class="cron-list" id="rp-crons">
+            <div style="font-size:12px;color:var(--text-3)">Загрузка...</div>
+          </div>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-title" style="display:flex;align-items:center;gap:6px">
+            🧠 Память сессий
+            <span id="digest-badge" style="font-size:10px;background:rgba(72,187,120,0.15);color:var(--accent-3);padding:1px 6px;border-radius:10px;display:none">загружена</span>
+          </div>
+          <div id="rp-digest" style="font-size:11px;color:var(--text-3);line-height:1.6;max-height:120px;overflow-y:auto">
+            <div>Загрузка...</div>
+          </div>
+        </div>
+
+        <div class="rp-section" style="margin-top:auto;padding-top:8px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div style="font-size:11px;color:var(--text-3)" id="idle-timer">⏱ авто-выкл: <span id="idle-countdown">—</span></div>
+            <button
+              onclick="shutdownServer()"
+              style="font-size:11px;padding:5px 10px;background:rgba(252,129,129,0.1);border:1px solid rgba(252,129,129,0.25);color:var(--accent-err);border-radius:6px;cursor:pointer;transition:var(--transition)"
+              onmouseover="this.style.background='rgba(252,129,129,0.2)'"
+              onmouseout="this.style.background='rgba(252,129,129,0.1)'"
+              title="Graceful shutdown — сохранит память и завершит сервер"
+            >⏻ Выключить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ PROVIDERS ═══════════ -->
+  <section class="panel" id="panel-providers">
+    <div class="panel-header">
+      <h2>🌐 Провайдеры LLM</h2>
+      <p>Настройка API ключей — добавь несколько ключей одного провайдера для увеличения квоты</p>
+    </div>
+    <div class="providers-grid" id="providers-grid">
+      <div style="color:var(--text-3);font-size:13px">Загрузка...</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ MEMORY ═══════════ -->
+  <section class="panel" id="panel-memory">
+    <div class="panel-header">
+      <h2>🧠 Память агента</h2>
+      <p>HOT / WARM / COLD тиры + поиск по архиву</p>
+    </div>
+    <div class="memory-tabs">
+      <div class="mem-tab active" onclick="switchMemTab('hot', this)">HOT память</div>
+      <div class="mem-tab" onclick="switchMemTab('stats', this)">Статистика</div>
+      <div class="mem-tab" onclick="switchMemTab('search', this)">Поиск</div>
+    </div>
+    <div class="memory-content">
+      <!-- HOT -->
+      <div id="mem-hot">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span style="font-size:12px;color:var(--text-3)">Активная память (инжектируется в каждый промпт)</span>
+          <button class="btn" onclick="loadMemory()">↻ Обновить</button>
+        </div>
+        <div class="hot-memory-text" id="hot-memory-text">Загрузка...</div>
+      </div>
+      <!-- STATS -->
+      <div id="mem-stats" style="display:none">
+        <div class="memory-stats-grid" id="mem-stats-grid">
+          <div style="color:var(--text-3)">Загрузка...</div>
+        </div>
+      </div>
+      <!-- SEARCH -->
+      <div id="mem-search" style="display:none">
+        <div class="search-bar">
+          <span style="color:var(--text-3)">🔍</span>
+          <input type="text" id="mem-search-input" placeholder="Поиск по архиву..." onkeydown="if(event.key==='Enter')searchMemory()">
+          <button class="btn primary" onclick="searchMemory()">Найти</button>
+        </div>
+        <div id="mem-search-results" style="font-size:13px;color:var(--text-3)">Введите запрос для поиска</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ TOOLS ═══════════ -->
+  <section class="panel" id="panel-tools">
+    <div class="panel-header">
+      <h2>🔧 Инструменты</h2>
+      <p>Агент автономно вызывает эти инструменты через ReAct loop</p>
+    </div>
+    <div style="padding:16px 24px 8px">
+      <div class="search-bar">
+        <span style="color:var(--text-3)">🔍</span>
+        <input type="text" id="tools-search" placeholder="Поиск инструментов..." oninput="filterTools(this.value)">
+      </div>
+    </div>
+    <div style="padding:0 24px 24px;overflow-y:auto;flex:1">
+      <div class="tools-grid" id="tools-grid">
+        <div style="color:var(--text-3)">Загрузка...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ METRICS ═══════════ -->
+  <section class="panel" id="panel-metrics">
+    <div class="panel-header">
+      <h2>📊 Метрики и аналитика</h2>
+      <p>Статистика задач, качества ответов, токенов и стоимости</p>
+    </div>
+    <div class="metrics-content">
+      <div class="metrics-big-grid" id="metrics-big"></div>
+      <div class="chart-wrap chart-tall">
+        <div class="chart-title">Тренд оценок (последние сессии)</div>
+        <canvas id="chart-trend"></canvas>
+        <div id="chart-trend-empty" style="display:none;text-align:center;padding:24px 0;color:#8b9ab8;font-size:13px;">
+          📊 Данных пока мало — выполните несколько задач, чтобы увидеть тренд
+        </div>
+      </div>
+      <div class="chart-wrap" style="margin-top:16px;">
+        <div class="chart-title">Средний балл по типам задач</div>
+        <canvas id="chart-types"></canvas>
+        <div id="chart-types-empty" style="display:none;text-align:center;padding:24px 0;color:#8b9ab8;font-size:13px;">
+          📈 Здесь появятся данные после накопления задач разных типов
+        </div>
+      </div>
+      <div id="type-detail-wrap" style="margin-top:16px;display:none;">
+        <div class="chart-title" style="margin-bottom:8px;">Детали по типам задач</div>
+        <div id="type-detail-table"></div>
+      </div>
+
+      <!-- ── Квоты провайдеров ── -->
+      <div style="margin-top:16px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:16px;" id="budget-section-wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;color:var(--text-3);font-weight:500">🔋 Квоты API провайдеров</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:10px;color:var(--text-3)" id="budget-hint"></span>
+            <button onclick="resetAllBudgets()" style="font-size:10px;padding:2px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-3)">↺ Сбросить кулдауны</button>
+          </div>
+        </div>
+        <div id="budget-full-table"></div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text-3)">
+          💡 Несколько ключей = больше квота. Управляй ключами в панели <a href="#" onclick="switchPanel('providers');return false" style="color:var(--accent)">Провайдеры →</a>
+        </div>
+      </div>
+
+      <!-- ── Пометки системы самообучения ── -->
+      <div id="notes-wrap" style="margin-top:20px;display:none;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <div style="font-size:12px;color:var(--text-3);font-weight:500;margin-bottom:12px;">🗒️ Пометки системы (кандидаты на улучшение)</div>
+        <div id="notes-grid" style="display:flex;flex-wrap:wrap;gap:12px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ SETTINGS ═══════════ -->
+  <section class="panel" id="panel-settings">
+    <div class="panel-header">
+      <h2>⚙️ Настройки</h2>
+      <p>Конфигурация FreePalp</p>
+    </div>
+    <div style="padding:24px;overflow-y:auto">
+      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+        <div class="rp-title">Информация о системе</div>
+        <div id="settings-info" style="font-size:13px;color:var(--text-2);line-height:1.8">Загрузка...</div>
+      </div>
+      <div id="training-notice" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px;border-left:3px solid var(--accent);padding:10px 12px;display:none">
+        <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">🧬 Самообучение</div>
+        <div id="training-status" style="font-size:11px;color:var(--text-2);line-height:1.6"></div>
+      </div>
+      <!-- Версии -->
+      <div id="versions-wrap" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="rp-title" style="margin:0">📦 Версии промптов</div>
+          <button class="btn" style="font-size:11px;padding:3px 8px" onclick="rollbackVersion()">↩ Откат</button>
+        </div>
+        <div id="versions-list" style="font-size:11px;color:var(--text-2)"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn primary" onclick="triggerImprove()">🧬 Самоулучшение</button>
+        <button class="btn" onclick="triggerMemClean()">🧹 Очистить память</button>
+        <button class="btn" onclick="window.open('/docs','_blank')">📖 API Docs</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+const state = {
+  tasks: 0,
+  totalTokens: 0,
+  totalCost: 0,
+  scores: [],
+  currentModel: '',
+  allTools: [],
+};
+
+// ════════════════════════════════════════════════
+// MULTI-CHAT STATE
+// ════════════════════════════════════════════════
+function genConvId() { return 'conv-' + Date.now() + '-' + Math.random().toString(36).slice(2,7); }
+
+// _chatSessions хранит все открытые диалоги в памяти:
+// { [convId]: { title, created, historyLen, msgsHtml, savedOnDisk } }
+const _chatSessions = {};
+let conversationId = genConvId();
+let historyLen = 0;
+
+function _initFirstChat() {
+  const id = conversationId;
+  _chatSessions[id] = {
+    title: 'Новый диалог',
+    created: Date.now(),
+    historyLen: 0,
+    msgsHtml: document.getElementById('messages').innerHTML,
+  };
+  renderChatList();
+  // Загружаем сохранённые сессии с сервера
+  _loadSavedSessions();
+}
+
+// Загружаем сохранённые сессии при старте
+async function _loadSavedSessions() {
+  try {
+    const r = await fetch('/api/chat/sessions');
+    if (!r.ok) return;
+    const { sessions } = await r.json();
+    if (!sessions || !sessions.length) return;
+
+    let needsRender = false;
+    for (const s of sessions) {
+      if (_chatSessions[s.conv_id]) continue; // уже есть
+      const savedMs = s.saved_at ? new Date(s.saved_at).getTime() : Date.now();
+      _chatSessions[s.conv_id] = {
+        title:       s.title || 'Сохранённый диалог',
+        created:     savedMs,
+        historyLen:  Math.floor((s.msg_count || 0) / 2),
+        msgsHtml:    null,   // загрузим при переключении
+        savedOnDisk: true,
+      };
+      needsRender = true;
+    }
+    if (needsRender) renderChatList();
+  } catch(e) {}
+}
+
+// Загружаем историю конкретной сессии с диска и рендерим
+async function _loadSessionHistory(id) {
+  try {
+    const r = await fetch(`/api/chat/sessions/${id}`);
+    if (!r.ok) return false;
+    const { history } = await r.json();
+    if (!history || !history.length) return false;
+
+    const msgs = document.getElementById('messages');
+    msgs.innerHTML = '';
+    for (let i = 0; i < history.length; i += 2) {
+      const userMsg  = history[i];
+      const asstMsg  = history[i + 1];
+      if (userMsg)  appendMsg('user',      userMsg.content,  {}, false);
+      if (asstMsg)  appendMsg('assistant', asstMsg.content,  {}, false);
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+    // Кэшируем HTML чтобы не загружать повторно
+    _chatSessions[id].msgsHtml = msgs.innerHTML;
+    _chatSessions[id].savedOnDisk = false;
+    return true;
+  } catch(e) { return false; }
+}
+
+// Рендерим список чатов в левой колонке
+function renderChatList() {
+  const el = document.getElementById('chat-list');
+  if (!el) return;
+  const ids = Object.keys(_chatSessions).sort(
+    (a, b) => (_chatSessions[b].created || 0) - (_chatSessions[a].created || 0)
+  );
+  if (!ids.length) {
+    el.innerHTML = '<div class="chat-list-empty">Нет диалогов</div>';
+    return;
+  }
+  el.innerHTML = ids.map(id => {
+    const c = _chatSessions[id];
+    const isActive = id === conversationId;
+    const time = c.created ? new Date(c.created).toLocaleTimeString('ru', { hour:'2-digit', minute:'2-digit' }) : '';
+    const msgCount = c.historyLen > 0 ? `${c.historyLen} обм.` : 'пусто';
+    const savedBadge = c.savedOnDisk ? '<span style="font-size:9px;color:var(--text-3);margin-left:3px">💾</span>' : '';
+    return `
+      <div class="chat-item ${isActive ? 'active' : ''}" onclick="switchToChat('${id}')">
+        <div class="chat-item-title" title="${escHtml(c.title)}">${escHtml(c.title)}${savedBadge}</div>
+        <div class="chat-item-meta">${time} · ${msgCount}</div>
+        <span class="chat-item-del" onclick="deleteChat(event,'${id}')" title="Удалить">✕</span>
+      </div>`;
+  }).join('');
+}
+
+// Переключаемся на другой диалог
+async function switchToChat(id) {
+  if (id === conversationId) return;
+
+  // Сохраняем HTML текущего диалога
+  if (_chatSessions[conversationId]) {
+    _chatSessions[conversationId].msgsHtml = document.getElementById('messages').innerHTML;
+    _chatSessions[conversationId].historyLen = historyLen;
+  }
+
+  // Переключаемся
+  conversationId = id;
+  historyLen = _chatSessions[id]?.historyLen || 0;
+
+  const msgs = document.getElementById('messages');
+  const sess = _chatSessions[id];
+
+  if (sess?.msgsHtml) {
+    // Уже загружен в память
+    msgs.innerHTML = sess.msgsHtml;
+    msgs.scrollTop = msgs.scrollHeight;
+  } else if (sess?.savedOnDisk) {
+    // Нужно загрузить с диска
+    msgs.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px">⏳ Загружаю историю...</div>';
+    const ok = await _loadSessionHistory(id);
+    if (!ok) msgs.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px">Не удалось загрузить историю</div>';
+  } else {
+    msgs.innerHTML = '';
+  }
+
+  updateHistoryBadge();
+  renderChatList();
+}
+
+// Удалить диалог
+function deleteChat(event, id) {
+  event.stopPropagation();
+  fetch('/api/chat/history?conversation_id=' + id, { method: 'DELETE' }).catch(()=>{});
+  delete _chatSessions[id];
+
+  if (id === conversationId) {
+    // Переключаемся на другой или создаём новый
+    const remaining = Object.keys(_chatSessions);
+    if (remaining.length > 0) {
+      switchToChat(remaining[0]);
+    } else {
+      _createNewChat();
+    }
+  }
+  renderChatList();
+}
+
+function _createNewChat() {
+  const id = genConvId();
+  conversationId = id;
+  historyLen = 0;
+  _chatSessions[id] = {
+    title: 'Новый диалог',
+    created: Date.now(),
+    historyLen: 0,
+    msgsHtml: '',
+  };
+  document.getElementById('messages').innerHTML = `
+    <div class="msg assistant">
+      <div class="msg-avatar">🐙</div>
+      <div>
+        <div class="msg-content">
+          Новый диалог. Задай любой вопрос или задачу.
+        </div>
+        <div class="msg-meta">FreePalp · сейчас</div>
+      </div>
+    </div>`;
+  updateHistoryBadge();
+  renderChatList();
+}
+
+// Обновляем заголовок диалога из первого сообщения пользователя
+function _updateChatTitle(text) {
+  if (!_chatSessions[conversationId]) return;
+  const current = _chatSessions[conversationId].title;
+  if (current === 'Новый диалог' || !current) {
+    _chatSessions[conversationId].title = text.slice(0, 40) + (text.length > 40 ? '…' : '');
+    renderChatList();
+  }
+}
+
+// ════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+
+  if (name === 'providers') loadProviders();
+  if (name === 'memory')    loadMemory();
+  if (name === 'tools')     loadTools();
+  if (name === 'metrics')   { loadMetrics(); loadTokenBudget(); }
+  if (name === 'settings')  { loadSettings(); loadImproveStatus(); }
+}
+
+// ════════════════════════════════════════════════
+// CHAT
+// ════════════════════════════════════════════════
+const ta = document.getElementById('user-input');
+ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
+ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!_abortCtrl) sendMessage(); } });
+
+function fillInput(text) { ta.value = text; ta.focus(); ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+
+// ════════════════════════════════════════════════
+// qclaw-режим (гость через туннель): ключи в localStorage браузера
+// ════════════════════════════════════════════════
+const GUEST_KEYS_LS = 'freepalp_guest_keys';
+
+function isGuestMode() {
+  // Гость = доступ НЕ с localhost (через Cloudflare Tunnel и т.п.)
+  const h = location.hostname;
+  return h !== 'localhost' && h !== '127.0.0.1' && h !== '0.0.0.0';
+}
+function getGuestKeys() {
+  try { return JSON.parse(localStorage.getItem(GUEST_KEYS_LS) || '{}'); }
+  catch { return {}; }
+}
+function setGuestKey(provider, key) {
+  const k = getGuestKeys();
+  if (key) k[provider] = key; else delete k[provider];
+  localStorage.setItem(GUEST_KEYS_LS, JSON.stringify(k));
+}
+function clearGuestKeys() {
+  localStorage.removeItem(GUEST_KEYS_LS);
+}
+
+let _abortCtrl = null;   // активный запрос — для кнопки Стоп
+
+function stopGeneration() {
+  if (_abortCtrl) { _abortCtrl.abort(); _abortCtrl = null; }
+}
+
+async function sendMessage() {
+  if (_abortCtrl) return;   // уже идёт задача — сначала Стоп
+  const text = ta.value.trim();
+  if (!text && _attachments.length === 0) return;
+  ta.value = ''; ta.style.height = 'auto';
+
+  // Обновляем заголовок диалога из первого сообщения
+  _updateChatTitle(text || (_attachments[0] && _attachments[0].name) || '📎');
+
+  // Формируем превью пользовательского сообщения с приложениями
+  let userDisplayHtml = text ? escapeHtml(text) : '';
+  if (_attachments.length > 0) {
+    const chipHtml = _attachments.map(a =>
+      a.isImage
+        ? `<img src="${a.dataUrl}" style="max-height:60px;max-width:120px;border-radius:5px;margin:3px 2px;" title="${escapeHtml(a.name)}">`
+        : `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.06);border-radius:4px;padding:2px 7px;font-size:12px;margin:2px;">📄 ${escapeHtml(a.name)}</span>`
+    ).join('');
+    userDisplayHtml += (userDisplayHtml ? '<br>' : '') + chipHtml;
+  }
+  appendMsg('user', userDisplayHtml, {}, true);
+
+  // Снимаем прикрепления
+  const attachmentsToSend = [..._attachments];
+  _attachments = [];
+  renderAttachPreview();
+
+  setBusy(true);
+
+  // Вставляем прогресс-панель вместо обычного "печатает..."
+  const progressId = appendProgress();
+  try {
+    const payload = {
+      message: text || '(см. прикреплённые файлы)',
+      conversation_id: conversationId,
+    };
+    // qclaw-режим: гость шлёт свои ключи из localStorage (изоляция от ключей хоста)
+    const _guestKeys = getGuestKeys();
+    if (isGuestMode() && Object.keys(_guestKeys).length > 0) {
+      payload.session_keys = _guestKeys;
+    }
+    if (attachmentsToSend.length > 0) {
+      payload.attachments = attachmentsToSend.map(a => ({
+        name: a.name,
+        mime: a.mime,
+        data: a.b64,
+      }));
+    }
+
+    _abortCtrl = new AbortController();
+    const resp = await fetch('/api/chat/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: _abortCtrl.signal,
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    let finalData = null;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const ev = JSON.parse(line.slice(6));
+          if (ev.type === 'done' || ev.type === 'error') {
+            finalData = ev;
+          } else {
+            updateProgress(progressId, ev);
+          }
+        } catch(e) {}
+      }
+    }
+
+    removeMsg(progressId);
+
+    if (!finalData || finalData.type === 'error') {
+      appendMsg('assistant', '❌ ' + (finalData?.text || 'Ошибка соединения'));
+    } else {
+      const data = finalData;
+      appendMsg('assistant', data.answer, {
+        model:      data.model,
+        score:      data.score,
+        iterations: data.iterations,
+        elapsed:    data.elapsed,
+        tokens_in:  data.tokens_in,
+        tokens_out: data.tokens_out,
+        cost_usd:   data.cost_usd,
+        tool_calls: data.tool_calls || [],
+      });
+      if (data.history_len !== undefined) {
+        historyLen = data.history_len;
+        if (_chatSessions[conversationId]) {
+          _chatSessions[conversationId].historyLen = historyLen;
+        }
+        updateHistoryBadge();
+        renderChatList();
+      }
+      updateSessionStats(data);
+    }
+  } catch(e) {
+    removeMsg(progressId);
+    if (e.name === 'AbortError') {
+      appendMsg('assistant', '⏹ Остановлено пользователем');
+    } else {
+      appendMsg('assistant', '❌ Ошибка соединения с сервером: ' + e.message);
+    }
+  }
+  _abortCtrl = null;
+  setBusy(false);
+}
+
+// ── Progress panel helpers ────────────────────────────────────────────────
+const STAGE_ICON = {
+  parsing:  '🔍', parsed:  '📋',
+  routing:  '🔀', worker:  '🤖',
+  critic:   '🧐', scored:  '📊',
+  retry:    '🔄', fallback:'⚡',
+  tool:     '🔧', error:   '❌',
+};
+
+function appendProgress() {
+  const msgs = document.getElementById('messages');
+  const id = 'msg-' + Date.now();
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = 'msg-row assistant';
+  div.innerHTML = `
+    <div class="msg-avatar">🐙</div>
+    <div class="msg-content">
+      <div class="progress-panel" id="pp-${id}">
+        <div class="progress-steps" id="ps-${id}"></div>
+        <div class="progress-spinner"></div>
+      </div>
+    </div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function updateProgress(msgId, ev) {
+  const stepsEl = document.getElementById('ps-' + msgId);
+  if (!stepsEl) return;
+  const icon = ev.type === 'tool' ? '🔧' : (STAGE_ICON[ev.stage] || '⚙️');
+  const step = document.createElement('div');
+  step.className = 'progress-step' + (ev.type === 'scored' ? (ev.score >= 0.85 ? ' good' : ev.score >= 0.7 ? ' ok' : ' bad') : '');
+  let extra = '';
+  if (ev.type === 'scored' && ev.issues && ev.issues.length) {
+    extra = `<span class="ps-issues">${ev.issues.slice(0,2).map(i => `<span>${i.slice(0,60)}</span>`).join('')}</span>`;
+  }
+  step.innerHTML = `<span class="ps-icon">${icon}</span><span class="ps-text">${ev.text}</span>${extra}`;
+  stepsEl.appendChild(step);
+  // Прокручиваем вниз
+  document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+}
+
+function newChat() {
+  // Сохраняем текущий диалог
+  if (_chatSessions[conversationId]) {
+    _chatSessions[conversationId].msgsHtml = document.getElementById('messages').innerHTML;
+    _chatSessions[conversationId].historyLen = historyLen;
+  }
+  _createNewChat();
+  showToast('🐙 Новый диалог начат');
+}
+
+function updateHistoryBadge() {
+  const badge = document.getElementById('history-badge');
+  if (!badge) return;
+  if (historyLen > 0) {
+    badge.textContent = historyLen + ' обменов в памяти';
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function appendMsg(role, text, meta = {}, rawHtml = false) {
+  const msgs = document.getElementById('messages');
+  const id = 'msg-' + Date.now();
+  const isUser = role === 'user';
+  const avatar = isUser ? '👤' : '🐙';
+
+  let metaHtml = '';
+  if (meta.model) {
+    const score = meta.score ? ` · ${(meta.score*100).toFixed(0)}%` : '';
+    const iter  = meta.iterations > 1 ? ` · ${meta.iterations} iter` : '';
+    const tok   = meta.tokens_in ? ` · ${meta.tokens_in+meta.tokens_out} tok` : '';
+    const cost  = meta.cost_usd ? ` · $${meta.cost_usd.toFixed(4)}` : '';
+    metaHtml = `<div class="msg-meta">${meta.model}${score}${iter}${tok}${cost}</div>`;
+  }
+
+  let toolBadges = '';
+  if (meta.tool_calls && meta.tool_calls.length > 0) {
+    toolBadges = meta.tool_calls.map(tc =>
+      `<div class="tool-call-badge ${tc.ok !== false ? 'success' : 'error'}">
+        🔧 ${tc.tool}(${tc.ok !== false ? '✓' : '✗'})
+      </div>`
+    ).join('');
+  }
+
+  const formattedText = rawHtml ? text : formatText(text);
+
+  msgs.innerHTML += `
+    <div class="msg ${role}" id="${id}">
+      <div class="msg-avatar">${avatar}</div>
+      <div>
+        ${toolBadges}
+        <div class="msg-content">${formattedText}</div>
+        ${metaHtml}
+      </div>
+    </div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function formatText(text) {
+  // Код-блоки
+  text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre><code>${escHtml(code.trim())}</code></pre>`);
+  // Inline code
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Bold
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Newlines
+  text = text.replace(/\n/g, '<br>');
+  return text;
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(s) { return escHtml(String(s || '')); }
+
+// ══════════════════════════════════════════════════════════════
+// FILE / IMAGE ATTACHMENTS
+// ══════════════════════════════════════════════════════════════
+
+let _attachments = [];  // [{name, mime, b64, dataUrl, isImage}]
+
+function renderAttachPreview() {
+  const box = document.getElementById('attach-preview');
+  if (!box) return;
+  if (_attachments.length === 0) {
+    box.innerHTML = '';
+    box.classList.remove('has-files');
+    return;
+  }
+  box.classList.add('has-files');
+  box.innerHTML = _attachments.map((a, i) => {
+    const icon = a.isImage
+      ? `<img class="thumb" src="${a.dataUrl}" alt="">`
+      : `<span class="chip-icon">📄</span>`;
+    return `<div class="attach-chip">
+      ${icon}
+      <span class="chip-name" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</span>
+      <span class="chip-del" onclick="removeAttachment(${i})">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function removeAttachment(idx) {
+  _attachments.splice(idx, 1);
+  renderAttachPreview();
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);  // data:mime;base64,XXX
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addFiles(files) {
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;  // 10 MB
+  for (const file of files) {
+    if (file.size > MAX_FILE_SIZE) {
+      alert(`Файл "${file.name}" слишком большой (>${(MAX_FILE_SIZE/1024/1024).toFixed(0)} MB)`);
+      continue;
+    }
+    if (_attachments.length >= 8) { alert('Максимум 8 файлов за раз'); break; }
+    const dataUrl = await readFileAsBase64(file);
+    const b64 = dataUrl.split(',')[1];
+    _attachments.push({
+      name: file.name,
+      mime: file.type || 'application/octet-stream',
+      b64,
+      dataUrl,
+      isImage: file.type.startsWith('image/'),
+    });
+  }
+  renderAttachPreview();
+}
+
+// Инициализация drag-and-drop и file input
+function _initAttachments() {
+  const fileInput = document.getElementById('file-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', e => {
+      if (e.target.files.length) addFiles(e.target.files);
+      e.target.value = '';  // сброс для повторного выбора того же файла
+    });
+  }
+
+  const wrap = document.getElementById('input-area-wrap') || document.getElementById('messages');
+  const overlay = document.getElementById('drop-overlay');
+  if (!wrap || !overlay) return;
+
+  let dragCounter = 0;
+  wrap.addEventListener('dragenter', e => {
+    e.preventDefault(); dragCounter++;
+    overlay.classList.add('active');
+  });
+  wrap.addEventListener('dragleave', () => {
+    dragCounter--;
+    if (dragCounter <= 0) { dragCounter = 0; overlay.classList.remove('active'); }
+  });
+  wrap.addEventListener('dragover', e => e.preventDefault());
+  wrap.addEventListener('drop', e => {
+    e.preventDefault(); dragCounter = 0; overlay.classList.remove('active');
+    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  });
+
+  // Paste из буфера (картинки)
+  document.addEventListener('paste', e => {
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    const imageItems = [...items].filter(it => it.type.startsWith('image/'));
+    if (imageItems.length > 0) {
+      e.preventDefault();
+      addFiles(imageItems.map(it => it.getAsFile()));
+    }
+  });
+}
+
+function appendTyping() {
+  const msgs = document.getElementById('messages');
+  const id = 'typing-' + Date.now();
+  msgs.innerHTML += `
+    <div class="msg assistant" id="${id}">
+      <div class="msg-avatar">🐙</div>
+      <div class="msg-content"><div class="typing"><span></span><span></span><span></span></div></div>
+    </div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function removeMsg(id) { document.getElementById(id)?.remove(); }
+
+const _SEND_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
+const _STOP_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>`;
+
+function setBusy(busy) {
+  // Во время задачи кнопка отправки превращается в Стоп (агента можно прервать)
+  const btn = document.getElementById('send-btn');
+  btn.disabled = false;
+  btn.innerHTML = busy ? _STOP_SVG : _SEND_SVG;
+  btn.onclick = busy ? stopGeneration : sendMessage;
+  btn.title = busy ? 'Остановить агента' : 'Отправить';
+  btn.style.background = busy ? 'var(--error, #e53e3e)' : '';
+  document.getElementById('status-dot').className = 'status-dot' + (busy ? ' loading' : '');
+}
+
+function updateSessionStats(data) {
+  state.tasks++;
+  if (data.tokens_in) state.totalTokens += data.tokens_in + (data.tokens_out || 0);
+  if (data.cost_usd)  state.totalCost   += data.cost_usd;
+  if (data.score)     state.scores.push(data.score);
+  if (data.model)     state.currentModel = data.model;
+
+  document.getElementById('rp-tasks').textContent = state.tasks;
+  document.getElementById('rp-tokens').textContent = state.totalTokens > 1000 ? (state.totalTokens/1000).toFixed(1)+'K' : state.totalTokens;
+  document.getElementById('rp-cost').textContent = '$' + state.totalCost.toFixed(3);
+
+  if (state.scores.length > 0) {
+    const avg = state.scores.reduce((a,b)=>a+b,0) / state.scores.length;
+    const pct = avg * 100;
+    const col = scoreColor(pct);
+    document.getElementById('rp-score').textContent = pct.toFixed(0)+'%';
+    document.getElementById('rp-score').style.color = col;
+    document.getElementById('rp-score-wrap').style.display = 'block';
+    document.getElementById('rp-score-pct').textContent = pct.toFixed(0)+'%';
+    const fill = document.getElementById('rp-score-fill');
+    fill.style.width = pct + '%';
+    fill.style.background = `linear-gradient(90deg, ${col}, ${col})`;
+    fill.style.boxShadow = `0 0 6px ${col}`;
+  }
+  if (data.model) document.getElementById('model-badge').textContent = data.model;
+}
+
+// ════════════════════════════════════════════════
+// PROVIDERS + SVG ICONS (thesvg.org)
+// ════════════════════════════════════════════════
+
+// ────────────────────────────────────────────────────────────────
+// Точные имена провайдеров из model_discovery.py → slug thesvg.org
+// ────────────────────────────────────────────────────────────────
+const PROVIDER_SVG = {
+  // Бесплатные / основные
+  'Groq':               'groq',
+  'OpenRouter':         'openrouter',
+  'Cerebras':           'cerebras',
+  'Google Gemini':      'gemini',
+  'SambaNova':          'sambanova',
+  'GitHub Models':      'github',
+  'Ollama (local)':     'ollama',
+  'Anthropic (Claude)': 'anthropic',
+  'Together AI':        null,       // нет в thesvg.org — используем кастомный SVG
+  'Novita AI':          null,       // нет в thesvg.org — используем кастомный SVG
+  'OpenAI':             null,       // белый лого на thesvg.org → кастомный SVG на тёмном фоне
+  'Hugging Face':       'huggingface',
+  // Дополнительные / если появятся
+  'Mistral':            'mistral',
+  'Cohere':             'cohere',
+  'DeepSeek':           'deepseek',
+  'OpenAI':             'openai',
+  'Meta':               'meta',
+  'Nvidia':             'nvidia',
+  'Amazon':             'aws',
+  'Google':             'google',
+  'Microsoft':          'microsoft',
+};
+
+const PROVIDER_EMOJI = {
+  'Groq':'⚡','OpenRouter':'🔀','Cerebras':'🧠','Google Gemini':'✨',
+  'SambaNova':'🚀','GitHub Models':'🐙','Ollama (local)':'🖥️',
+  'Anthropic (Claude)':'🤖','Together AI':'🤝','Novita AI':'🌟',
+  'Hugging Face':'🤗','Mistral':'💨','DeepSeek':'🔍',
+};
+
+// Кастомные инлайн-SVG для провайдеров без иконок на thesvg.org
+const PROVIDER_CUSTOM = {
+  'Together AI': `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+    <circle cx="16" cy="16" r="16" fill="#1a1a2e"/>
+    <circle cx="11.5" cy="16" r="5.5" fill="none" stroke="#a78bfa" stroke-width="2.2"/>
+    <circle cx="20.5" cy="16" r="5.5" fill="none" stroke="#818cf8" stroke-width="2.2"/>
+    <circle cx="16" cy="16" r="2.2" fill="#c4b5fd"/>
+  </svg>`,
+  // Novita AI — фирменная «N» с градиентом (нет на thesvg.org)
+  'Novita AI': `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+    <defs>
+      <linearGradient id="ng" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#00d4aa"/>
+        <stop offset="100%" stop-color="#059669"/>
+      </linearGradient>
+    </defs>
+    <rect width="32" height="32" rx="8" fill="url(#ng)"/>
+    <text x="16" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900"
+          font-size="17" fill="#fff" letter-spacing="-0.5">N</text>
+  </svg>`,
+  // OpenAI — характерный многоугольник / свёрток на тёмном фоне
+  'OpenAI': `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+    <rect width="32" height="32" rx="8" fill="#111"/>
+    <path d="M16 5.5a4.5 4.5 0 0 1 4.28 3.12 4.5 4.5 0 0 1-.08 8.76L16 19.1l-4.2-1.72a4.5 4.5 0 0 1-.08-8.76A4.5 4.5 0 0 1 16 5.5z"
+          fill="none" stroke="#fff" stroke-width="1.6"/>
+    <circle cx="16" cy="16" r="2.4" fill="#fff"/>
+    <line x1="16" y1="8.5" x2="16" y2="13.6" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="16" y1="18.4" x2="16" y2="23.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="9.5" y1="12" x2="13.9" y2="14.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="18.1" y1="17.5" x2="22.5" y2="20" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="22.5" y1="12" x2="18.1" y2="14.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="13.9" y1="17.5" x2="9.5" y2="20" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+  </svg>`,
+};
+
+// Цвет фона чипа за иконкой.
+// Белый (#fff) — для тёмных логотипов (GitHub).
+// Тёмный — для белых/светлых логотипов (Anthropic, OpenRouter, Ollama).
+// Брендовый цвет — для фирменного вида.
+const PROVIDER_CHIP_BG = {
+  'Groq':               '#f54f35',   // фирменный красный Groq
+  'OpenRouter':         '#111317',   // белый логотип → тёмный чип
+  'Cerebras':           '#fff',
+  'Google Gemini':      '#fff',
+  'SambaNova':          '#fff',
+  'GitHub Models':      '#fff',      // тёмный логотип → белый чип
+  'Ollama (local)':     '#1a1a1a',   // белый логотип → тёмный чип
+  'Anthropic (Claude)': '#c96442',   // Anthropic бренд
+  'Together AI':        'transparent',
+  'Novita AI':          'transparent', // кастомный SVG со своим фоном
+  'Mistral':            '#fff',        // оранжевый логотип Mistral → белый чип
+  'OpenAI':             'transparent', // кастомный SVG со своим тёмным фоном
+  'Hugging Face':       '#fff8e7',   // тёплый кремовый — под жёлтый HF
+};
+
+function providerIconHtml(name, isActive) {
+  const slug   = PROVIDER_SVG[name];
+  const emoji  = PROVIDER_EMOJI[name] || '🌐';
+  const custom = PROVIDER_CUSTOM[name];
+  const dim    = isActive ? '' : ' dim';
+  const bg     = PROVIDER_CHIP_BG[name] || '#fff';
+
+  if (slug) {
+    return `<div class="provider-logo-chip${dim}" style="background:${bg}">
+      <img class="provider-logo"
+        src="https://thesvg.org/icons/${slug}/default.svg"
+        onerror="this.parentElement.innerHTML='<span style=\\'font-size:18px\\'>${emoji}</span>'"
+        alt="${name}" loading="lazy">
+    </div>`;
+  }
+  if (custom) {
+    return `<div class="provider-logo-chip${dim}" style="background:transparent;padding:0;border-radius:50%;overflow:hidden">${custom}</div>`;
+  }
+  return `<div class="provider-logo-chip${dim}" style="background:rgba(255,255,255,0.06);font-size:20px">${emoji}</div>`;
+}
+
+// Провайдеры с иконками, лимитами, ссылками регистрации
+// svgName — ключ в PROVIDER_SVG / PROVIDER_CUSTOM для получения логотипа
+const PROVIDER_META = {
+  groq:       { icon:'⚡', svgName:'Groq',               label:'Groq',         free: true,  limit:'14.4k req/day',      signup:'https://console.groq.com/',       color:'#F55036' },
+  cerebras:   { icon:'🧠', svgName:'Cerebras',           label:'Cerebras',     free: true,  limit:'30k req/day',        signup:'https://cloud.cerebras.ai/',      color:'#5B4FD9' },
+  openrouter: { icon:'🔀', svgName:'OpenRouter',         label:'OpenRouter',   free: true,  limit:'бесплатные модели',  signup:'https://openrouter.ai/',          color:'#6E57FF' },
+  gemini:     { icon:'✨', svgName:'Google Gemini',      label:'Gemini',       free: true,  limit:'1.5k req/day',       signup:'https://aistudio.google.com/',    color:'#4285F4' },
+  sambanova:  { icon:'🚀', svgName:'SambaNova',          label:'SambaNova',    free: true,  limit:'без явных лимитов',  signup:'https://cloud.sambanova.ai/',     color:'#FF6B35' },
+  mistral:    { icon:'🌬️', svgName:'Mistral',            label:'Mistral',      free: true,  limit:'1 млрд tok/мес',     signup:'https://console.mistral.ai/',     color:'#FA520F' },
+  together:   { icon:'🤝', svgName:'Together AI',        label:'Together AI',  free: false, limit:'$5 кредитов',        signup:'https://api.together.xyz/',       color:'#2563EB' },
+  novita:     { icon:'🌟', svgName:'Novita AI',          label:'Novita AI',    free: false, limit:'$0.5 кредитов',      signup:'https://novita.ai/',              color:'#059669' },
+  anthropic:  { icon:'🤖', svgName:'Anthropic (Claude)', label:'Anthropic',    free: false, limit:'платный',            signup:'https://console.anthropic.com/',  color:'#CC785C' },
+  openai:     { icon:'🌐', svgName:'OpenAI',             label:'OpenAI',       free: false, limit:'платный',            signup:'https://platform.openai.com/',    color:'#10A37F' },
+};
+
+async function loadProviders() {
+  const grid = document.getElementById('providers-grid');
+  grid.innerHTML = '<div style="color:var(--text-3);font-size:13px">Загрузка...</div>';
+  try {
+    // Load both provider status and current keys
+    const [pResp, kResp, bResp] = await Promise.all([
+      fetch('/api/providers'),
+      fetch('/api/keys'),
+      fetch('/api/token-budget')
+    ]);
+    const pData = await pResp.json();
+    const kData = await kResp.json();
+    const bData = await bResp.json();
+
+    const activeNames = new Set((pData.active || []).map(a => a.name.toLowerCase()));
+    const keysMap = {};   // provider → keys array
+    (kData.providers || []).forEach(p => { keysMap[p.provider] = p.keys || []; });
+    const budgetMap = {};  // provider → budget entry
+    (bData.providers || []).forEach(b => { budgetMap[b.provider] = b; });
+
+    // Merge all known providers from PROVIDER_META + catalog
+    const catalog = [...(pData.active || []), ...(pData.inactive || [])];
+    const allProviders = Object.keys(PROVIDER_META).map(key => {
+      const meta = PROVIDER_META[key];
+      const cat = catalog.find(c => c.name.toLowerCase() === key || c.name.toLowerCase().includes(key));
+      return {
+        key,
+        label:   meta.label,
+        icon:    meta.icon,
+        svgName: meta.svgName,
+        color:   meta.color,
+        free:    meta.free,
+        limit:   meta.limit,
+        signup:  meta.signup,
+        models:  cat?.models || '',
+        notes:   cat?.notes || '',
+        isLocal: key === 'ollama',
+        // Проверяем по ключу, лейблу и частичному совпадению имени каталога
+        // (напр. 'gemini' совпадёт с 'google gemini', 'openrouter' с 'openrouter' и т.д.)
+        isActive: [...activeNames].some(n => n === key || n.includes(key) || n === meta.label.toLowerCase()),
+        keys:   keysMap[key] || [],
+        budget: budgetMap[key] || null,
+      };
+    });
+
+    // Ollama separately
+    const ollamaActive = activeNames.has('ollama');
+    allProviders.unshift({
+      key: 'ollama', label: 'Ollama (local)', icon: '🦙', svgName: 'Ollama (local)', color: '#888',
+      free: true, limit: '∞ без лимитов', signup: 'https://ollama.com/download',
+      models: 'qwen2.5-coder, deepseek-coder, llama3, mistral…',
+      notes: 'Локально, приватно, без интернета. Нужен GPU или быстрый CPU.',
+      isLocal: true, isActive: ollamaActive,
+      keys: [], budget: budgetMap['ollama'] || null,
+    });
+
+    // qclaw-баннер для гостя
+    let banner = '';
+    if (isGuestMode()) {
+      const gk = Object.keys(getGuestKeys());
+      banner = `<div style="grid-column:1/-1;padding:12px 16px;margin-bottom:8px;border-radius:10px;
+        background:rgba(99,179,237,.1);border:1px solid var(--border-glow);font-size:13px;color:var(--text-2)">
+        🔑 <b>Режим гостя (qclaw):</b> твои ключи хранятся <b>только в этом браузере</b> и не видны хосту.
+        Добавь свои бесплатные ключи ниже — система будет работать на них.
+        ${gk.length ? `<span style="color:var(--accent-3)"> Активно: ${gk.join(', ')}</span>` : ''}
+      </div>`;
+    }
+    grid.innerHTML = banner + allProviders.map(p => renderProviderCard(p)).join('');
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+  }
+}
+
+function renderProviderCard(p) {
+  const tagClass = p.isActive ? 'active' : 'inactive';
+  const tagText  = p.isActive ? '✓ Активен' : 'Не настроен';
+  const freeTag  = p.free ? '<span style="font-size:9px;background:rgba(72,187,120,.12);color:var(--accent-3);padding:1px 5px;border-radius:8px;margin-left:4px">FREE</span>' : '';
+
+  // Используем SVG-логотип через providerIconHtml(), если есть svgName — иначе fallback на emoji
+  const iconHtml = p.svgName
+    ? providerIconHtml(p.svgName, p.isActive)
+    : `<div class="provider-logo-chip ${p.isActive ? '' : 'dim'}" style="background:${p.color}22;border:1px solid ${p.color}44;font-size:18px">${p.icon}</div>`;
+
+  // Keys list
+  let keysHtml = '';
+  if (!p.isLocal) {
+    const keyItems = p.keys.map(k => `
+      <div class="key-slot">
+        <span class="key-num">#${k.slot}</span>
+        <span class="key-val">${k.preview}</span>
+        <span class="key-del" onclick="deleteKey('${p.key}', ${k.slot})" title="Удалить ключ">✕</span>
+      </div>`).join('');
+
+    // Budget info
+    let budgetLine = '';
+    if (p.budget) {
+      const b = p.budget;
+      const bar = `<div style="display:inline-block;width:60px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;vertical-align:middle;margin:0 4px">
+        <div style="height:100%;width:${Math.min(100,b.pct_used)}%;background:${b.pct_used>=90?'var(--accent-err)':b.pct_used>=70?'var(--accent-2)':'var(--accent-3)'};border-radius:2px"></div></div>`;
+      const rem = b.remaining_today >= 999999 ? '∞' : (b.remaining_today >= 1000 ? (b.remaining_today/1000).toFixed(1)+'k' : b.remaining_today);
+      const cd  = b.cooldown_sec > 0 ? ` ⏱${b.cooldown_sec}s` : '';
+      budgetLine = `<div style="margin-top:6px;font-size:11px;color:var(--text-3)">
+        Квота:${bar}<span style="color:${p.budget.available ? 'var(--accent-3)' : 'var(--accent-err)'}">${rem} req осталось${cd}</span>
+        ${p.keys.length > 1 ? `<span class="budget-keys-badge">×${p.keys.length} ключей</span>` : ''}
+      </div>`;
+    }
+
+    // Next slot number
+    const nextSlot = p.keys.length > 0 ? Math.max(...p.keys.map(k=>k.slot)) + 1 : 1;
+    const inputId   = `key-input-${p.key}`;
+    const resultId  = `key-result-${p.key}`;
+
+    keysHtml = `
+      ${keyItems ? `<div class="provider-keys">${keyItems}</div>` : ''}
+      ${budgetLine}
+      <div class="add-key-wrap">
+        <input id="${inputId}" type="password" placeholder="${p.keys.length ? 'Добавить ещё ключ' : 'Вставить API ключ...'}" autocomplete="off"
+               onkeydown="if(event.key==='Enter') addKey('${p.key}', ${nextSlot}, '${inputId}', '${resultId}')">
+        <button class="btn-test-key" onclick="testKey('${p.key}', '${inputId}', '${resultId}')">🧪</button>
+        <button class="btn-add-key" onclick="addKey('${p.key}', ${nextSlot}, '${inputId}', '${resultId}')">+ Добавить</button>
+      </div>
+      <div id="${resultId}" class="key-test-result"></div>`;
+  } else {
+    // Ollama — show install link and status
+    keysHtml = `<div style="margin-top:8px;font-size:12px;color:var(--text-3)">
+      ${p.isActive ? '✅ Запущен (localhost:11434)' : '❌ Не обнаружен — установите и запустите: <code>ollama serve</code>'}
+    </div>
+    <div style="margin-top:6px;font-size:11px;color:var(--text-3)">Популярные модели: <code style="color:var(--accent-2)">ollama pull qwen2.5-coder:7b</code></div>`;
+  }
+
+  return `<div class="provider-card ${p.isActive ? 'active' : ''}" id="pcard-${p.key}">
+    <div class="provider-head">
+      ${iconHtml}
+      <div>
+        <div class="provider-name">${p.label}${freeTag}</div>
+        <div style="font-size:10px;color:var(--text-3)">${p.limit}</div>
+      </div>
+      <span class="provider-tag ${tagClass}" style="margin-left:auto">${tagText}</span>
+    </div>
+    ${p.models ? `<div class="provider-detail" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.models}"><span>Модели: </span>${p.models.slice(0,60)}</div>` : ''}
+    ${p.notes  ? `<div class="provider-detail"><span>💡 </span>${p.notes.slice(0,80)}</div>` : ''}
+    ${keysHtml}
+    ${p.signup && !p.isLocal ? `<a class="provider-signup" href="${p.signup}" target="_blank">📋 Получить ключ →</a>` : (p.isLocal ? `<a class="provider-signup" href="${p.signup}" target="_blank">📥 Скачать Ollama →</a>` : '')}
+  </div>`;
+}
+
+async function addKey(provider, slot, inputId, resultId) {
+  const input = document.getElementById(inputId);
+  const result = document.getElementById(resultId);
+  const key = input?.value?.trim();
+  if (!key) { showKeyResult(resultId, false, 'Введите ключ'); return; }
+
+  // qclaw: гость сохраняет ключ ТОЛЬКО в свой браузер (не на сервер хоста)
+  if (isGuestMode()) {
+    setGuestKey(provider, key);
+    showKeyResult(resultId, true, '✅ Сохранён в этом браузере (приватно)');
+    input.value = '';
+    return;
+  }
+
+  result.style.display = 'none';
+  const btn = input.parentElement.querySelector('.btn-add-key');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  try {
+    const r = await fetch('/api/keys/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({provider, api_key: key, slot})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showKeyResult(resultId, true, `✅ Сохранён: ${d.preview}`);
+      input.value = '';
+      await loadProviders();  // refresh cards
+    } else {
+      showKeyResult(resultId, false, '❌ ' + (d.error || 'Ошибка'));
+    }
+  } catch(e) {
+    showKeyResult(resultId, false, '❌ ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '+ Добавить'; }
+  }
+}
+
+async function deleteKey(provider, slot) {
+  if (!confirm(`Удалить ключ #${slot} провайдера ${provider}?`)) return;
+  const r = await fetch('/api/keys/delete', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({provider, slot})
+  });
+  const d = await r.json();
+  if (d.ok) { showToast(`Ключ #${slot} удалён`); await loadProviders(); }
+  else showToast('Ошибка: ' + (d.error || '?'));
+}
+
+async function testKey(provider, inputId, resultId) {
+  const input = document.getElementById(inputId);
+  const key = input?.value?.trim();
+  if (!key) { showKeyResult(resultId, false, 'Введите ключ для проверки'); return; }
+
+  const btn = input.parentElement.querySelector('.btn-test-key');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  showKeyResult(resultId, null, 'Проверяю...');
+
+  try {
+    const r = await fetch('/api/keys/test', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({provider, api_key: key})
+    });
+    const d = await r.json();
+    showKeyResult(resultId, d.valid, d.message || d.error || '?');
+  } catch(e) {
+    showKeyResult(resultId, false, '❌ ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🧪'; }
+  }
+}
+
+function showKeyResult(id, ok, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'block';
+  el.className = 'key-test-result ' + (ok === true ? 'ok' : ok === false ? 'err' : '');
+  el.textContent = msg;
+}
+
+// ════════════════════════════════════════════════
+// MEMORY
+// ════════════════════════════════════════════════
+let currentMemTab = 'hot';
+function switchMemTab(tab, el) {
+  currentMemTab = tab;
+  document.querySelectorAll('.mem-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('mem-hot').style.display    = tab === 'hot'    ? 'block' : 'none';
+  document.getElementById('mem-stats').style.display  = tab === 'stats'  ? 'block' : 'none';
+  document.getElementById('mem-search').style.display = tab === 'search' ? 'block' : 'none';
+  if (tab === 'stats') loadMemStats();
+}
+
+async function loadMemory() {
+  try {
+    const resp = await fetch('/api/memory');
+    const data = await resp.json();
+    document.getElementById('hot-memory-text').textContent = data.hot || '(пусто)';
+  } catch(e) {
+    document.getElementById('hot-memory-text').textContent = 'Ошибка загрузки: ' + e.message;
+  }
+}
+
+async function loadMemStats() {
+  const grid = document.getElementById('mem-stats-grid');
+  try {
+    const resp = await fetch('/api/memory/stats');
+    const s    = await resp.json();
+    grid.innerHTML = `
+      <div class="mem-stat"><div class="mem-stat-value hot">${s.hot_lines||0}</div><div class="mem-stat-label">HOT строк</div></div>
+      <div class="mem-stat"><div class="mem-stat-value warm">${s.sessions||0}</div><div class="mem-stat-label">WARM сессий</div></div>
+      <div class="mem-stat"><div class="mem-stat-value cold">${s.archived||0}</div><div class="mem-stat-label">COLD архивов</div></div>
+      <div class="mem-stat"><div class="mem-stat-value">${s.corrections||0}/50</div><div class="mem-stat-label">Исправлений</div></div>
+      <div class="mem-stat"><div class="mem-stat-value">${s.warm_files||0}</div><div class="mem-stat-label">Демотированных</div></div>
+      <div class="mem-stat"><div class="mem-stat-value">${s.projects||0}</div><div class="mem-stat-label">Проектов</div></div>`;
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+  }
+}
+
+async function searchMemory() {
+  const q = document.getElementById('mem-search-input').value.trim();
+  if (!q) return;
+  const res = document.getElementById('mem-search-results');
+  res.innerHTML = '<div style="color:var(--text-3)">Поиск...</div>';
+  try {
+    const resp = await fetch('/api/memory/search?q=' + encodeURIComponent(q));
+    const data = await resp.json();
+    if (!data.results || !data.results.length) {
+      res.innerHTML = '<div style="color:var(--text-3)">Ничего не найдено</div>';
+      return;
+    }
+    res.innerHTML = data.results.map(r => `
+      <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px">
+        <div style="font-size:10px;color:var(--accent);margin-bottom:4px">[${r.tier?.toUpperCase()}] ${r.source}</div>
+        <div style="font-size:12px;color:var(--text-2)">${escHtml(r.snippet || '')}</div>
+      </div>`).join('');
+  } catch(e) {
+    res.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════════
+// TOOLS
+// ════════════════════════════════════════════════
+const TOOL_CATEGORIES = {
+  file: ['read_file','write_file','list_files','delete_file','move_file'],
+  shell: ['run_command'],
+  web: ['web_search','fetch_url'],
+  browser: ['browser_open','browser_click','browser_fill','browser_screenshot','browser_extract','browser_eval'],
+  github: ['github_get_repo','github_list_issues','github_create_issue','github_get_file','github_create_file','github_list_prs','github_search_code','github_get_commits'],
+  notify: ['email_send','slack_send','notion_create','notion_search','notion_get_page'],
+  system: ['memory_read','memory_write','memory_search','memory_forget','cron_list','cron_add','cron_remove','providers_list','models_list','mcp_list','skills_list','skill_run','metrics_summary'],
+};
+const getCat = name => Object.entries(TOOL_CATEGORIES).find(([,v])=>v.includes(name))?.[0] || 'other';
+const CAT_LABELS = { file:'Файлы', shell:'Shell', web:'Web', browser:'Браузер', github:'GitHub', notify:'Уведомления', system:'Система', other:'Прочее' };
+
+async function loadTools() {
+  const grid = document.getElementById('tools-grid');
+  try {
+    const resp = await fetch('/api/tools');
+    const data = await resp.json();
+    state.allTools = data.tools || [];
+    renderTools(state.allTools);
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+  }
+}
+
+function renderTools(tools) {
+  const grid = document.getElementById('tools-grid');
+  grid.innerHTML = tools.map(t => {
+    const cat = getCat(t.name);
+    return `
+      <div class="tool-card">
+        <div class="tool-name">${t.name}</div>
+        <div class="tool-desc">${t.description || ''}</div>
+        <span class="tool-category">${CAT_LABELS[cat] || cat}</span>
+      </div>`;
+  }).join('');
+}
+
+function filterTools(q) {
+  const f = q.toLowerCase();
+  renderTools(f ? state.allTools.filter(t => t.name.includes(f) || (t.description||'').toLowerCase().includes(f)) : state.allTools);
+}
+
+// ════════════════════════════════════════════════
+// TOKEN BUDGET
+// ════════════════════════════════════════════════
+function fmtRemaining(n) {
+  if (n >= 999_999) return '∞';      // только локальный Ollama
+  if (n >= 1000)   return (n/1000).toFixed(1)+'k';
+  return n;
+}
+
+function renderBudgetMini(providers, activeSet) {
+  const el = document.getElementById('rp-budget');
+  if (!el) return;
+  if (!providers || !providers.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text-3)">Нет данных</div>';
+    return;
+  }
+  // Show top 7 providers (skip ollama if not running)
+  const shown = providers.filter(p => !(p.is_local && !p.available)).slice(0, 7);
+  el.innerHTML = shown.map(p => {
+    const pct = p.pct_used;
+    const barClass = pct >= 90 ? 'crit' : pct >= 70 ? 'warn' : '';
+
+    // Точка: 🟢 активен, 🟡 ключ есть но провайдер не отвечает, 🔴 кулдаун/нет ключа
+    const provName = p.provider.toLowerCase();
+    const isConfirmedActive = p.is_local ? p.available
+      : (activeSet && [...activeSet].some(n => n === provName || n.includes(provName)));
+    let dotClass = '';
+    if (!p.available) {
+      dotClass = p.cooldown_sec > 0 ? 'cooldown' : 'offline';
+    } else if (!isConfirmedActive) {
+      dotClass = 'unverified';  // жёлтый — ключ есть, но модели не загрузились
+    }
+
+    const remaining = p.is_local ? '∞' : fmtRemaining(p.remaining_today);
+    const keysLabel = p.keys_count > 1 ? `×${p.keys_count}` : '';
+    const cooldownLabel = p.cooldown_sec > 0 ? ` ⏱${p.cooldown_sec}s` : '';
+    return `<div class="budget-row">
+      <div class="budget-dot ${dotClass}" title="${isConfirmedActive ? 'Активен' : (p.available ? 'Ключ есть, проверка...' : 'Недоступен')}"></div>
+      <div class="budget-provider">${p.provider}${keysLabel ? '<span style="font-size:9px;color:var(--accent-3)"> '+keysLabel+'</span>' : ''}</div>
+      <div class="budget-bar-wrap"><div class="budget-bar ${barClass}" style="width:${Math.min(100,pct)}%"></div></div>
+      <div class="budget-remaining">${remaining}${cooldownLabel}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderBudgetFull(providers) {
+  const el = document.getElementById('budget-full-table');
+  const hint = document.getElementById('budget-hint');
+  if (!el) return;
+  if (!providers || !providers.length) {
+    el.innerHTML = '<div style="color:var(--text-3);font-size:12px">Нет данных</div>';
+    return;
+  }
+  const totalRemaining = providers.filter(p=>!p.is_local).reduce((s,p)=>s+p.remaining_today,0);
+  const totalLimit     = providers.filter(p=>!p.is_local).reduce((s,p)=>s+p.daily_limit,0);
+  if (hint) hint.textContent = `Облако: ~${fmtRemaining(totalRemaining)} из ${fmtRemaining(totalLimit)} req осталось сегодня`;
+  el.innerHTML = `<table class="budget-table">
+    <thead><tr>
+      <th>Провайдер</th><th>Ключей</th><th class="bar-cell">Использовано</th>
+      <th>Осталось</th><th>Лимит/день</th><th>Статус</th>
+    </tr></thead>
+    <tbody>
+    ${providers.map(p => {
+      const pct = p.pct_used;
+      const barClass = pct >= 90 ? 'crit' : pct >= 70 ? 'warn' : '';
+      let status = '✅ готов';
+      if (!p.available && p.cooldown_sec > 0) status = `⏱ кулдаун ${p.cooldown_sec}s`;
+      else if (!p.available) status = '❌ исчерпан';
+      else if (pct >= 70) status = '⚠️ скоро лимит';
+      const keysHtml = p.keys_count > 1
+        ? `${p.keys_count} <span class="budget-keys-badge">×${p.keys_count}</span>`
+        : '1';
+      return `<tr>
+        <td style="font-weight:600;text-transform:capitalize">${p.provider}</td>
+        <td style="text-align:center">${keysHtml}</td>
+        <td class="bar-cell">
+          <div style="display:flex;align-items:center;gap:5px">
+            <div class="budget-bar-wrap" style="flex:1"><div class="budget-bar ${barClass}" style="width:${Math.min(100,pct)}%"></div></div>
+            <span style="font-size:10px;color:var(--text-3);width:28px;text-align:right">${pct}%</span>
+          </div>
+        </td>
+        <td>${p.is_local ? '∞' : fmtRemaining(p.remaining_today)}</td>
+        <td style="color:var(--text-3)">${p.is_local ? '∞' : fmtRemaining(p.daily_limit)}</td>
+        <td style="font-size:11px">${status}</td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function loadTokenBudget() {
+  try {
+    // Загружаем бюджет и активные провайдеры вместе, чтобы точно красить точки
+    const [bResp, pResp] = await Promise.all([
+      fetch('/api/token-budget'),
+      fetch('/api/providers')
+    ]);
+    const d = await bResp.json();
+    const pData = await pResp.json();
+    // Множество нижних имён активных провайдеров
+    const activeSet = new Set([
+      ...(pData.active || []).map(p => p.name.toLowerCase())
+    ]);
+    if (d.ok) {
+      renderBudgetMini(d.providers, activeSet);
+      renderBudgetFull(d.providers, activeSet);
+    }
+  } catch(e) {
+    const el = document.getElementById('rp-budget');
+    if (el) el.innerHTML = '<div style="font-size:11px;color:var(--text-3)">Недоступно</div>';
+  }
+}
+
+async function resetAllBudgets() {
+  await fetch('/api/token-budget/reset', {method:'POST'});
+  await loadTokenBudget();
+}
+
+// ════════════════════════════════════════════════
+// METRICS
+// ════════════════════════════════════════════════
+async function loadMetrics() {
+  try {
+    const resp = await fetch('/api/metrics');
+    const m    = await resp.json();
+    const big  = document.getElementById('metrics-big');
+    big.innerHTML = [
+      { val: m.total || 0,                        lbl: 'Задач выполнено' },
+      { val: m.avg_score ? (m.avg_score*100).toFixed(1)+'%' : '—', lbl: 'Средний балл' },
+      { val: m.total_tokens ? (m.total_tokens/1000).toFixed(1)+'K' : '0', lbl: 'Токенов всего' },
+      { val: m.total_cost_usd ? '$'+m.total_cost_usd.toFixed(4) : '$0', lbl: 'Потрачено USD' },
+      { val: m.retry_rate ? (m.retry_rate*100).toFixed(0)+'%' : '0%', lbl: 'Retry rate' },
+    ].map(({ val, lbl }) => `<div class="big-metric"><div class="val">${val}</div><div class="lbl">${lbl}</div></div>`).join('');
+
+    // ── Chart 1: Score trend (line) ──────────────────────────
+    try {
+      const hist = await fetch('/api/metrics/history?n=20').then(r => r.json());
+      const recs = (hist.records || []).filter(r => r.critic_score > 0);
+      const trendEmpty = document.getElementById('chart-trend-empty');
+      const trendCanvas = document.getElementById('chart-trend');
+      if (recs.length >= 2 && window.Chart) {
+        trendEmpty.style.display = 'none';
+        trendCanvas.style.display = '';
+        const labels = recs.map((r, i) => {
+          const t = r.task_type.replace('_', ' ');
+          const prev = r.preview ? r.preview.slice(0, 20) : '';
+          return prev || `#${i+1}`;
+        });
+        const scores = recs.map(r => +(r.critic_score * 100).toFixed(1));
+        if (window._chartTrend) window._chartTrend.destroy();
+        window._chartTrend = new Chart(trendCanvas.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              data: scores,
+              borderColor: 'rgba(99,179,237,0.9)',
+              backgroundColor: 'rgba(99,179,237,0.08)',
+              borderWidth: 2,
+              pointRadius: 4,
+              pointBackgroundColor: scores.map(s => s >= 90 ? '#68d391' : s >= 70 ? '#63b3ed' : '#fc8181'),
+              pointBorderColor: 'transparent',
+              tension: 0.35,
+              fill: true,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: (items) => recs[items[0].dataIndex].task_type.replace('_', ' '),
+                  label: (item) => ` Оценка: ${item.raw}%`,
+                  afterLabel: (item) => {
+                    const r = recs[item.dataIndex];
+                    return r.preview ? ` "${r.preview.slice(0,40)}..."` : '';
+                  },
+                }
+              }
+            },
+            scales: {
+              x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b9ab8', font: { size: 10 }, maxRotation: 35, maxTicksLimit: 10 } },
+              y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b9ab8', font: { size: 11 }, callback: v => v+'%' }, max: 100, min: 0 },
+            }
+          }
+        });
+      } else {
+        trendCanvas.style.display = 'none';
+        trendEmpty.style.display = '';
+      }
+    } catch(_) {}
+
+    // ── Chart 2: Avg score by task type (bar) ────────────────
+    const byType = m.by_type || {};
+    const typeKeys = Object.keys(byType);
+    const typesEmpty = document.getElementById('chart-types-empty');
+    const typesCanvas = document.getElementById('chart-types');
+    if (typeKeys.length && window.Chart) {
+      typesEmpty.style.display = 'none';
+      typesCanvas.style.display = '';
+      if (window._chart) window._chart.destroy();
+      const barColors = Object.values(byType).map(() => 'rgba(99,179,237,0.2)');
+      const borderColors = Object.values(byType).map(() => 'rgba(99,179,237,0.8)');
+      window._chart = new Chart(typesCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: typeKeys.map(k => k.replace('_', ' ')),
+          datasets: [{
+            data: Object.values(byType).map(v => (v*100).toFixed(1)),
+            backgroundColor: barColors,
+            borderColor: borderColors,
+            borderWidth: 1.5,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: item => ` Средний балл: ${item.raw}%` } }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b9ab8', font: { size: 11 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b9ab8', font: { size: 11 }, callback: v => v+'%' }, max: 100, min: 0 },
+          }
+        }
+      });
+    } else {
+      typesCanvas.style.display = 'none';
+      typesEmpty.style.display = '';
+    }
+
+    // ── Type detail table ─────────────────────────────────────
+    const detail = m.by_type_detail || {};
+    const detailKeys = Object.keys(detail);
+    const detailWrap = document.getElementById('type-detail-wrap');
+    const detailTable = document.getElementById('type-detail-table');
+    if (detailKeys.length) {
+      detailWrap.style.display = '';
+      const scoreClass = () => 'score-mid';
+      const rows = detailKeys.map(tt => {
+        const d = detail[tt];
+        const sc = d.avg_score;
+        const label = tt.replace(/_/g, ' ');
+        const errTag = d.errors > 0 ? `<span style="color:var(--accent-err);font-size:10px"> ⚠${d.errors}err</span>` : '';
+        return `<tr>
+          <td>${label}${errTag}</td>
+          <td>${d.count}</td>
+          <td class="score-cell score-mid">${sc > 0 ? (sc*100).toFixed(1)+'%' : '—'}</td>
+          <td>${d.avg_elapsed > 0 ? d.avg_elapsed.toFixed(1)+'s' : '—'}</td>
+          <td>${d.avg_iter > 0 ? d.avg_iter.toFixed(1)+'x' : '—'}</td>
+        </tr>`;
+      }).join('');
+      detailTable.innerHTML = `<table class="type-table">
+        <thead><tr>
+          <th>Тип задачи</th><th>Кол-во</th><th>Балл</th><th>Время</th><th>Итер.</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    } else {
+      detailWrap.style.display = 'none';
+    }
+
+    // ── Пометки: кандидаты на улучшение ──────────────────────
+    loadImprovementNotes();
+  } catch(e) {
+    document.getElementById('metrics-big').innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+  }
+}
+
+async function loadImprovementNotes() {
+  try {
+    const resp = await fetch('/api/improve/status');
+    if (!resp.ok) return;
+    const d = await resp.json();
+    const wrap = document.getElementById('notes-wrap');
+    const grid = document.getElementById('notes-grid');
+    const candidates = d.improvement_candidates || 0;
+    // Получаем расширенный список кандидатов
+    const previews = d.candidates_preview || [];
+    if (!previews.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    const clrMap = {
+      'worker_prompt': '#f6ad55',   // оранжевый — промпт
+      'keywords':      '#68d391',   // зелёный — ключевые слова
+      'critic_system': '#76e4f7',   // голубой — система критика
+    };
+    const iconMap = { 'worker_prompt': '✍️', 'keywords': '🔑', 'critic_system': '🔍' };
+    grid.innerHTML = previews.map(raw => {
+      // raw формат: "component/task_type: problem text"
+      const slash = raw.indexOf('/');
+      const colon = raw.indexOf(':');
+      const comp = slash > -1 ? raw.slice(0, slash) : 'system';
+      const taskType = colon > -1 && slash > -1 ? raw.slice(slash + 1, colon) : '';
+      const problem = colon > -1 ? raw.slice(colon + 2) : raw;
+      const clr = clrMap[comp] || '#63b3ed';
+      const icon = iconMap[comp] || '⚠️';
+      const tag = taskType ? `${comp} / ${taskType}` : comp;
+      return `<div class="note-card" style="--clr:${clr}">
+        <div class="note-tag">${icon} ${tag}</div>
+        <div class="note-body">${problem}</div>
+        <div class="note-stat">v${d.current_version} · ${candidates} кандидат${candidates === 1 ? '' : 'а'}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════════
+async function loadSettings() {
+  try {
+    const resp = await fetch('/api/status');
+    const d    = await resp.json();
+    document.getElementById('settings-info').innerHTML = `
+      <b>Версия:</b> ${d.version || '1.0'}<br>
+      <b>Активная модель:</b> ${d.current_model || '—'}<br>
+      <b>Провайдеров активно:</b> ${d.active_providers || 0}<br>
+      <b>Инструментов:</b> ${d.total_tools || 0}<br>
+      <b>Задач в сессии:</b> ${state.tasks}
+    `;
+  } catch(e) {}
+}
+
+async function triggerImprove() {
+  showToast('🧬 Запускаю самоулучшение...');
+  try {
+    const resp = await fetch('/api/improve', { method: 'POST' });
+    const d = await resp.json();
+    if (d.version_activated) {
+      const changes = (d.changes || []).map(c => `${c.component}[${c.task_type||'all'}]`).join(', ');
+      showToast(`✅ v${d.version_proposed} активирована! Изменено: ${changes || d.changes?.length || 0}`);
+      if (d.restarting) {
+        setTimeout(() => showToast('🔄 Сервер перезапускается для применения улучшений...'), 1000);
+        setTimeout(() => _waitForRestart(), 7000);
+      }
+    } else {
+      showToast('⚠️ ' + (d.error || 'Улучшений не найдено'));
+    }
+    loadImproveStatus();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+async function _waitForRestart() {
+  for (let i = 0; i < 20; i++) {
+    await new Promise(r => setTimeout(r, 1500));
+    try {
+      const r = await fetch('/api/status');
+      if (r.ok) { showToast('✅ Сервер перезапущен — улучшения применены!'); location.reload(); return; }
+    } catch(e) {}
+  }
+  showToast('⚠️ Сервер не ответил — обнови страницу вручную');
+}
+
+async function rollbackVersion() {
+  if (!confirm('Откатиться к предыдущей версии промптов?')) return;
+  try {
+    const resp = await fetch('/api/improve/rollback', { method: 'POST' });
+    const d = await resp.json();
+    showToast(d.ok ? '↩ ' + d.message : '❌ ' + (d.error || 'Ошибка'));
+    loadImproveStatus();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+async function loadImproveStatus() {
+  try {
+    const resp = await fetch('/api/improve/status');
+    const d = await resp.json();
+    if (d.error) return;
+
+    // Обновить training-notice
+    const notice = document.getElementById('training-notice');
+    const statusEl = document.getElementById('training-status');
+    if (notice && statusEl) {
+      const m = d.metrics || {};
+      const ver = d.current_version || '?';
+      const cands = d.improvement_candidates || 0;
+      const avg = m.avg_score ? (m.avg_score * 100).toFixed(0) + '%' : '—';
+      notice.style.display = 'block';
+      statusEl.innerHTML = `
+        <b>Версия:</b> v${ver} &nbsp;|&nbsp; <b>Задач:</b> ${m.total || 0} &nbsp;|&nbsp; <b>Avg:</b> ${avg}<br>
+        <b>Кандидатов:</b> ${cands} ${cands > 0 ? '⚠️' : '✅'}<br>
+        ${d.candidates_preview?.length ? d.candidates_preview.map(c => `<span style="color:var(--accent-warn)">• ${c}</span>`).join('<br>') : ''}
+      `;
+    }
+
+    // Блок версий
+    const versWrap = document.getElementById('versions-wrap');
+    const versList = document.getElementById('versions-list');
+    if (versWrap && versList && d.versions?.length) {
+      versWrap.style.display = '';
+      const rows = [...d.versions].reverse().map(v => {
+        const st = v.status === 'active' ? '🟢' : v.test_passed ? '✅' : v.test_passed === false ? '❌' : '⏳';
+        const dt = v.activated_at || v.proposed_at || '';
+        const time = dt ? dt.slice(5,16).replace('T',' ') : '';
+        return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+          <span>${st}</span>
+          <span style="font-weight:${v.status==='active'?600:400};color:${v.status==='active'?'var(--accent)':'inherit'}">v${v.version}</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-3)">${v.changes || ''}</span>
+          <span style="color:var(--text-3);font-size:10px">${time}</span>
+        </div>`;
+      }).join('');
+      versList.innerHTML = rows;
+    }
+  } catch(e) {}
+}
+
+async function triggerMemClean() {
+  showToast('🧹 Очищаю память...');
+  try {
+    const resp = await fetch('/api/memory/clean', { method: 'POST' });
+    const d = await resp.json();
+    showToast(`✅ Очищено: ${d.hot_trimmed} HOT, ${d.corrections_archived} corrections`);
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// ════════════════════════════════════════════════
+// RIGHT PANEL SIDEBAR DATA
+// ════════════════════════════════════════════════
+async function loadSidebarData() {
+  // Models
+  try {
+    const resp = await fetch('/api/models');
+    const data = await resp.json();
+    const list = document.getElementById('rp-models');
+    const models = data.models || [];
+    const top4 = models.slice(0, 4);
+    const extra = models.length > 4 ? `<div style="font-size:11px;color:var(--text-3);padding:4px 10px">+${models.length - 4} моделей</div>` : '';
+    list.innerHTML = top4.map(m => `
+      <div class="model-item">
+        <div class="dot"></div>
+        <div class="name" title="${m.model_id}">${m.name}</div>
+        <div class="provider">${m.provider}</div>
+      </div>`).join('') + extra || '<div style="font-size:12px;color:var(--text-3)">Нет моделей</div>';
+  } catch(e) {}
+
+  // Crons
+  try {
+    const resp = await fetch('/api/crons');
+    const data = await resp.json();
+    const list = document.getElementById('rp-crons');
+    list.innerHTML = (data.tasks || []).map(c => `
+      <div class="cron-item">
+        <div class="cron-name">${c.name}</div>
+        <div class="cron-next">${c.next_run} · ${c.interval_h}h</div>
+      </div>`).join('') || '<div style="font-size:12px;color:var(--text-3)">Нет задач</div>';
+  } catch(e) {}
+
+  // Session digest (память предыдущих сессий)
+  try {
+    const resp = await fetch('/api/chat/digest');
+    const data = await resp.json();
+    const el = document.getElementById('rp-digest');
+    const badge = document.getElementById('digest-badge');
+    if (data.digest && data.lines > 0) {
+      // Показываем только строки с "-" (сами вопросы, без заголовка)
+      const items = data.digest.split('\n').filter(l => l.trim().startsWith('-')).slice(0, 6);
+      if (items.length > 0) {
+        el.innerHTML = items.map(l => {
+          const text = l.replace(/^- (\[\d{4}-\d{2}-\d{2}.*?\]\s*)?/, '').trim();
+          return `<div style="padding:2px 0;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${text}">• ${text}</div>`;
+        }).join('');
+        if (badge) { badge.style.display = 'inline'; }
+      } else {
+        el.innerHTML = '<div style="color:var(--text-3)">Нет предыдущих сессий</div>';
+      }
+    } else {
+      el.innerHTML = '<div style="color:var(--text-3)">Нет предыдущих сессий</div>';
+    }
+  } catch(e) {
+    document.getElementById('rp-digest').innerHTML = '<div style="color:var(--text-3)">—</div>';
+  }
+
+  // Token budget (sidebar mini widget)
+  await loadTokenBudget();
+
+  // Metrics / training progress
+  try {
+    const resp = await fetch('/api/metrics');
+    const m = await resp.json();
+    const MIN_SESSIONS = 5;
+    const total = m.total || 0;
+    const notice = document.getElementById('training-notice');
+    const status = document.getElementById('training-status');
+    if (notice && status) {
+      notice.style.display = 'block';
+      if (total < MIN_SESSIONS) {
+        const need = MIN_SESSIONS - total;
+        notice.style.borderLeftColor = 'var(--text-3)';
+        status.innerHTML = `Для запуска самообучения нужно минимум <b>${MIN_SESSIONS} сессий</b>.<br>
+          Сейчас: <b>${total}</b> из ${MIN_SESSIONS} — ещё <b>${need}</b> диалог${need===1?'':'а/ов'}.`;
+      } else {
+        notice.style.borderLeftColor = 'var(--accent-3)';
+        const avg = m.avg_score ? (m.avg_score * 100).toFixed(0) : '?';
+        const tok = m.total_tokens ? `${(m.total_tokens/1000).toFixed(1)}k токенов` : '';
+        status.innerHTML = `✅ ${total} сессий · ср. оценка <b>${avg}%</b>${tok ? ' · ' + tok : ''}<br>
+          Авто-улучшение <span style="color:var(--accent-3)">активно</span> — запускается каждые 10 сессий.`;
+      }
+    }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// ════════════════════════════════════════════════
+// STATUS BADGE — авто-обновление при загрузке
+// ════════════════════════════════════════════════
+async function loadStatus() {
+  try {
+    const resp = await fetch('/api/status');
+    const d    = await resp.json();
+    const badge = document.getElementById('model-badge');
+    if (d.current_model && d.current_model !== '—') {
+      badge.textContent = d.current_model + ' · ' + d.total_models + ' models';
+    }
+    // Повторим через 3с если модели ещё не загружены (discovery)
+    if (!d.discovery_live) {
+      setTimeout(loadStatus, 3000);
+    }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════
+// SCORE BAR COLOR
+// ════════════════════════════════════════════════
+function scoreColor(pct) {
+  if (pct >= 85) return 'var(--accent-3)';   // green
+  if (pct >= 65) return 'var(--accent-warn)'; // yellow
+  return 'var(--accent-err)';                  // red
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+// Chart.js — загружаем и только потом рисуем если панель активна
+const chartScript = document.createElement('script');
+chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+chartScript.onload = () => {
+  // Если панель метрик уже открыта — перерисуем
+  if (document.getElementById('panel-metrics').classList.contains('active')) {
+    loadMetrics();
+  }
+};
+document.head.appendChild(chartScript);
+
+// ════════════════════════════════════════════════
+// AUTO-SHUTDOWN
+// ════════════════════════════════════════════════
+
+// Кнопка "Выключить сервер"
+async function shutdownServer() {
+  if (!confirm('Выключить сервер FreePalp?\n\nПамять будет сохранена.')) return;
+  try {
+    showToast('⏻ Выключение сервера...');
+    await fetch('/api/shutdown', { method: 'POST' });
+    document.body.innerHTML = `
+      <div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f1117;color:#8b9ab8;font-family:sans-serif;gap:16px">
+        <div style="font-size:48px">⏻</div>
+        <div style="font-size:20px;color:#e8eaf0">FreePalp выключен</div>
+        <div style="font-size:14px">Память сохранена. Закройте вкладку или перезапустите сервер.</div>
+        <button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:rgba(99,179,237,0.15);border:1px solid rgba(99,179,237,0.3);color:#63b3ed;border-radius:8px;cursor:pointer;font-size:14px">↺ Переподключиться</button>
+      </div>`;
+  } catch(e) {
+    showToast('Сервер уже недоступен');
+  }
+}
+
+// beforeunload — сигнал при закрытии вкладки
+// Защита от F5: если страница переоткрывается в течение 3 секунд — считаем F5, игнорируем
+let _isRefreshing = false;
+document.addEventListener('keydown', e => {
+  if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+    _isRefreshing = true;
+    setTimeout(() => { _isRefreshing = false; }, 3000);
+  }
+});
+// Ctrl+Shift+R тоже обновление
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+    _isRefreshing = true;
+    setTimeout(() => { _isRefreshing = false; }, 3000);
+  }
+});
+
+window.addEventListener('beforeunload', () => {
+  if (!_isRefreshing) {
+    // source=beacon → сервер знает что это авто-сигнал, а не кнопка
+    navigator.sendBeacon('/api/shutdown?source=beacon');
+  }
+});
+
+// Idle countdown — показываем обратный отсчёт до авто-выключения
+(async function initIdleTimer() {
+  // Спрашиваем у сервера время бездействия
+  let idleMinutes = 30;  // дефолт
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    if (d.idle_shutdown_minutes !== undefined) idleMinutes = d.idle_shutdown_minutes;
+  } catch(e) {}
+
+  const el = document.getElementById('idle-countdown');
+  const wrap = document.getElementById('idle-timer');
+  if (!el) return;
+
+  if (idleMinutes <= 0) {
+    wrap.style.display = 'none';
+    return;
+  }
+
+  let lastActivity = Date.now();
+
+  // Сбрасываем при любом взаимодействии
+  ['mousemove','keydown','click','touchstart'].forEach(ev =>
+    document.addEventListener(ev, () => { lastActivity = Date.now(); }, { passive: true })
+  );
+
+  setInterval(() => {
+    const idleSec  = Math.round((Date.now() - lastActivity) / 1000);
+    const remaining = idleMinutes * 60 - idleSec;
+    if (remaining <= 0) { el.textContent = 'скоро...'; el.style.color = 'var(--accent-err)'; return; }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    el.textContent = m > 0 ? `${m}м ${s}с` : `${s}с`;
+    if (remaining < 120) el.style.color = 'var(--accent-err)';
+    else if (remaining < 300) el.style.color = 'var(--accent-warn)';
+    else el.style.color = '';
+  }, 1000);
+})();
+
+_initFirstChat();
+loadSidebarData();
+loadStatus();
+_initAttachments();
+</script>
+</body>
+</html>

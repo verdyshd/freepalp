@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200" width="560" height="200">
+  <defs>
+    <!-- ── Фон ── -->
+    <radialGradient id="wm-bg" cx="25%" cy="38%" r="70%">
+      <stop offset="0%"   stop-color="#1c2235"/>
+      <stop offset="100%" stop-color="#090c14"/>
+    </radialGradient>
+
+    <!-- ── Щупальце ── -->
+    <linearGradient id="wm-tentBody" x1="20%" y1="100%" x2="80%" y2="0%">
+      <stop offset="0%"   stop-color="#7b1a14"/>
+      <stop offset="45%"  stop-color="#c0392b"/>
+      <stop offset="100%" stop-color="#e84040"/>
+    </linearGradient>
+    <linearGradient id="wm-tentHi" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#f5b7b1" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#f5b7b1" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- ── Ключ ── -->
+    <linearGradient id="wm-keyGold" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%"   stop-color="#ffe066"/>
+      <stop offset="55%"  stop-color="#f0b429"/>
+      <stop offset="100%" stop-color="#c88000"/>
+    </linearGradient>
+    <linearGradient id="wm-keyHi" x1="0%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%"   stop-color="#fff9c4" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#fff9c4" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- ── Текст градиенты ── -->
+    <linearGradient id="wm-textMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#e8eaf0"/>
+      <stop offset="100%" stop-color="#c5cde0"/>
+    </linearGradient>
+    <linearGradient id="wm-accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#63b3ed"/>
+      <stop offset="100%" stop-color="#9b87f5"/>
+    </linearGradient>
+
+    <!-- ── Фильтры ── -->
+    <filter id="wm-keyGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="wm-halo" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <filter id="wm-textGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#63b3ed" flood-opacity="0.25"/>
+    </filter>
+    <filter id="wm-tentShadow">
+      <feDropShadow dx="2" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+
+    <clipPath id="wm-iconClip">
+      <rect width="200" height="200" rx="42"/>
+    </clipPath>
+  </defs>
+
+  <!-- ══════════════════════════════════════════
+       ЛЕВАЯ ЧАСТЬ — иконка (200×200)
+  ══════════════════════════════════════════ -->
+
+  <!-- Фон иконки -->
+  <rect width="200" height="200" rx="42" fill="url(#wm-bg)"/>
+
+  <!-- Тень щупальца -->
+  <path
+    d="M 118,188 C 146,184 164,164 160,136 C 156,108 126,104 106,94
+       C 86,84 56,80 44,60 C 32,40 46,18 72,14 C 88,10 106,18 116,32"
+    fill="none" stroke="#3a0a07" stroke-width="34" stroke-linecap="round"
+    filter="url(#wm-tentShadow)" clip-path="url(#wm-iconClip)" opacity="0.55"/>
+
+  <!-- Тело щупальца -->
+  <path
+    d="M 118,188 C 146,184 164,164 160,136 C 156,108 126,104 106,94
+       C 86,84 56,80 44,60 C 32,40 46,18 72,14 C 88,10 106,18 116,32"
+    fill="none" stroke="url(#wm-tentBody)" stroke-width="30" stroke-linecap="round"
+    clip-path="url(#wm-iconClip)"/>
+
+  <!-- Блик щупальца -->
+  <path
+    d="M 118,188 C 146,184 164,164 160,136 C 156,108 126,104 106,94
+       C 86,84 56,80 44,60 C 32,40 46,18 72,14 C 88,10 106,18 116,32"
+    fill="none" stroke="url(#wm-tentHi)" stroke-width="11" stroke-linecap="round"
+    clip-path="url(#wm-iconClip)"/>
+
+  <!-- Присоски -->
+  <g clip-path="url(#wm-iconClip)">
+    <circle cx="151" cy="158" r="6.5" fill="#6e1810"/><circle cx="151" cy="158" r="3.5" fill="#e84040" opacity="0.45"/>
+    <circle cx="147" cy="130" r="6"   fill="#6e1810"/><circle cx="147" cy="130" r="3"   fill="#e84040" opacity="0.45"/>
+    <circle cx="126" cy="106" r="5.5" fill="#6e1810"/><circle cx="126" cy="106" r="2.8" fill="#e84040" opacity="0.45"/>
+    <circle cx="98"  cy="92"  r="5.5" fill="#6e1810"/><circle cx="98"  cy="92"  r="2.8" fill="#e84040" opacity="0.45"/>
+    <circle cx="65"  cy="78"  r="5"   fill="#6e1810"/><circle cx="65"  cy="78"  r="2.5" fill="#e84040" opacity="0.45"/>
+    <circle cx="44"  cy="58"  r="4.5" fill="#6e1810"/><circle cx="44"  cy="58"  r="2.2" fill="#e84040" opacity="0.45"/>
+    <circle cx="57"  cy="34"  r="4"   fill="#6e1810"/><circle cx="57"  cy="34"  r="2"   fill="#e84040" opacity="0.45"/>
+  </g>
+
+  <!-- Гало ключа -->
+  <circle cx="138" cy="56" r="34" fill="#f0b429" opacity="0.16" filter="url(#wm-halo)"/>
+
+  <!-- Кольцо ключа outer -->
+  <circle cx="138" cy="54" r="23"
+          fill="none" stroke="url(#wm-keyGold)" stroke-width="9"
+          filter="url(#wm-keyGlow)"/>
+  <!-- Кольцо ключа inner -->
+  <circle cx="138" cy="54" r="10"
+          fill="none" stroke="url(#wm-keyGold)" stroke-width="3" opacity="0.6"/>
+  <circle cx="138" cy="54" r="4" fill="#ffe066" opacity="0.3"/>
+
+  <!-- Стержень -->
+  <rect x="132.5" y="75" width="11" height="50" rx="5.5"
+        fill="url(#wm-keyGold)" filter="url(#wm-keyGlow)"/>
+  <rect x="133.5" y="77" width="4.5" height="46" rx="2.5" fill="url(#wm-keyHi)"/>
+
+  <!-- Зубцы -->
+  <rect x="143.5" y="93"  width="17" height="8.5" rx="4" fill="url(#wm-keyGold)"/>
+  <rect x="143.5" y="109" width="13" height="8.5" rx="4" fill="url(#wm-keyGold)"/>
+  <rect x="143.5" y="93"  width="17" height="3.5" rx="2" fill="#fff9c4" opacity="0.28"/>
+  <rect x="143.5" y="109" width="13" height="3.5" rx="2" fill="#fff9c4" opacity="0.28"/>
+
+  <!-- Рамка иконки -->
+  <rect width="200" height="200" rx="42"
+        fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+
+  <!-- ══════════════════════════════════════════
+       ПРАВАЯ ЧАСТЬ — текст
+  ══════════════════════════════════════════ -->
+
+  <!-- Заголовок "FreePalp" -->
+  <text
+    x="228" y="112"
+    font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+    font-size="74" font-weight="800" letter-spacing="-2.5"
+    fill="url(#wm-textMain)"
+    filter="url(#wm-textGlow)">FreePalp</text>
+
+  <!-- Акцентная черта под текстом -->
+  <rect x="228" y="122" width="300" height="3" rx="1.5" fill="url(#wm-accent)" opacity="0.7"/>
+
+  <!-- Подзаголовок -->
+  <text
+    x="230" y="148"
+    font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+    font-size="17" font-weight="400" letter-spacing="3.5"
+    fill="#4a5568">AI ORCHESTRATOR</text>
+
+  <!-- Теги-чипы -->
+  <!-- ReAct -->
+  <rect x="229" y="160" width="74" height="22" rx="6"
+        fill="rgba(99,179,237,0.1)" stroke="rgba(99,179,237,0.3)" stroke-width="1"/>
+  <text x="266" y="175"
+        font-family="'Inter',system-ui,sans-serif" font-size="11" font-weight="600"
+        text-anchor="middle" fill="#63b3ed">ReAct Loop</text>
+
+  <!-- Self-Correction -->
+  <rect x="311" y="160" width="110" height="22" rx="6"
+        fill="rgba(155,135,245,0.1)" stroke="rgba(155,135,245,0.3)" stroke-width="1"/>
+  <text x="366" y="175"
+        font-family="'Inter',system-ui,sans-serif" font-size="11" font-weight="600"
+        text-anchor="middle" fill="#9b87f5">Self-Correction</text>
+
+  <!-- Multi-Agent -->
+  <rect x="430" y="160" width="98" height="22" rx="6"
+        fill="rgba(72,187,120,0.1)" stroke="rgba(72,187,120,0.3)" stroke-width="1"/>
+  <text x="479" y="175"
+        font-family="'Inter',system-ui,sans-serif" font-size="11" font-weight="600"
+        text-anchor="middle" fill="#48bb78">Multi-Agent</text>
+</svg>

@@ -1,0 +1,14 @@
+{
+  "name": "architect",
+  "version": "1.0",
+  "description": "Проектирование систем и архитектуры",
+  "input": "system_requirements",
+  "output": "architecture_plan",
+  "preferred_model": "cloud_fast",
+  "fallback_model": "cloud_heavy",
+  "max_tokens": 8192,
+  "temperature": 0.3,
+  "critic_enabled": true,
+  "max_iterations": 2,
+  "tags": ["architecture", "design", "system", "planning", "structure"]
+}

@@ -1,0 +1,19 @@
+# Секреты
+.env
+
+# Кэши и логи
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
+logs/
+
+# Рабочие данные агента (не код системы)
+freepalp/memory/
+freepalp/sandbox/
+freepalp/state/
+freepalp/logs/
+
+# Прочее
+node_modules/
+.claude/

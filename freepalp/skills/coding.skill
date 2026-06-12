@@ -1,0 +1,15 @@
+{
+  "name": "coding",
+  "version": "1.0",
+  "description": "Написание и отладка кода на любом языке",
+  "input": "task_description",
+  "output": "code_with_explanation",
+  "preferred_model": "local_small",
+  "fallback_model": "cloud_fast",
+  "max_tokens": 4096,
+  "temperature": 0.2,
+  "critic_enabled": true,
+  "max_iterations": 3,
+  "system_prompt_override": null,
+  "tags": ["python", "javascript", "typescript", "code", "script", "function"]
+}

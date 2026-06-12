@@ -1,0 +1,157 @@
+
+   [38;5;213m[1m🐙  FreePalp[0m  [38;5;245mAI Orchestrator[0m
+   [38;5;213m╭───────────────────────────────────────────────╮[0m
+   [38;5;213m│[0m   [38;5;245mMulti-agent · ReAct · Self-improving v1.0[0m    [38;5;213m│[0m
+   [38;5;213m╰───────────────────────────────────────────────╯[0m
+
+   [38;5;117m🌐  WebUI[0m     [38;5;245m→[0m  [1mhttp://localhost:28800[0m
+   [38;5;117m📚  API docs[0m  [38;5;245m→[0m  http://localhost:28800/docs
+
+   [38;5;84m⚡ 11 провайдеров[0m  [38;5;245m·[0m  [38;5;84m🧠 4-слойная память[0m  [38;5;245m·[0m  [38;5;84m🪝 hooks[0m
+   [38;5;245mЗапуск...[0m
+
+  [Memory] Restored 14 active session(s) from disk
+  [Memory] Session digest injected into HOT (964 chars)
+  >> Ollama offline - skipping local_small, using cloud.
+  >> 6 моделей (static). Запуск discovery при первом запросе...
+  [Discovery] Опрашиваем провайдеров...
+  [Discovery] novita: auth check failed (403) — пропускаем
+  [Discovery] Groq: 9 моделей
+  [Discovery] OpenRouter: 10 моделей
+  [Discovery] Cerebras: 2 моделей
+  [Discovery] Gemini: 3 моделей
+  [Discovery] SambaNova: 3 моделей
+  [Discovery] Together: 5 моделей
+  [Discovery] Mistral: 4 моделей
+  >> Discovery: 36 моделей — llama-3.3-70b-versatile(groq), llama-4-scout-17b(groq), qwen3-32b(groq), llama-3.1-8b-instant(groq)...
+  [AutoShutdown] Активен — выключусь через 30 мин без запросов (FREEPALP_IDLE_SHUTDOWN=0 чтобы отключить)
+
+[>] Task type : general
+[>] Complexity: 1/5
+[*] Worker model: compound (groq)
+
+[~] Iteration 1/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [C] Score: [#########.] 0.92
+  [!] Issues: **Неточность в алгоритмической сложности (пункт 1 заголовка)**:, **Избыточная детализация для SystemEye**:, **Отсутствие обработки переполнения**:
+
+  [$$] Tokens: 9988 in / 2000 out  |  ~$0.0000
+Model: mistral-large-latest | Score: 0.92 | Iters: 1
+---
+
+[>] Task type : general
+[>] Complexity: 1/5
+[*] Worker model: mistral-large-latest (mistral)
+
+[~] Iteration 1/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [C] Score: [#########.] 0.98
+  [!] Issues: **Минорная неполнота в примере кода (строка 150-152)**:, **Избыточное упоминание DoS (раздел 1.3)**:
+
+  [$$] Tokens: 10509 in / 2000 out  |  ~$0.0000
+Model: mistral-large-latest | Score: 0.98 | Iters: 1
+---
+
+[>] Task type : general
+[>] Complexity: 1/5
+[*] Worker model: mistral-large-latest (mistral)
+
+[~] Iteration 1/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [C] Score: [####......] 0.45
+  [!] Issues: Утверждение в разделе **2.3**: *"Параллелизация с `multiprocessing`"* подразумевает, что `multiprocessing` ускоряет **сложение двух чисел** (CPU-bound операция). Однако:, Сложение двух чисел — это **O(1)**, а не O(n³), и не требует параллелизации., Для **O(1)** операций накладные расходы на межпроцессное взаимодействие (`multiprocessing`) **превысят выигрыш** от параллелизации.
+  [>] Retry...
+
+[>] Task type : general
+[>] Complexity: 1/5
+[*] Worker model: mistral-large-latest (mistral)
+
+[~] Iteration 2/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [C] Score: [#####.....] 0.55
+  [!] Issues: Утверждение *"Параллелизация с `multiprocessing` (только для CPU-bound задач)"* **технически верно**, но в контексте **SystemEye** (экспорт метрик в CSV) **неприменимо**:, Экспорт метрик в CSV — это **IO-bound задача** (запись на диск), а не CPU-bound., Для IO-bound задач `multiprocessing` **не нужен** (достаточно `threading` или `asyncio`).
+  [>] Retry...
+
+  [$$] Tokens: 10773 in / 2000 out  |  ~$0.0000
+Model: mistral-large-latest | Score: 0.55 | Iters: 2
+---
+
+[>] Task type : shell
+[>] Complexity: 1/5
+[*] Worker model: llama-3.3-70b-versatile (groq)
+
+[~] Iteration 1/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [C] Score: [#########.] 0.98
+  [!] Issues: **Незначительная проблема с правами доступа (строка 15-18):**, **Отсутствие обработки случая, когда `SEARCH_DIR` не существует (строка 12):**
+
+  [$$] Tokens: 9827 in / 800 out  |  ~$0.0000
+Model: gpt-oss-120b | Score: 0.98 | Iters: 1
+---
+
+[>] Task type : shell
+[>] Complexity: 1/5
+[*] Worker model: gpt-oss-120b (cerebras)
+
+[~] Iteration 1/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [C] Score: [#########.] 0.92
+  [!] Issues: **Незначительная проблема с обработкой ошибок (строка 1 кода)**:, **Упрощение в пояснении (строка 2 пояснения)**:
+
+  [$$] Tokens: 8466 in / 510 out  |  ~$0.0000
+Model: gpt-oss-120b | Score: 0.92 | Iters: 1
+---
+  [SI] Split (random): train=35, held-out=15
+  [SI] Candidates: 2
+  [SI] Improving: worker_prompt/review (priority=6)
+
+[>] Task type : shell
+[>] Complexity: 1/5
+[*] Worker model: gpt-oss-120b (cerebras)
+
+[~] Iteration 1/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [C] Score: [###.......] 0.32
+  [!] Issues: **Неполный код**: ответ обрывается на строке `pg_dump -h "$DB_HOST" -U "$DB` без завершения команды, без перенаправления вывода, без закрывающих кавычек и без дальнейшего кода скрипта., **Отсутствует логика ротации**: в скрипте не реализовано удаление старых резервных копий (нет `find … -mtime +… -delete` или аналогичного механизма), хотя в описании указано хранить только 5 последних копий., **Отсутствует завершение функции/скрипта**: нет закрывающих фигурных скобок для функции `log`, нет завершения основного блока, нет финального сообщения о завершении бэкапа.
+  [>] Retry...
+
+[>] Task type : shell
+[>] Complexity: 1/5
+[*] Worker model: gpt-oss-120b (cerebras)
+
+[~] Iteration 2/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [Improver] Used fallback: mistral/mistral-large-latest
+    -> worker_prompt[review]: 1810 -> 2224 chars
+  [SI] Improving: worker_prompt/general (priority=2)
+  [Improver] Used fallback: mistral/mistral-large-latest
+    -> worker_prompt[general]: 766 -> 1680 chars
+  [SI] Proposed version: v1.0.14
+  [SI] Running test_mvp.py...
+  [SI] Held-out валидация на 15 задачах...
+  [Improver] Used fallback: mistral/mistral-large-latest
+  [C] Score: [###.......] 0.38
+  [!] Issues: **Неполный скрипт** – ответ обрывается на строке `case "$COMPRESS" in gzip) ext` и не содержит завершения функции сжатия, создания архива, ротации (удаления старых копий) и завершения скрипта. Код не будет работать., **Отсутствует логика ротации** – в тексте указано, что хранит только 5 последних копий, но в скрипте нет команды, удаляющей старые файлы (например, `find "$BACKUP_DIR" -type f -name "${DB_NAME}_*.sql.gz" -mtime +5 -delete` или аналог)., **Отсутствует обработка ошибок после `pg_dump`** – хотя включён `set -euo pipefail`, нет проверки кода возврата `pg_dump` и записи в лог в случае неудачи.
+  [>] Retry...
+
+  [$$] Tokens: 7369 in / 800 out  |  ~$0.0000
+Model: gpt-oss-120b | Score: 0.38 | Iters: 2
+---
+
+[>] Task type : shell
+[>] Complexity: 1/5
+[*] Worker model: llama-3.3-70b-versatile (groq)
+
+[~] Iteration 1/2
+  [W] Worker running...
+  [C] Critic evaluating...
+  [C] Score: [#########.] 0.96
+  [!] Issues: Нет критических проблем. Единственное небольшое замечание: при парсинге вывода `df -hP` лучше использовать `df -P` (без `-h`), чтобы гарантировать, что поле «Use%» всегда содержит только число и знак `%`, а не может быть изменено локалью (например, `df -h` может выводить размеры в разных единицах, что не влияет на поле `%`, но всё‑равно предпочтительнее избегать `-h` при машинном разборе).

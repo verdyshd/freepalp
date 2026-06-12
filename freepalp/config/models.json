@@ -1,0 +1,120 @@
+{
+  "models": [
+    {
+      "name": "qwen-coder-7b",
+      "tier": "local_small",
+      "provider": "ollama",
+      "model_id": "qwen2.5-coder:7b",
+      "max_tokens": 4096,
+      "temperature": 0.2,
+      "cost_per_1k": 0.0,
+      "available": true
+    },
+    {
+      "name": "deepseek-coder",
+      "tier": "local_small",
+      "provider": "ollama",
+      "model_id": "deepseek-coder:6.7b",
+      "max_tokens": 4096,
+      "temperature": 0.2,
+      "cost_per_1k": 0.0,
+      "available": true
+    },
+    {
+      "name": "mistral",
+      "tier": "local_small",
+      "provider": "ollama",
+      "model_id": "mistral:7b",
+      "max_tokens": 4096,
+      "temperature": 0.3,
+      "cost_per_1k": 0.0,
+      "available": true
+    },
+    {
+      "name": "llama3-groq-70b",
+      "tier": "cloud_fast",
+      "provider": "groq",
+      "model_id": "llama-3.3-70b-versatile",
+      "max_tokens": 8192,
+      "temperature": 0.3,
+      "cost_per_1k": 0.001,
+      "available": true
+    },
+    {
+      "name": "llama-3.1-8b-groq",
+      "tier": "cloud_fast",
+      "provider": "groq",
+      "model_id": "llama-3.1-8b-instant",
+      "max_tokens": 4096,
+      "temperature": 0.3,
+      "cost_per_1k": 0.0002,
+      "available": true
+    },
+    {
+      "name": "qwen3-32b-groq",
+      "tier": "cloud_fast",
+      "provider": "groq",
+      "model_id": "qwen/qwen3-32b",
+      "max_tokens": 4096,
+      "temperature": 0.3,
+      "cost_per_1k": 0.0008,
+      "available": true
+    },
+    {
+      "name": "gpt-oss-120b",
+      "tier": "cloud_heavy",
+      "provider": "groq",
+      "model_id": "openai/gpt-oss-120b",
+      "max_tokens": 8192,
+      "temperature": 0.3,
+      "cost_per_1k": 0.0,
+      "available": true
+    },
+    {
+      "name": "groq-compound",
+      "tier": "cloud_heavy",
+      "provider": "groq",
+      "model_id": "groq/compound",
+      "max_tokens": 8192,
+      "temperature": 0.3,
+      "cost_per_1k": 0.0,
+      "available": true
+    },
+    {
+      "name": "llama-70b-samba",
+      "tier": "cloud_fast",
+      "provider": "sambanova",
+      "model_id": "Meta-Llama-3.3-70B-Instruct",
+      "max_tokens": 8192,
+      "temperature": 0.3,
+      "cost_per_1k": 0.0,
+      "available": true
+    },
+    {
+      "name": "claude-sonnet",
+      "tier": "cloud_heavy",
+      "provider": "anthropic",
+      "model_id": "claude-sonnet-4-6",
+      "max_tokens": 8192,
+      "temperature": 0.3,
+      "cost_per_1k": 0.003,
+      "available": false
+    }
+  ],
+
+  "routing_rules": {
+    "coding_small": "cloud_fast",
+    "coding_large": "cloud_heavy",
+    "architecture": "cloud_heavy",
+    "text":         "cloud_fast",
+    "search":       "cloud_heavy",
+    "file_ops":     "cloud_heavy",
+    "shell":        "cloud_fast",
+    "review":       "cloud_heavy",
+    "general":      "cloud_heavy"
+  },
+
+  "critic_model": "cloud_fast",
+  "architect_model": "cloud_heavy",
+  "fallback_chain": ["cloud_fast", "cloud_heavy", "local_small"]
+}

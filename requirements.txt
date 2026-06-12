@@ -1,0 +1,38 @@
+# QClaw AI Orchestrator — зависимости
+
+# HTTP клиент (нужен для Ollama и web tools)
+httpx>=0.27.0
+
+# Groq (облако, быстрый 70B)
+groq>=0.9.0
+
+# Anthropic (опционально, fallback)
+anthropic>=0.34.0
+
+# Переменные окружения
+python-dotenv>=1.0.0
+
+# FastAPI (для будущего WebUI)
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+
+# Pydantic (валидация данных)
+pydantic>=2.7.0
+
+# NumPy — векторный семантический поиск памяти (4-слойная память)
+numpy>=1.24.0
+
+# Опционально: HNSW для быстрого ANN-поиска памяти на больших объёмах (>2000 записей)
+# Нужен C++ компилятор. Без него — брют-форс numpy (достаточно для тысяч записей).
+# hnswlib>=0.8.0
+
+# Опциональные зависимости для расширения
+# ollama>=0.2.0          # Python SDK для Ollama (альтернатива httpx)
+# openai>=1.40.0         # OpenAI compatible API
+# requests>=2.32.0       # Sync HTTP
+
+# Dev зависимости
+# pytest>=8.0.0
+# pytest-asyncio>=0.23.0
+# black>=24.0.0
+# ruff>=0.4.0
