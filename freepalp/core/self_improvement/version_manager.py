@@ -56,7 +56,13 @@ class VersionManager:
     def list_versions(self) -> list[dict]:
         """Список всех версий с метаданными."""
         versions = []
-        for d in sorted(VERSIONS_DIR.iterdir()):
+        def _ver_key(d):
+            # Числовая сортировка: v1.0.9 < v1.0.10 (строковая давала обратное)
+            try:
+                return tuple(int(x) for x in d.name.lstrip("v").split("."))
+            except ValueError:
+                return (0,)
+        for d in sorted(VERSIONS_DIR.iterdir(), key=_ver_key):
             if d.is_dir() and d.name.startswith("v"):
                 meta_file = d / "metadata.json"
                 if meta_file.exists():

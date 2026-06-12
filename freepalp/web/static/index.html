@@ -2620,8 +2620,17 @@ async function loadSettings() {
   try {
     const resp = await fetch('/api/status');
     const d    = await resp.json();
+    let sysVer = '—';
+    try {
+      const sv = await (await fetch('/api/system/versions')).json();
+      if (sv.ok && sv.commits?.length) {
+        const c = sv.commits[0];
+        sysVer = `${c.tag || c.hash} (${c.date})`;
+      }
+    } catch(e) {}
     document.getElementById('settings-info').innerHTML = `
-      <b>Версия:</b> ${d.version || '1.0'}<br>
+      <b>Версия системы (код):</b> ${sysVer}<br>
+      <b>Версия промптов:</b> v${d.version || '1.0'} <span style="color:var(--text-3)">(самоулучшение)</span><br>
       <b>Активная модель:</b> ${d.current_model || '—'}<br>
       <b>Провайдеров активно:</b> ${d.active_providers || 0}<br>
       <b>Инструментов:</b> ${d.total_tools || 0}<br>
