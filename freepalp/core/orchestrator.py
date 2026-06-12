@@ -201,6 +201,25 @@ def _detect_blind_rewrite(user_input: str, tools_used: list[dict]) -> Optional[s
     return None
 
 
+# Ответ начинается с системной ошибки воркера ([Провайдер ...], [Ошибка ...]).
+# Наблюдалось: критик дал 0.85 за «[Провайдер novita-ai не поддерживается]»;
+# затем «[Ошибка Gemini: 429 ...]» с вложенными ] прошла мимо строгого варианта
+# регекса и при недоступном критике получила проходные 0.72. Поэтому матчим
+# только префикс: легитимный ответ так не начинается.
+_SYSTEM_ERROR_ANSWER_RE = _re.compile(
+    r"^\s*\[(Провайдер|Ошибка|Provider|Error)", _re.IGNORECASE)
+
+
+def _detect_system_error_answer(answer: str) -> Optional[str]:
+    """Возвращает проблему, если финальный ответ — голое сообщение об ошибке."""
+    if _SYSTEM_ERROR_ANSWER_RE.match(answer or ""):
+        return (
+            f"Ответ агента — системное сообщение об ошибке ({(answer or '').strip()[:80]}), "
+            "а не ответ пользователю. Нужен ретрай на другой модели."
+        )
+    return None
+
+
 # Вопрос об идентичности агента + чужие бренды, которыми слабые модели себя называют
 _IDENTITY_QUESTION_RE = _re.compile(
     r"(как тебя зовут|кто ты\b|ты кто\b|какая ты модель|тво[её] имя|представься|"
@@ -526,6 +545,9 @@ class Orchestrator:
             # Если типовой провал пойман — LLM-критик не нужен, экономим токены.
             # Раньше критик звался всегда и пропускал эти случаи (давал 0.9+).
             cheap_issues = []
+            sys_error = _detect_system_error_answer(worker_msg.content)
+            if sys_error:
+                cheap_issues.append(sys_error)
             unfulfilled = _detect_unfulfilled_file_request(request.user_input, worker_msg.content, tools_used)
             if unfulfilled:
                 cheap_issues.append(unfulfilled)

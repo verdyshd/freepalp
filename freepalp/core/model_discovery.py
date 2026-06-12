@@ -446,7 +446,11 @@ async def discover_all(force: bool = False) -> list[dict]:
         from .models_dev_catalog import fetch_catalog, extra_openai_compat_providers
         catalog = await fetch_catalog()
         if catalog:
-            known = set(_OPENAI_COMPAT_PROVIDERS) | {"groq", "openrouter", "cerebras", "gemini", "ollama"}
+            known = set(_OPENAI_COMPAT_PROVIDERS) | {
+                "groq", "openrouter", "cerebras", "gemini", "ollama",
+                "novita-ai",                        # каталожный алиас захардкоженного "novita" (иначе дубль моделей)
+                "github-models", "github-copilot",  # GitHub Models осознанно убран (429/413); copilot — другая авторизация
+            }
             extra = extra_openai_compat_providers(catalog, known)
             for pid, cfg in extra.items():
                 if pid not in _OPENAI_COMPAT_PROVIDERS:

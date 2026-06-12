@@ -38,6 +38,22 @@ _TRACE_MAX_ROWS = 500  # сколько строк держим в трейс-ф
 # Провайдеры, поддерживающие native function calling
 _NATIVE_FC_PROVIDERS = frozenset({"github", "groq", "cerebras", "openrouter", "sambanova"})
 
+
+def _catalog_endpoint(provider: str) -> Optional[tuple[str, str]]:
+    """(base_url, env_key) для провайдера, добавленного из каталога models.dev.
+
+    Discovery регистрирует каталожные провайдеры в _OPENAI_COMPAT_PROVIDERS,
+    но захардкоженные ENDPOINTS воркера про них не знают — без этого резолва
+    любой каталожный провайдер падал в «не поддерживается»."""
+    try:
+        from ..core.model_discovery import _OPENAI_COMPAT_PROVIDERS
+        cfg = _OPENAI_COMPAT_PROVIDERS.get(provider)
+        if cfg and cfg.get("base_url") and cfg.get("env_key"):
+            return cfg["base_url"], cfg["env_key"]
+    except Exception:
+        pass
+    return None
+
 # Лимит токенов по типу задачи — меньше токенов = быстрее ответ (без потери качества)
 # Простые задачи не требуют 4096 токенов; сложные (file_ops, coding_large) — оставляем полный лимит
 TASK_MAX_TOKENS: dict[str, int] = {
@@ -480,6 +496,9 @@ class WorkerAgent:
             return await self._call_openai_compat(messages)
         elif self.model.provider == "gemini":
             return await self._call_gemini(messages)
+        elif _catalog_endpoint(self.model.provider):
+            # Провайдер добавлен динамически из каталога models.dev
+            return await self._call_openai_compat(messages)
         else:
             return f"[Провайдер {self.model.provider} не поддерживается]", 0, 0
 
@@ -638,6 +657,13 @@ class WorkerAgent:
             "mistral":    ("https://api.mistral.ai/v1",             "MISTRAL_API_KEY"),
         }
         base_url, env_key = ENDPOINTS.get(self.model.provider, ("", ""))
+        if not base_url:
+            # Провайдер из каталога models.dev — endpoint берём оттуда
+            dyn = _catalog_endpoint(self.model.provider)
+            if dyn:
+                base_url, env_key = dyn
+            else:
+                return f"[Провайдер {self.model.provider}: endpoint неизвестен]", 0, 0
         try:
             from openai import AsyncOpenAI
             api_key = _skeys.get_api_key(env_key)

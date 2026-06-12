@@ -11,6 +11,7 @@ from ..core.models import (
 )
 from ..core import prompt_loader
 from ..core import session_keys as _skeys
+from .worker_agent import _catalog_endpoint
 
 # Fallback если prompts.json недоступен
 _CRITIC_SYSTEM_FALLBACK = """Ты строгий QA инженер, fact-checker и code reviewer.
@@ -158,6 +159,9 @@ class CriticAgent:
             return await self._call_openai_compat(user_prompt, critic_system)
         elif p == "gemini":
             return await self._call_gemini(user_prompt, critic_system)
+        elif _catalog_endpoint(p):
+            # Провайдер добавлен динамически из каталога models.dev
+            return await self._call_openai_compat(user_prompt, critic_system)
         return ("PASSED: yes\nSCORE: 0.72\nISSUES:\n- Провайдер критика не поддерживается\nSUGGESTIONS:", 0, 0)
 
     @staticmethod
@@ -356,6 +360,13 @@ class CriticAgent:
             "mistral":    ("https://api.mistral.ai/v1",            "MISTRAL_API_KEY"),
         }
         base_url, env_key = ENDPOINTS.get(self.model.provider, ("", ""))
+        if not base_url:
+            # Провайдер из каталога models.dev — endpoint берём оттуда
+            dyn = _catalog_endpoint(self.model.provider)
+            if dyn:
+                base_url, env_key = dyn
+            else:
+                return "PASSED: yes\nSCORE: 0.72\nISSUES:\n- Провайдер критика не поддерживается\nSUGGESTIONS:", 0, 0
         try:
             from openai import AsyncOpenAI
             api_key = _skeys.get_api_key(env_key)

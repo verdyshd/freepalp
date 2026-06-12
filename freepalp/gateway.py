@@ -36,6 +36,14 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# Windows-консоль по умолчанию cp1251: любой print() текста модели с экзотическим
+# символом (напр. BOM ﻿) ронял ВЕСЬ запрос UnicodeEncodeError'ом.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT))
 

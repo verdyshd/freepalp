@@ -2031,7 +2031,8 @@ async function loadProviders() {
     });
 
     // Ollama separately
-    const ollamaActive = activeNames.has('ollama');
+    // Имя в каталоге — «Ollama (local)», поэтому строгий has('ollama') не совпадал
+    const ollamaActive = [...activeNames].some(n => n.includes('ollama'));
     allProviders.unshift({
       key: 'ollama', label: 'Ollama (local)', icon: '🦙', svgName: 'Ollama (local)', color: '#888',
       free: true, limit: '∞ без лимитов', signup: 'https://ollama.com/download',
