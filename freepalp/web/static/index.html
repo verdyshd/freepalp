@@ -1163,13 +1163,16 @@
         <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">🧬 Самообучение</div>
         <div id="training-status" style="font-size:11px;color:var(--text-2);line-height:1.6"></div>
       </div>
-      <!-- Версии -->
-      <div id="versions-wrap" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px;display:none">
+      <!-- Единая версия FreePalp: вехи + код + промпты в одной ленте -->
+      <div id="versions-wrap" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="rp-title" style="margin:0">📦 Версии промптов</div>
-          <button class="btn" style="font-size:11px;padding:3px 8px" onclick="rollbackVersion()">↩ Откат</button>
+          <div class="rp-title" style="margin:0">🐙 Версия FreePalp: <span id="fp-version" style="color:var(--accent)">…</span></div>
+          <button class="btn" style="font-size:11px;padding:3px 8px" onclick="rollbackVersion()" title="Откат версии промптов">↩ Откат промптов</button>
         </div>
-        <div id="versions-list" style="font-size:11px;color:var(--text-2)"></div>
+        <div style="font-size:10px;color:var(--text-3);margin-bottom:6px">
+          Хронология: вехи проекта, изменения кода (git, автокоммит самомодификаций) и версии промптов (самоулучшение)
+        </div>
+        <div id="versions-list" style="font-size:11px;color:var(--text-2);max-height:300px;overflow-y:auto"></div>
       </div>
       <!-- Поведение системы (настоящие настройки) -->
       <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
@@ -1192,14 +1195,6 @@
             <span style="color:var(--text-3)">(score ниже — повтор; 0.7 по умолчанию)</span>
           </label>
         </div>
-      </div>
-      <!-- Версии кода системы (git) — отдельно от версий промптов -->
-      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-        <div class="rp-title">🛠 Версии системы (код)</div>
-        <div style="font-size:10px;color:var(--text-3);margin-bottom:6px">
-          История изменений исходников FreePalp (git). Самомодификации агента коммитятся автоматически.
-        </div>
-        <div id="sys-versions-list" style="font-size:11px;color:var(--text-2);line-height:1.7">Загрузка...</div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn primary" onclick="triggerImprove()">🧬 Самоулучшение</button>
@@ -2642,24 +2637,20 @@ async function loadSettings() {
   try {
     const resp = await fetch('/api/status');
     const d    = await resp.json();
-    let sysVer = '—';
+    let fpVer = '—';
     try {
       const sv = await (await fetch('/api/system/versions')).json();
-      if (sv.ok && sv.commits?.length) {
-        const c = sv.commits[0];
-        sysVer = `${c.tag || c.hash} (${c.date})`;
-      }
+      if (sv.ok) fpVer = 'v' + sv.version;
     } catch(e) {}
     document.getElementById('settings-info').innerHTML = `
-      <b>Версия системы (код):</b> ${sysVer}<br>
-      <b>Версия промптов:</b> v${d.version || '1.0'} <span style="color:var(--text-3)">(самоулучшение)</span><br>
+      <b>Версия FreePalp:</b> ${fpVer}<br>
       <b>Активная модель:</b> ${d.current_model || '—'}<br>
       <b>Провайдеров активно:</b> ${d.active_providers || 0}<br>
       <b>Инструментов:</b> ${d.total_tools || 0}<br>
       <b>Задач в сессии:</b> ${state.tasks}
     `;
   } catch(e) {}
-  loadSystemVersions();
+  loadUnifiedVersions();
   loadBehaviorSettings();
 }
 
@@ -2684,22 +2675,28 @@ async function saveSetting(key, value) {
   } catch(e) { showToast('❌ ' + e.message); }
 }
 
-async function loadSystemVersions() {
-  const el = document.getElementById('sys-versions-list');
+async function loadUnifiedVersions() {
+  const el = document.getElementById('versions-list');
+  const verEl = document.getElementById('fp-version');
   if (!el) return;
   try {
     const d = await (await fetch('/api/system/versions')).json();
-    if (!d.ok || !d.commits?.length) {
-      el.innerHTML = '⚠️ ' + (d.error || 'история пуста');
-      return;
-    }
-    el.innerHTML = d.commits.map(c => `
-      <div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
-        <code style="color:var(--accent);flex-shrink:0">${c.hash}</code>
-        <span style="color:var(--text-3);flex-shrink:0">${c.date}</span>
-        ${c.tag ? `<span style="color:var(--accent-3);flex-shrink:0">${escapeHtml(c.tag)}</span>` : ''}
-        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.message)}</span>
-      </div>`).join('');
+    if (!d.ok) { el.innerHTML = '⚠️ ' + (d.error || 'история недоступна'); return; }
+    if (verEl) verEl.textContent = 'v' + d.version;
+    const KIND = {
+      'веха':    {icon: '🏁', color: 'var(--accent)'},
+      'код':     {icon: '🛠', color: 'var(--accent-3)'},
+      'промпты': {icon: '🧬', color: 'var(--text-2)'},
+    };
+    el.innerHTML = (d.history || []).map(h => {
+      const k = KIND[h.kind] || {icon: '•', color: 'var(--text-3)'};
+      return `<div style="display:flex;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span style="flex-shrink:0">${k.icon}</span>
+        <span style="color:${k.color};font-weight:${h.kind==='веха'?600:400};flex-shrink:0;min-width:90px">${escapeHtml(h.label)}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(h.text)}</span>
+        <span style="color:var(--text-3);font-size:10px;flex-shrink:0">${escapeHtml((h.date||'').slice(5))}</span>
+      </div>`;
+    }).join('');
   } catch(e) { el.innerHTML = '⚠️ ' + e.message; }
 }
 
@@ -2765,24 +2762,7 @@ async function loadImproveStatus() {
       `;
     }
 
-    // Блок версий
-    const versWrap = document.getElementById('versions-wrap');
-    const versList = document.getElementById('versions-list');
-    if (versWrap && versList && d.versions?.length) {
-      versWrap.style.display = '';
-      const rows = [...d.versions].reverse().map(v => {
-        const st = v.status === 'active' ? '🟢' : v.test_passed ? '✅' : v.test_passed === false ? '❌' : '⏳';
-        const dt = v.activated_at || v.proposed_at || '';
-        const time = dt ? dt.slice(5,16).replace('T',' ') : '';
-        return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
-          <span>${st}</span>
-          <span style="font-weight:${v.status==='active'?600:400};color:${v.status==='active'?'var(--accent)':'inherit'}">v${v.version}</span>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-3)">${v.changes || ''}</span>
-          <span style="color:var(--text-3);font-size:10px">${time}</span>
-        </div>`;
-      }).join('');
-      versList.innerHTML = rows;
-    }
+    // Лента версий рисуется в loadUnifiedVersions() (единая хронология)
   } catch(e) {}
 }
 

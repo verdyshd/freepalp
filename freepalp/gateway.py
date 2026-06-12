@@ -1027,37 +1027,72 @@ async def api_settings_set(req: dict):
         return {"ok": False, "error": str(e)}
 
 
+# Вехи FreePalp — реконструкция по датам файлов, транскриптам и CHANGELOG.md
+_FREEPALP_MILESTONES = [
+    {"date": "2026-05-22", "label": "v0.1.0", "kind": "веха",
+     "text": "Рождение: прото-пакет octo — оркестратор, Worker/Critic, первые инструменты"},
+    {"date": "2026-05-23", "label": "v0.2.0", "kind": "веха",
+     "text": "FreePalp: переименование, Gateway+WebUI, память HOT/WARM/COLD, мульти-провайдеры"},
+    {"date": "2026-05-24", "label": "v0.3.0", "kind": "веха",
+     "text": "Самоулучшение: цикл SI, версионирование промптов, гейт test_mvp"},
+    {"date": "2026-06-01", "label": "v0.4.0", "kind": "веха",
+     "text": "Улучшение промптов shell/search/general/review, недельный дайджест"},
+    {"date": "2026-06-11", "label": "v0.5.0", "kind": "веха",
+     "text": "Надёжность: UTF-8, песочница, whitelist, детектор галлюцинаций файлов"},
+    {"date": "2026-06-12", "label": "v1.0.0", "kind": "веха",
+     "text": "Git-версионирование, кнопка Стоп, двухъярусный критик, BASELINE.md"},
+    {"date": "2026-06-12", "label": "v1.1.0", "kind": "веха",
+     "text": "Настройки, heartbeat, loop breaker, teacher→skill, каталог models.dev"},
+]
+
+
+def _read_freepalp_version() -> str:
+    vf = Path(__file__).parent.parent / "VERSION"
+    try:
+        return vf.read_text("utf-8").strip()
+    except Exception:
+        return "1.1.0"
+
+
 @app.get("/api/system/versions")
 async def api_system_versions():
-    """Версии кода самой системы (git-история) — не путать с версиями промптов.
-
-    Версии промптов (v1.0.x) ведёт самоулучшение; здесь — история изменений
-    исходников FreePalp (orchestrator, gateway, агенты и т.д.)."""
+    """Единая версия FreePalp + общая хронология: вехи, изменения кода (git)
+    и версии промптов (самоулучшение) в одной ленте."""
     import subprocess
-    from pathlib import Path as _Path
-    repo_root = str(_Path(__file__).parent.parent)
+    repo_root = str(Path(__file__).parent.parent)
+    history: list[dict] = [dict(m) for m in _FREEPALP_MILESTONES]
+
+    # Изменения кода — git
     try:
         r = subprocess.run(
-            ["git", "log", "--max-count=30",
-             "--pretty=format:%h|%ad|%d|%s", "--date=format:%Y-%m-%d %H:%M"],
+            ["git", "log", "--max-count=20", "--pretty=format:%h|%ad|%s",
+             "--date=format:%Y-%m-%d %H:%M"],
             capture_output=True, cwd=repo_root, timeout=10,
         )
-        if r.returncode != 0:
-            return {"ok": False, "error": r.stderr.decode("utf-8", errors="replace")}
-        commits = []
-        for line in r.stdout.decode("utf-8", errors="replace").splitlines():
-            parts = line.split("|", 3)
-            if len(parts) == 4:
-                commits.append({
-                    "hash": parts[0], "date": parts[1],
-                    "tag": parts[2].strip().strip("()").replace("tag: ", ""),
-                    "message": parts[3],
-                })
-        return {"ok": True, "commits": commits}
-    except FileNotFoundError:
-        return {"ok": False, "error": "git не установлен"}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
+        if r.returncode == 0:
+            for line in r.stdout.decode("utf-8", errors="replace").splitlines():
+                parts = line.split("|", 2)
+                if len(parts) == 3:
+                    history.append({"date": parts[1], "label": parts[0],
+                                    "kind": "код", "text": parts[2]})
+    except Exception:
+        pass
+
+    # Версии промптов — самоулучшение
+    try:
+        from freepalp.core.self_improvement.version_manager import VersionManager
+        for v in VersionManager().list_versions():
+            history.append({
+                "date": (v.get("proposed_at") or "")[:16].replace("T", " "),
+                "label": f"промпты v{v.get('version')}",
+                "kind": "промпты",
+                "text": v.get("changes", "") or "",
+            })
+    except Exception:
+        pass
+
+    history.sort(key=lambda h: h.get("date") or "", reverse=True)
+    return {"ok": True, "version": _read_freepalp_version(), "history": history[:50]}
 
 
 @app.get("/api/improve/status")
