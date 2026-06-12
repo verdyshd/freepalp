@@ -1,141 +1,98 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!--
+    FreePalp icon v2 — стиль Windows 11 Fluent:
+    мягкая геометрия без обводок, сочные градиенты, глубина через
+    полупрозрачные слои, свет сверху-слева, без «свечений».
+    Мотив сохранён: щупальце осьминога + ключ (свобода доступа к ИИ).
+  -->
   <defs>
-    <!-- Фон -->
-    <radialGradient id="bg" cx="38%" cy="36%" r="72%">
-      <stop offset="0%"   stop-color="#1c2235"/>
-      <stop offset="100%" stop-color="#090c14"/>
-    </radialGradient>
-
-    <!-- Щупальце: тёмно-красный → яркий красный -->
-    <linearGradient id="tentBody" x1="20%" y1="100%" x2="80%" y2="0%">
-      <stop offset="0%"   stop-color="#7b1a14"/>
-      <stop offset="45%"  stop-color="#c0392b"/>
-      <stop offset="100%" stop-color="#e84040"/>
+    <!-- Плитка: глубокий сланцево-синий, светлее сверху (fluent-свет) -->
+    <linearGradient id="tile" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#394763"/>
+      <stop offset="55%"  stop-color="#222c44"/>
+      <stop offset="100%" stop-color="#151c2e"/>
     </linearGradient>
-    <!-- Хайлайт (блик) -->
-    <linearGradient id="tentHi" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#f5b7b1" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#f5b7b1" stop-opacity="0"/>
+    <linearGradient id="tileSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="35%"  stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
 
-    <!-- Ключ: золото -->
-    <linearGradient id="keyGold" x1="20%" y1="0%" x2="80%" y2="100%">
-      <stop offset="0%"   stop-color="#ffe066"/>
-      <stop offset="55%"  stop-color="#f0b429"/>
-      <stop offset="100%" stop-color="#c88000"/>
+    <!-- Щупальце: коралл → алый → винный (как градиенты Office-иконок) -->
+    <linearGradient id="tent2" x1="15%" y1="100%" x2="85%" y2="0%">
+      <stop offset="0%"   stop-color="#8e1e3a"/>
+      <stop offset="50%"  stop-color="#e0354b"/>
+      <stop offset="100%" stop-color="#ff7a59"/>
     </linearGradient>
-    <!-- Блик ключа -->
-    <linearGradient id="keyHi" x1="0%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%"   stop-color="#fff9c4" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#fff9c4" stop-opacity="0"/>
+    <!-- Верхний полупрозрачный слой щупальца (fluent-послойность) -->
+    <linearGradient id="tentLayer" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#ffb199" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#ffd2c2" stop-opacity="0.55"/>
     </linearGradient>
 
-    <!-- Свечение ключа -->
-    <filter id="keyGlow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="7" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <!-- Ключ: тёплое золото, светлее сверху -->
+    <linearGradient id="key2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#ffd969"/>
+      <stop offset="55%"  stop-color="#f2a93b"/>
+      <stop offset="100%" stop-color="#d97e16"/>
+    </linearGradient>
+
+    <!-- Мягкие fluent-тени (никаких glow) -->
+    <filter id="softSh" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#000" flood-opacity="0.32"/>
     </filter>
-    <!-- Мягкое гало -->
-    <filter id="halo" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="14"/>
-    </filter>
-    <!-- Тень щупальца -->
-    <filter id="tentShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="2" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.5"/>
+    <filter id="tinySh" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.30"/>
     </filter>
 
-    <clipPath id="roundClip">
-      <rect width="200" height="200" rx="42"/>
-    </clipPath>
+    <clipPath id="clip2"><rect width="200" height="200" rx="46"/></clipPath>
   </defs>
 
-  <!-- ── Фон ── -->
-  <rect width="200" height="200" rx="42" fill="url(#bg)"/>
+  <!-- ── Плитка ── -->
+  <rect width="200" height="200" rx="46" fill="url(#tile)"/>
+  <rect width="200" height="200" rx="46" fill="url(#tileSheen)"/>
 
-  <!-- ── Щупальце ──────────────────────────────────────────────── -->
-  <!--
-    Форма: снизу справа (маленький завиток) → вверх-влево (тело) →
-    изгибается вправо (верхняя петля) → кончик уходит вправо
-    Ключ «сидит» в проёме верхней петли.
-  -->
-
-  <!-- Тень -->
-  <path
-    d="M 118,188
-       C 146,184 164,164 160,136
-       C 156,108 126,104 106,94
-       C 86,84  56,80  44,60
-       C 32,40  46,18  72,14
-       C 88,10  106,18 116,32"
-    fill="none" stroke="#3a0a07" stroke-width="34" stroke-linecap="round"
-    filter="url(#tentShadow)" clip-path="url(#roundClip)" opacity="0.6"/>
-
-  <!-- Основное тело щупальца -->
-  <path id="tent"
-    d="M 118,188
-       C 146,184 164,164 160,136
-       C 156,108 126,104 106,94
-       C 86,84  56,80  44,60
-       C 32,40  46,18  72,14
-       C 88,10  106,18 116,32"
-    fill="none" stroke="url(#tentBody)" stroke-width="30" stroke-linecap="round"
-    clip-path="url(#roundClip)"/>
-
-  <!-- Блик (полупрозрачная полоса вдоль выпуклой стороны) -->
-  <path
-    d="M 118,188
-       C 146,184 164,164 160,136
-       C 156,108 126,104 106,94
-       C 86,84  56,80  44,60
-       C 32,40  46,18  72,14
-       C 88,10  106,18 116,32"
-    fill="none" stroke="url(#tentHi)" stroke-width="11" stroke-linecap="round"
-    clip-path="url(#roundClip)"/>
-
-  <!-- ── Присоски (вдоль вогнутой стороны) ── -->
-  <!-- каждая: тёмное кольцо + яркая точка -->
-  <g clip-path="url(#roundClip)">
-    <circle cx="151" cy="158" r="6.5" fill="#6e1810"/><circle cx="151" cy="158" r="3.5" fill="#e84040" opacity="0.45"/>
-    <circle cx="147" cy="130" r="6"   fill="#6e1810"/><circle cx="147" cy="130" r="3"   fill="#e84040" opacity="0.45"/>
-    <circle cx="126" cy="106" r="5.5" fill="#6e1810"/><circle cx="126" cy="106" r="2.8" fill="#e84040" opacity="0.45"/>
-    <circle cx="98"  cy="92"  r="5.5" fill="#6e1810"/><circle cx="98"  cy="92"  r="2.8" fill="#e84040" opacity="0.45"/>
-    <circle cx="65"  cy="78"  r="5"   fill="#6e1810"/><circle cx="65"  cy="78"  r="2.5" fill="#e84040" opacity="0.45"/>
-    <circle cx="44"  cy="58"  r="4.5" fill="#6e1810"/><circle cx="44"  cy="58"  r="2.2" fill="#e84040" opacity="0.45"/>
-    <circle cx="57"  cy="34"  r="4"   fill="#6e1810"/><circle cx="57"  cy="34"  r="2"   fill="#e84040" opacity="0.45"/>
+  <g clip-path="url(#clip2)">
+    <!-- ── Щупальце: гладкая S-спираль, сужается к кончику ── -->
+    <!-- тень -->
+    <path d="M 116,186
+             C 148,182 166,160 161,132
+             C 156,104 124,100 104,91
+             C 84,82 56,78 45,59
+             C 35,41 48,20 72,16
+             C 88,13 104,20 113,33"
+          fill="none" stroke="#000" stroke-opacity="0.25" stroke-width="33"
+          stroke-linecap="round" transform="translate(0,5)"/>
+    <!-- тело -->
+    <path d="M 116,186
+             C 148,182 166,160 161,132
+             C 156,104 124,100 104,91
+             C 84,82 56,78 45,59
+             C 35,41 48,20 72,16
+             C 88,13 104,20 113,33"
+          fill="none" stroke="url(#tent2)" stroke-width="31" stroke-linecap="round"/>
+    <!-- полупрозрачный верхний слой (смещён к свету, сверху-слева) -->
+    <path d="M 113,183
+             C 144,179 162,158 157,131
+             C 152,104 121,99 101,90
+             C 82,81 55,77 44,58
+             C 35,41 47,21 70,17
+             C 85,14 100,21 109,33"
+          fill="none" stroke="url(#tentLayer)" stroke-width="13" stroke-linecap="round"/>
   </g>
 
-  <!-- ── Ключ ──────────────────────────────────────────────────── -->
-  <!-- Позиция: верхний правый квадрант, в «объятиях» верхней петли -->
-
-  <!-- Гало-свечение -->
-  <circle cx="138" cy="56" r="35" fill="#f0b429" opacity="0.18" filter="url(#halo)"/>
-
-  <!-- Кольцо ключа (outer) -->
-  <circle cx="138" cy="54" r="23"
-          fill="none" stroke="url(#keyGold)" stroke-width="9"
-          filter="url(#keyGlow)"/>
-  <!-- Кольцо ключа (inner hollow) -->
-  <circle cx="138" cy="54" r="10"
-          fill="none" stroke="url(#keyGold)" stroke-width="3" opacity="0.6"/>
-  <!-- Центральная точка кольца -->
-  <circle cx="138" cy="54" r="4" fill="#ffe066" opacity="0.35"/>
-
-  <!-- Стержень ключа -->
-  <rect x="132.5" y="75" width="11" height="50" rx="5.5"
-        fill="url(#keyGold)" filter="url(#keyGlow)"/>
-  <!-- Блик стержня -->
-  <rect x="133.5" y="77" width="4.5" height="46" rx="2.5"
-        fill="url(#keyHi)"/>
-
-  <!-- Зубцы ключа (вправо) -->
-  <rect x="143.5" y="93"  width="17" height="8.5" rx="4" fill="url(#keyGold)"/>
-  <rect x="143.5" y="109" width="13" height="8.5" rx="4" fill="url(#keyGold)"/>
-
-  <!-- Блики зубцов -->
-  <rect x="143.5" y="93"  width="17" height="3.5" rx="2" fill="#fff9c4" opacity="0.3"/>
-  <rect x="143.5" y="109" width="13" height="3.5" rx="2" fill="#fff9c4" opacity="0.3"/>
-
-  <!-- ── Рамка (слабое свечение по краю) ── -->
-  <rect width="200" height="200" rx="42"
-        fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+  <!-- ── Ключ (в петле щупальца, как в v1) ── -->
+  <g filter="url(#softSh)">
+    <!-- кольцо -->
+    <circle cx="137" cy="55" r="22" fill="none" stroke="url(#key2)" stroke-width="11"/>
+    <!-- стержень -->
+    <rect x="131" y="74" width="12" height="52" rx="6" fill="url(#key2)"/>
+    <!-- зубцы -->
+    <rect x="139" y="95"  width="18" height="9" rx="4.5" fill="url(#key2)"/>
+    <rect x="139" y="111" width="13" height="9" rx="4.5" fill="url(#key2)"/>
+  </g>
+  <!-- fluent-свет на кольце: верхняя дуга чуть светлее -->
+  <path d="M 118,47 A 22,22 0 0 1 154,46" fill="none"
+        stroke="#fff" stroke-opacity="0.35" stroke-width="5" stroke-linecap="round"/>
+  <!-- лёгкий светлый торец стержня -->
+  <rect x="131" y="74" width="5" height="50" rx="2.5" fill="#fff" opacity="0.18"/>
 </svg>
