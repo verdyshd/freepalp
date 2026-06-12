@@ -2546,27 +2546,68 @@ async function loadMemStats() {
       card(s.warm_files||0, 'Демотированных', 'Записи, вытесненные из HOT за невостребованностью.', '', '⬇️') +
       card(s.projects||0, 'Проектов', 'Папки project memory — контекст по конкретным проектам.', '', '📁');
 
-    // Слои векторного индекса (то, что видно на вкладке «Связи»)
-    const layerBar = (name, count, total, color, desc) => {
-      const pct = total ? Math.round(100*count/total) : 0;
-      return `<div style="margin-bottom:10px" title="${desc}">
-        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
-          <span style="color:${color}">● ${name} — ${count}</span><span style="color:var(--text-3)">${pct}%</span>
+    // Визуальная схема жизненного цикла памяти (те же реальные числа,
+    // что в карточках выше): воронка HOT → WARM → COLD + датчик исправлений
+    const hot = s.hot_lines||0, warm = s.sessions||0, cold = s.archived||0;
+    const demoted = s.warm_files||0, corr = s.corrections||0, projects = s.projects||0;
+    const maxV = Math.max(hot, warm, cold, 1);
+    const tw = v => Math.round(110 + 290 * Math.log(1+v) / Math.log(1+maxV));  // лог-шкала ширин
+    const tier = (w, grad, icon, label, val, desc) => `
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div style="width:${w}px;max-width:100%;background:${grad};border-radius:10px;
+                    padding:8px 14px;text-align:center;box-shadow:0 0 14px rgba(0,0,0,.25)">
+          <span style="font-size:15px">${icon}</span>
+          <b style="font-size:16px;margin-left:6px">${val}</b>
+          <span style="font-size:11px;opacity:.9;margin-left:6px">${label}</span>
         </div>
-        <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px">
-          <div style="height:100%;width:${pct}%;background:${color};border-radius:3px"></div>
-        </div>
-        <div style="font-size:10px;color:var(--text-3);margin-top:3px">${desc}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:4px;max-width:340px;text-align:center">${desc}</div>
       </div>`;
-    };
-    const lt = L.total || 0;
+    const arrow = (label) => `
+      <div style="display:flex;flex-direction:column;align-items:center;margin:2px 0">
+        <div style="color:var(--text-3);font-size:14px;line-height:1">⬇</div>
+        <div style="font-size:10px;color:var(--text-3)">${label}</div>
+      </div>`;
+    // Датчик исправлений: дуга-прогресс до консолидации (50)
+    const corrPct = Math.min(100, corr/50*100);
+    const dash = 2 * Math.PI * 26;
+    const gauge = `
+      <svg width="76" height="76" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/>
+        <circle cx="32" cy="32" r="26" fill="none" stroke="${corrPct>=90?'#fc8181':corrPct>=70?'#f6ad55':'#63b3ed'}"
+                stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="${(dash*corrPct/100).toFixed(1)} ${dash.toFixed(1)}"
+                transform="rotate(-90 32 32)"/>
+        <text x="32" y="30" text-anchor="middle" font-size="12" fill="currentColor" font-weight="700">${corr}</text>
+        <text x="32" y="43" text-anchor="middle" font-size="8" fill="rgba(160,174,192,.9)">из 50</text>
+      </svg>`;
     grid.innerHTML += `
-      <div style="grid-column:1/-1;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-top:6px">
-        <div style="font-size:12px;color:var(--text-2);margin-bottom:10px">Векторный индекс — ${lt} записей (это узлы на вкладке «Связи»)</div>
-        ${layerBar('episodic', L.episodic||0, lt, '#9f7aea', 'Эпизоды: конкретные задачи и диалоги — «что происходило».')}
-        ${layerBar('procedural', L.procedural||0, lt, '#48bb78', 'Процедуры: накопленные приёмы «как делать» — уроки и teacher→skill.')}
-        ${layerBar('semantic', L.semantic||0, lt, '#63b3ed', 'Факты: устойчивые знания о мире и системе.')}
-        ${layerBar('working', L.working||0, lt, '#f6ad55', 'Рабочая память текущей задачи — короткоживущая.')}
+      <div style="grid-column:1/-1;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:6px">
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:12px">Жизненный цикл памяти (реальные числа сейчас)</div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:stretch">
+          <div style="flex:1;min-width:300px;display:flex;flex-direction:column;align-items:center">
+            ${tier(tw(hot),  'linear-gradient(135deg,#f56565,#ed8936)', '🔥', 'HOT строк', hot, 'Активная память — в каждом промпте целиком')}
+            ${arrow('демотирование за невостребованность — ' + demoted)}
+            ${tier(tw(warm), 'linear-gradient(135deg,#ed8936,#ecc94b)', '🌡', 'WARM сессий', warm, 'Журналы недавних диалогов — при продолжении темы')}
+            ${arrow('архивация и сжатие')}
+            ${tier(tw(cold), 'linear-gradient(135deg,#4299e1,#63b3ed)', '🧊', 'COLD архивов', cold, 'Старые записи — достаются только поиском')}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;justify-content:center;min-width:170px">
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
+              ${gauge}
+              <div>
+                <div style="font-size:12px;color:var(--text-2)">📝 Исправления</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:3px;max-width:140px">уроки из ошибок; на 50 — консолидация</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+              <span style="font-size:20px">📁</span>
+              <div>
+                <div style="font-size:13px;color:var(--text)"><b>${projects}</b> проект${projects===1?'':'а/ов'}</div>
+                <div style="font-size:10px;color:var(--text-3)">project memory — контекст по проектам</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>`;
   } catch(e) {
     grid.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
