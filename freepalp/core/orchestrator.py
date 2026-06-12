@@ -485,27 +485,41 @@ class Orchestrator:
                      "text": f"Тип: {task_key_str} · сложность {complexity_val}/5",
                      "task_type": task_key_str, "complexity": complexity_val})
 
-        # 4️⃣ Enrich request with hot memory and user context
-        hot_mem = self.memory.load_hot()
-        user_ctx = self.user_profile.get_context_for_prompt()
+        # 4️⃣ Enrich request with hot memory and user context.
+        # Lean-режим для тривиальных задач: «привет», «2+2» не нуждаются в полной
+        # HOT-памяти и семантическом recall — это раздувало промпт до ~15K токенов
+        # и замедляло ответ. Для complexity ≤1 и лёгких типов даём только шапку
+        # версии + краткий профиль пользователя.
+        _LEAN_TYPES = {"general", "text"}
+        _is_lean = (complexity_val <= 1 and task_key_str in _LEAN_TYPES
+                    and not request.context.get("conversation_history"))
+
         version_header = f"[Активное ядро FreePalp: v{prompt_loader.get_version()}]"
+        user_ctx = self.user_profile.get_context_for_prompt()
 
-        # Семантический recall: подтягиваем релевантные воспоминания по смыслу задачи
-        recalled = ""
-        try:
-            if hasattr(self.memory, "recall"):
-                hits = self.memory.recall(request.user_input, k=3)
-                if hits:
-                    lines = [f"- ({h['layer']}) {h['text']}" for h in hits if h.get("score", 0) >= 0.1]
-                    if lines:
-                        recalled = "Релевантный опыт из памяти:\n" + "\n".join(lines)
-        except Exception as exc:
-            logger.debug("Semantic recall failed: %s", exc)
-
-        if hot_mem or user_ctx or recalled:
+        if _is_lean:
             request.context["agent_memory"] = "\n\n".join(
-                filter(None, [version_header, user_ctx, hot_mem, recalled])
+                filter(None, [version_header, user_ctx])
             )
+            request.context["lean_mode"] = True
+        else:
+            hot_mem = self.memory.load_hot()
+            # Семантический recall: релевантные воспоминания по смыслу задачи
+            recalled = ""
+            try:
+                if hasattr(self.memory, "recall"):
+                    hits = self.memory.recall(request.user_input, k=3)
+                    if hits:
+                        lines = [f"- ({h['layer']}) {h['text']}" for h in hits if h.get("score", 0) >= 0.1]
+                        if lines:
+                            recalled = "Релевантный опыт из памяти:\n" + "\n".join(lines)
+            except Exception as exc:
+                logger.debug("Semantic recall failed: %s", exc)
+
+            if hot_mem or user_ctx or recalled:
+                request.context["agent_memory"] = "\n\n".join(
+                    filter(None, [version_header, user_ctx, hot_mem, recalled])
+                )
 
         # 5️⃣ Main execution loop (retry up to MAX_ITERATIONS)
         result: Optional[TaskResult] = None
@@ -620,6 +634,14 @@ class Orchestrator:
                              "text": "Провал пойман без LLM-критика (ярус 1)"})
                 feedback = CriticFeedback(passed=False, score=0.3,
                                           issues=cheap_issues, must_retry=True)
+            elif request.context.get("lean_mode"):
+                # Тривиальный чат («привет», «2+2») не нуждается в LLM-критике —
+                # он придирался к приветствию как к code review (0.00) и форсил
+                # ненужный retry. Детерминированные проверки уже прошли — этого
+                # достаточно. Это главный источник тормозов на простых запросах.
+                print("  [C] Lean-режим — LLM-критик пропущен")
+                feedback = CriticFeedback(passed=True, score=0.9,
+                                          issues=[], must_retry=False)
             else:
                 # ── Ярус 2: LLM-критик для неоднозначного ──
                 critic_model = self.router.get_critic_model()

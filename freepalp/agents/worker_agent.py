@@ -97,16 +97,20 @@ class WorkerAgent:
         task_key          = self._task_key
         system_prompt     = prompt_loader.get_worker_prompt(task_key)
 
+        # Lean-режим (тривиальный чат): инструменты не нужны — не раздуваем промпт
+        _lean = bool(request.context.get("lean_mode"))
+
         # Включаем native function calling если провайдер поддерживает
         self._native_mode = (
-            self.tool_agent is not None
+            not _lean
+            and self.tool_agent is not None
             and self.model.provider in _NATIVE_FC_PROVIDERS
         )
         if self._native_mode:
             self._openai_tools = self._build_openai_tools_spec(task_key)
 
         # Инжектируем описание инструментов в system prompt если есть tool_agent
-        if self.tool_agent:
+        if self.tool_agent and not _lean:
             if not self._native_mode:
                 # Текстовый ReAct — инструкции в промпт
                 tools_desc = self._build_tools_section(task_key)
