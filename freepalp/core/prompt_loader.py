@@ -85,6 +85,15 @@ def get_critic_system() -> str:
 
 
 def get_retry_threshold() -> float:
+    # settings.json пользователя приоритетнее значения из prompts.json
+    settings_path = Path(__file__).parent.parent / "config" / "settings.json"
+    try:
+        if settings_path.exists():
+            s = json.loads(settings_path.read_text("utf-8"))
+            if "retry_threshold" in s:
+                return float(s["retry_threshold"])
+    except Exception:
+        pass
     return float(get().get("retry_threshold", 0.7))
 
 

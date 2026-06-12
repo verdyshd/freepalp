@@ -174,6 +174,33 @@ def _detect_unfulfilled_file_request(user_input: str, worker_output: str, tools_
     return None
 
 
+# Задача-починка: переписывать файл, не прочитав его — запрещено
+_FIX_REQUEST_RE = _re.compile(r"(почин|исправ|поправ|почему не работает|\bfix\b|repair|broken)", _re.IGNORECASE)
+
+
+def _detect_blind_rewrite(user_input: str, tools_used: list[dict]) -> Optional[str]:
+    """Возвращает проблему, если в задаче-починке агент записал файл, не прочитав
+    его сначала (наблюдалось: «почини» = переписал с нуля хуже и потерял функционал)."""
+    if not _FIX_REQUEST_RE.search(user_input or ""):
+        return None
+    def _base(p):
+        return (p or "").lower().replace("\\", "/").rsplit("/", 1)[-1]
+    for i, t in enumerate(tools_used):
+        if t.get("tool") in _FILE_TOOLS and t.get("path"):
+            target = _base(t["path"])
+            was_read = any(x.get("tool") in ("read_file", "read_source")
+                           and _base(x.get("path", "")) == target
+                           for x in tools_used[:i])
+            if not was_read:
+                return (
+                    f"Это задача-починка, но агент переписал {t['path']} НЕ прочитав его "
+                    "(read_file не вызывался для этого файла). Так теряется рабочий код. "
+                    "Сначала вызови read_file, найди конкретную проблему и внеси точечное "
+                    "исправление, сохранив остальной код."
+                )
+    return None
+
+
 # Вопрос об идентичности агента + чужие бренды, которыми слабые модели себя называют
 _IDENTITY_QUESTION_RE = _re.compile(
     r"(как тебя зовут|кто ты\b|ты кто\b|какая ты модель|тво[её] имя|представься|"
@@ -430,6 +457,8 @@ class Orchestrator:
 
         max_iters = _FAST_MAX_ITERATIONS if task_key_str in _FAST_TASK_TYPES else MAX_ITERATIONS
 
+        from . import prompt_loader as _pl
+        _retry_threshold = _pl.get_retry_threshold()
         for iteration in range(max_iters):
             # Route → pick model
             model_config = self.router.route(request)
@@ -493,31 +522,33 @@ class Orchestrator:
             for t in tools_used:
                 await _emit({"type": "tool", "tool": t["tool"], "text": f"🔧 Использовал: {t['tool']}"})
 
-            # Run Critic
-            critic_model = self.router.get_critic_model()
-            critic_agent = CriticAgent(critic_model)
-            print("  [C] Critic evaluating...")
-            await _emit({"type": "stage", "stage": "critic", "text": "Проверяю качество ответа..."})
-            _crit_msg, feedback = await critic_agent.evaluate(request, worker_msg.content, iteration)
-
-            # Детерминированная проверка: пользователь просил сохранить/создать файл,
-            # но агент не вызвал ни один файловый tool, а просто напечатал код текстом.
-            # Критик не видит трейс tool-calls и такие случаи иногда пропускает (score 0.9+).
+            # ── Ярус 1: детерминированные проверки (бесплатно, мгновенно) ──
+            # Если типовой провал пойман — LLM-критик не нужен, экономим токены.
+            # Раньше критик звался всегда и пропускал эти случаи (давал 0.9+).
+            cheap_issues = []
             unfulfilled = _detect_unfulfilled_file_request(request.user_input, worker_msg.content, tools_used)
-            if unfulfilled and feedback:
-                feedback.score = min(feedback.score, 0.4)
-                feedback.passed = False
-                feedback.must_retry = True
-                feedback.issues = [unfulfilled] + (feedback.issues or [])
-
-            # Детерминированная проверка идентичности: слабые модели называют себя
-            # ChatGPT/Claude и т.п., а критик это пропускает.
+            if unfulfilled:
+                cheap_issues.append(unfulfilled)
             wrong_identity = _detect_identity_violation(request.user_input, worker_msg.content)
-            if wrong_identity and feedback:
-                feedback.score = min(feedback.score, 0.4)
-                feedback.passed = False
-                feedback.must_retry = True
-                feedback.issues = [wrong_identity] + (feedback.issues or [])
+            if wrong_identity:
+                cheap_issues.append(wrong_identity)
+            blind_rewrite = _detect_blind_rewrite(request.user_input, tools_used)
+            if blind_rewrite:
+                cheap_issues.append(blind_rewrite)
+
+            if cheap_issues:
+                print("  [C] Детерминированная проверка поймала провал — LLM-критик пропущен")
+                await _emit({"type": "stage", "stage": "critic",
+                             "text": "Провал пойман без LLM-критика (ярус 1)"})
+                feedback = CriticFeedback(passed=False, score=0.3,
+                                          issues=cheap_issues, must_retry=True)
+            else:
+                # ── Ярус 2: LLM-критик для неоднозначного ──
+                critic_model = self.router.get_critic_model()
+                critic_agent = CriticAgent(critic_model)
+                print("  [C] Critic evaluating...")
+                await _emit({"type": "stage", "stage": "critic", "text": "Проверяю качество ответа..."})
+                _crit_msg, feedback = await critic_agent.evaluate(request, worker_msg.content, iteration)
 
             score = feedback.score if feedback else 0.0
             blocks = int(score * 10)
@@ -533,7 +564,7 @@ class Orchestrator:
             # Build TaskResult
             result = TaskResult(
                 task_id=request.task_id if hasattr(request, "task_id") else f"task_{iteration}",
-                status=TaskStatus.COMPLETED if score >= 0.7 else TaskStatus.FAILED,
+                status=TaskStatus.COMPLETED if score >= _retry_threshold else TaskStatus.FAILED,
                 final_answer=worker_msg.content,
                 model_used=model_config.model_id,
                 iterations=iteration + 1,
@@ -557,7 +588,26 @@ class Orchestrator:
                 except Exception:
                     pass
 
-            if score >= 0.7:
+            if score >= _retry_threshold:
+                # Teacher→skill (мини-дистилляция, идея из Odysseus): успех ПОСЛЕ
+                # провала — ценный приём. Сохраняем процедуру в долгую память,
+                # чтобы в следующий раз дешёвая модель справилась с 1-й итерации,
+                # а не сжигала ретраи (коррекция накапливается, а не сгорает).
+                if iteration > 0:
+                    try:
+                        from ..memory.consolidation import add_to_long_term
+                        seq = " -> ".join(
+                            t["tool"] + (f"({(t.get('path') or '').replace(chr(92), '/').rsplit('/', 1)[-1]})"
+                                         if t.get("path") else "")
+                            for t in tools_used) or "ответ текстом, без инструментов"
+                        add_to_long_term(
+                            "skill",
+                            f"Приём [{task_key}]: запрос вида «{request.user_input[:90]}» "
+                            f"решён со 2+ попытки (модель {model_config.name}). "
+                            f"Рабочая последовательность: {seq}. Применяй её сразу.",
+                        )
+                    except Exception:
+                        pass
                 break
 
             prev_feedback = "\n".join(feedback.issues) if feedback and feedback.issues else ""

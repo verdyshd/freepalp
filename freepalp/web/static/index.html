@@ -1171,6 +1171,28 @@
         </div>
         <div id="versions-list" style="font-size:11px;color:var(--text-2)"></div>
       </div>
+      <!-- Поведение системы (настоящие настройки) -->
+      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+        <div class="rp-title">⚙️ Поведение</div>
+        <div style="font-size:12px;color:var(--text-2);display:flex;flex-direction:column;gap:10px;margin-top:8px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="set-si-startup" onchange="saveSetting('si_on_startup', this.checked)">
+            Самоулучшение при старте сервера <span style="color:var(--text-3)">(жжёт квоту провайдеров)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px">
+            Авто-выключение через
+            <input type="number" id="set-idle" min="0" max="1440" style="width:60px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--text-1);padding:2px 6px"
+                   onchange="saveSetting('idle_shutdown_minutes', parseInt(this.value)||0)">
+            мин <span style="color:var(--text-3)">(0 = никогда; нужен перезапуск)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px">
+            Порог критика для ретрая
+            <input type="number" id="set-retry" min="0" max="1" step="0.05" style="width:60px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--text-1);padding:2px 6px"
+                   onchange="saveSetting('retry_threshold', parseFloat(this.value)||0.7)">
+            <span style="color:var(--text-3)">(score ниже — повтор; 0.7 по умолчанию)</span>
+          </label>
+        </div>
+      </div>
       <!-- Версии кода системы (git) — отдельно от версий промптов -->
       <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
         <div class="rp-title">🛠 Версии системы (код)</div>
@@ -2638,6 +2660,28 @@ async function loadSettings() {
     `;
   } catch(e) {}
   loadSystemVersions();
+  loadBehaviorSettings();
+}
+
+async function loadBehaviorSettings() {
+  try {
+    const d = await (await fetch('/api/settings')).json();
+    const s = d.settings || {};
+    document.getElementById('set-si-startup').checked = !!s.si_on_startup;
+    document.getElementById('set-idle').value  = s.idle_shutdown_minutes ?? 30;
+    document.getElementById('set-retry').value = s.retry_threshold ?? 0.7;
+  } catch(e) {}
+}
+
+async function saveSetting(key, value) {
+  try {
+    const d = await (await fetch('/api/settings', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({[key]: value}),
+    })).json();
+    showToast(d.ok ? '✅ Сохранено' : '❌ ' + (d.error || 'ошибка'));
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 async function loadSystemVersions() {
@@ -2743,6 +2787,7 @@ async function loadImproveStatus() {
 }
 
 async function triggerMemClean() {
+  if (!confirm('Очистить память агента? Консолидация удалит устаревшие записи. Действие необратимо.')) return;
   showToast('🧹 Очищаю память...');
   try {
     const resp = await fetch('/api/memory/clean', { method: 'POST' });

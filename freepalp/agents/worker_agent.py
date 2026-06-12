@@ -168,6 +168,22 @@ class WorkerAgent:
             # Логируем вызов
             tool_name = tool_call.get("tool", "?")
             tool_args = tool_call.get("args", {})
+
+            # Loop breaker: тот же инструмент с теми же аргументами 3 раза подряд —
+            # агент зациклился (наблюдалось: gemini писал один файл 7 раз).
+            import hashlib as _hl
+            _sig = _hl.md5((tool_name + repr(sorted(tool_args.items()))).encode()).hexdigest()
+            _recent = getattr(self, "_recent_call_sigs", [])
+            _recent.append(_sig)
+            self._recent_call_sigs = _recent[-3:]
+            if len(self._recent_call_sigs) == 3 and len(set(self._recent_call_sigs)) == 1:
+                print(f"    [LoopBreaker] {tool_name} повторён 3 раза с теми же аргументами — прерываю цикл")
+                messages.append({"role": "user", "content":
+                    f"СТОП: ты вызвал {tool_name} три раза подряд с одинаковыми аргументами. "
+                    "Инструмент уже выполнен. Не вызывай его снова — дай финальный ответ."})
+                self._recent_call_sigs = []
+                continue
+
             tools_called.append({"tool": tool_name, "content": tool_args.get("content", ""),
                                  "path": tool_args.get("path", "")})
             print(f"    [ReAct] CALL {tool_name}({', '.join(f'{k}={repr(v)[:30]}' for k, v in tool_args.items())})")

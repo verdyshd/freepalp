@@ -4,6 +4,7 @@ Whitelist подход: только разрешённые команды.
 """
 
 import asyncio
+import re as _re_shell
 import shlex
 from pathlib import Path
 
@@ -116,6 +117,23 @@ def _check_safety(command: str) -> dict:
             "error": f"Команда '{base_cmd}' не в whitelist. "
                      f"Разрешены: {', '.join(sorted(ALLOWED_COMMANDS))}",
         }
+
+    # python <файл>: исполняемый файл обязан лежать в песочнице. Иначе агент
+    # обходит whitelist: write_file скрипта куда угодно -> python script.py.
+    # ВАЖНО: парсим СЫРУЮ команду (она уходит в shell как есть; shlex в posix-режиме
+    # съедает бэкслеши Windows и маскирует ..\evil.py).
+    if base_cmd in ("python", "python3"):
+        if _re_shell.search(r"(^|\s)-c(\s|$)", command):
+            return {"ok": False,
+                    "error": "python -c запрещён (обход whitelist). Запиши код "
+                             "в файл в sandbox через write_file и запусти его."}
+        for raw in _re_shell.findall(r"[\w.\\/:\-]+\.py\b", command):
+            norm = raw.replace("\\", "/")
+            if norm.startswith("./"):
+                norm = norm[2:]
+            if ".." in norm.split("/") or norm.startswith("/") or ":" in norm:
+                return {"ok": False,
+                        "error": f"Запуск python-файла вне песочницы запрещён: {raw}"}
 
     return {"ok": True}
 

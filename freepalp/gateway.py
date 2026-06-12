@@ -85,10 +85,37 @@ _orch = None
 _conversations: dict[str, list[dict]] = {}
 _MAX_HISTORY = 10   # последних обменов (каждый обмен = 2 сообщения)
 
+# ── Настройки системы (config/settings.json) ────────────────────────────
+_SETTINGS_PATH = Path(__file__).parent / "config" / "settings.json"
+_SETTINGS_DEFAULTS = {
+    "idle_shutdown_minutes": 30,   # 0 = не выключаться
+    "si_on_startup": False,        # самоулучшение при старте сервера (жжёт квоту!)
+    "beacon_shutdown": True,       # гасить сервер при закрытии вкладки
+    "retry_threshold": 0.7,        # порог критика для ретрая
+}
+
+
+def load_settings() -> dict:
+    s = dict(_SETTINGS_DEFAULTS)
+    try:
+        if _SETTINGS_PATH.exists():
+            s.update(json.loads(_SETTINGS_PATH.read_text("utf-8")))
+    except Exception:
+        pass
+    return s
+
+
+def save_settings(s: dict) -> None:
+    _SETTINGS_PATH.write_text(
+        json.dumps(s, ensure_ascii=False, indent=2), "utf-8")
+
+
 # ── Auto-shutdown ─────────────────────────────────────────────────────────
 # Сервер автоматически выключается если нет запросов IDLE_SHUTDOWN_MINUTES.
-# 0 = отключено (запустить с env FREEPALP_IDLE_SHUTDOWN=0 чтобы отключить).
-IDLE_SHUTDOWN_MINUTES: int = int(os.environ.get("FREEPALP_IDLE_SHUTDOWN", "30"))
+# Приоритет: env FREEPALP_IDLE_SHUTDOWN > settings.json > 30.
+_env_idle = os.environ.get("FREEPALP_IDLE_SHUTDOWN")
+IDLE_SHUTDOWN_MINUTES: int = (int(_env_idle) if _env_idle is not None
+                              else int(load_settings()["idle_shutdown_minutes"]))
 _last_activity: float = time.time()   # обновляется при каждом /api/chat
 _shutdown_task: asyncio.Task | None = None
 _startup_time:  float = 0.0           # время запуска — для защиты от ранних beacons
@@ -255,13 +282,18 @@ async def _startup_logic():
                 print("  [SI] Startup check: found improvement candidates — starting auto-improve...")
                 report = await orch.self_improvement.run(force=False, max_candidates=3)
                 if report.get("version_activated"):
-                    print(f"  [SI] Auto-improved on startup → v{report['version_proposed']} activated!")
+                    print(f"  [SI] Auto-improved on startup -> v{report['version_proposed']} activated!")
                 elif report.get("error"):
                     print(f"  [SI] Startup auto-improve skipped: {report['error']}")
         except Exception as e:
             print(f"  [SI] Startup improve error: {e}")
 
-    asyncio.create_task(_startup_improve())
+    # Самоулучшение при старте — только если явно включено (по умолчанию ВЫКЛ:
+    # жжёт квоту провайдеров и конкурирует с первой задачей пользователя)
+    if load_settings().get("si_on_startup"):
+        asyncio.create_task(_startup_improve())
+    else:
+        print("  [SI] Запуск при старте отключён (settings.si_on_startup=false)")
 
     # 4. Watchdog авто-выключения
     if IDLE_SHUTDOWN_MINUTES > 0:
@@ -594,12 +626,20 @@ async def chat_stream(req: ChatRequest):
         _bg_tasks.add(task)                       # сильная ссылка — защита от GC
         task.add_done_callback(_bg_tasks.discard)  # освобождаем после завершения
         try:
+            _silent = 0.0
             while True:
                 try:
-                    event = await asyncio.wait_for(queue.get(), timeout=110.0)
+                    event = await asyncio.wait_for(queue.get(), timeout=20.0)
+                    _silent = 0.0
                 except asyncio.TimeoutError:
-                    yield f"data: {json.dumps({'type': 'error', 'text': 'Queue timeout'}, ensure_ascii=False)}\n\n"
-                    break
+                    # Тишина ≠ смерть задачи: шлём heartbeat, держим соединение.
+                    # Раньше тут был ложный 'Queue timeout' при живой задаче.
+                    _silent += 20.0
+                    if _silent >= 600.0:   # 10 мин полной тишины — сдаёмся честно
+                        yield f"data: {json.dumps({'type': 'error', 'text': 'Задача не отвечает >10 мин — прервана'}, ensure_ascii=False)}\n\n"
+                        break
+                    yield f"data: {json.dumps({'type': 'heartbeat', 'silent_sec': int(_silent)}, ensure_ascii=False)}\n\n"
+                    continue
                 if event is None:
                     break
                 yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
@@ -963,6 +1003,28 @@ async def api_improve():
         return report
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.get("/api/settings")
+async def api_settings_get():
+    """Текущие настройки системы + дефолты (для UI)."""
+    return {"settings": load_settings(), "defaults": _SETTINGS_DEFAULTS}
+
+
+@app.post("/api/settings")
+async def api_settings_set(req: dict):
+    """Сохранить настройки. Принимает частичный dict — мержится с текущими.
+    idle_shutdown и retry_threshold применяются после перезапуска."""
+    try:
+        s = load_settings()
+        for k, v in (req or {}).items():
+            if k in _SETTINGS_DEFAULTS:
+                s[k] = v
+        save_settings(s)
+        return {"ok": True, "settings": s,
+                "note": "idle_shutdown/retry_threshold применятся после перезапуска"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 @app.get("/api/system/versions")

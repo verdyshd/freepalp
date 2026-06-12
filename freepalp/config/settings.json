@@ -1,0 +1,6 @@
+{
+  "idle_shutdown_minutes": 0,
+  "si_on_startup": false,
+  "beacon_shutdown": true,
+  "retry_threshold": 0.7
+}

@@ -440,6 +440,21 @@ async def discover_all(force: bool = False) -> list[dict]:
 
     print("  [Discovery] Опрашиваем провайдеров...")
 
+    # Каталог models.dev: подключаем любые OpenAI-совместимые провайдеры,
+    # для которых пользователь положил ключ в .env (сотни — одной настройкой)
+    try:
+        from .models_dev_catalog import fetch_catalog, extra_openai_compat_providers
+        catalog = await fetch_catalog()
+        if catalog:
+            known = set(_OPENAI_COMPAT_PROVIDERS) | {"groq", "openrouter", "cerebras", "gemini", "ollama"}
+            extra = extra_openai_compat_providers(catalog, known)
+            for pid, cfg in extra.items():
+                if pid not in _OPENAI_COMPAT_PROVIDERS:
+                    _OPENAI_COMPAT_PROVIDERS[pid] = cfg
+                    print(f"  [Discovery] +{pid} из каталога models.dev ({len(cfg['models'])} моделей)")
+    except Exception as e:
+        print(f"  [Discovery] models.dev каталог недоступен: {e}")
+
     # Запускаем все discovery параллельно
     import asyncio
     results = await asyncio.gather(
@@ -465,6 +480,17 @@ async def discover_all(force: bool = False) -> list[dict]:
                 print(f"  [Discovery] {name}: {len(r)} моделей")
         else:
             print(f"  [Discovery] {name}: ошибка — {r}")
+
+    # Динамические провайдеры из models.dev (добавлены выше в _OPENAI_COMPAT_PROVIDERS)
+    _static_compat = {"sambanova", "together", "novita", "mistral"}
+    _dynamic = [k for k in _OPENAI_COMPAT_PROVIDERS if k not in _static_compat]
+    if _dynamic:
+        dyn_results = await asyncio.gather(
+            *[_discover_openai_compat(k) for k in _dynamic], return_exceptions=True)
+        for name, r in zip(_dynamic, dyn_results):
+            if isinstance(r, list) and r:
+                all_models.extend(r)
+                print(f"  [Discovery] {name} (models.dev): {len(r)} моделей")
 
     if not all_models:
         print("  [Discovery] Нет доступных провайдеров — fallback на models.json")
