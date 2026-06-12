@@ -17,3 +17,9 @@ freepalp/logs/
 # Прочее
 node_modules/
 .claude/
+
+# Личные рабочие файлы и разовые логи
+всякое/
+server_*.txt
+tunnel_*.txt
+*.log

@@ -275,6 +275,21 @@ class Router:
     # Внутренние методы
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _provider_ok(provider: str) -> bool:
+        """False, только если TokenBudget знает провайдера и ВСЕ его ключи в
+        кулдауне/дневном лимите. Незнакомые провайдеры — ок (fail-open).
+        Раньше роутер игнорировал кулдауны: критик выбирал groq в разгар 429
+        и получал дефолтные 0.72 вместо оценки."""
+        try:
+            from . import token_budget as _tb
+            slots = _tb.get()._slots.get(provider)
+            if not slots:
+                return True
+            return any(s.is_available for s in slots)
+        except Exception:
+            return True
+
     def _find_available_by_provider(self, provider: str, tier_str: str) -> Optional[ModelConfig]:
         """Ищет первую доступную модель указанного провайдера (tier hint)."""
         try:
@@ -311,7 +326,10 @@ class Router:
             except ValueError:
                 return len(provider_priority)
 
-        available = [m for m in self.models if m.available]
+        available = [m for m in self.models
+                     if m.available and self._provider_ok(m.provider)]
+        if not available:
+            available = [m for m in self.models if m.available]
         if not available:
             return None
 
@@ -334,7 +352,10 @@ class Router:
             tier = ModelTier(tier_str)
         except ValueError:
             return None
-        candidates = [m for m in self.models if m.tier == tier and m.available]
+        candidates = [m for m in self.models
+                      if m.tier == tier and m.available and self._provider_ok(m.provider)]
+        if not candidates:
+            candidates = [m for m in self.models if m.tier == tier and m.available]
         if not candidates:
             return None
         def _rank(m: ModelConfig) -> int:
@@ -351,8 +372,12 @@ class Router:
         except ValueError:
             return None
 
-        # Кандидаты текущего тира
-        candidates = [m for m in self.models if m.tier == tier and m.available]
+        # Кандидаты текущего тира (провайдеры в 429-кулдауне пропускаем)
+        candidates = [m for m in self.models
+                      if m.tier == tier and m.available and self._provider_ok(m.provider)]
+        if not candidates:
+            # Все в кулдауне — деградируем мягко: берём как раньше, без фильтра
+            candidates = [m for m in self.models if m.tier == tier and m.available]
         if not candidates:
             return None
 
