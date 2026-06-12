@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 200" width="850" height="200">
+  <!--
+    FreePalp ЛОГО (горизонтальный lockup) — для README, сайта, промо.
+    Знак: щупальце-конус с завитком держит ключ (без плитки, на прозрачном).
+    Словесная часть: Free (светлый) + Palp (градиент бренда), теглайн.
+    Иконка приложения — отдельный файл freepalp-icon.svg (v3, с плиткой).
+  -->
+  <defs>
+    <linearGradient id="lgTent" x1="10%" y1="100%" x2="80%" y2="0%">
+      <stop offset="0%"   stop-color="#8e1e3a"/>
+      <stop offset="50%"  stop-color="#e0354b"/>
+      <stop offset="100%" stop-color="#ff7a59"/>
+    </linearGradient>
+    <linearGradient id="lgKey" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#ffd969"/>
+      <stop offset="55%"  stop-color="#f2a93b"/>
+      <stop offset="100%" stop-color="#d97e16"/>
+    </linearGradient>
+    <linearGradient id="lgWord" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#ff7a59"/>
+      <stop offset="60%"  stop-color="#e0354b"/>
+      <stop offset="100%" stop-color="#b22743"/>
+    </linearGradient>
+    <filter id="lgSh" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.30"/>
+    </filter>
+  </defs>
+
+  <!-- ═══ Знак (как в иконке v3, но свободный, чуть крупнее ключ) ═══ -->
+  <g transform="translate(8,0)">
+    <g filter="url(#lgSh)">
+      <path d="M 26,200
+               C 18,150 22,100 44,62
+               C 64,28 106,12 140,26
+               C 168,38 182,66 174,92
+               C 168,113 148,124 131,116
+               C 118,110 114,94 124,85
+               C 131,79 141,82 143,90
+               C 145,97 139,102 133,100
+               C 137,108 149,108 156,99
+               C 165,87 161,68 146,58
+               C 124,44 92,52 76,76
+               C 60,99 60,140 72,200
+               Z"
+        fill="url(#lgTent)"/>
+    </g>
+    <path d="M 30,196 C 24,150 28,102 48,66 C 66,35 104,20 136,32"
+          fill="none" stroke="#ffd2c2" stroke-opacity="0.45"
+          stroke-width="9" stroke-linecap="round"/>
+    <g fill="#ffc4b3">
+      <circle cx="80"  cy="180" r="7.5" opacity="0.55"/>
+      <circle cx="72"  cy="148" r="7"   opacity="0.6"/>
+      <circle cx="72"  cy="116" r="6.5" opacity="0.65"/>
+      <circle cx="82"  cy="88"  r="6"   opacity="0.7"/>
+      <circle cx="102" cy="68"  r="5.5" opacity="0.7"/>
+      <circle cx="126" cy="60"  r="4.5" opacity="0.7"/>
+      <circle cx="146" cy="72"  r="3.5" opacity="0.7"/>
+    </g>
+    <g filter="url(#lgSh)">
+      <circle cx="142" cy="143" r="19" fill="none" stroke="url(#lgKey)" stroke-width="10"/>
+      <rect x="136.5" y="159" width="11" height="36" rx="5.5" fill="url(#lgKey)"/>
+      <rect x="144"   y="170" width="16" height="8"  rx="4"   fill="url(#lgKey)"/>
+      <rect x="144"   y="183" width="12" height="8"  rx="4"   fill="url(#lgKey)"/>
+    </g>
+    <path d="M 126,136 A 19,19 0 0 1 157,135" fill="none"
+          stroke="#fff" stroke-opacity="0.35" stroke-width="4.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- ═══ Словесная часть ═══ -->
+  <g font-family="'Segoe UI', 'Segoe UI Variable Display', system-ui, sans-serif">
+    <text x="218" y="118" font-size="92" font-weight="800" letter-spacing="-2">
+      <tspan fill="#2a3650">Free</tspan><tspan fill="url(#lgWord)">Palp</tspan>
+    </text>
+    <!-- теглайн -->
+    <text x="222" y="158" font-size="21" font-weight="500"
+          fill="#5a6b8c" letter-spacing="0.4">мультиагентный AI-оркестратор · бесплатные модели</text>
+    <!-- золотая черта-акцент под словом, перекликается с ключом -->
+    <rect x="222" y="131" width="382" height="4" rx="2" fill="url(#lgKey)" opacity="0.85"/>
+  </g>
+</svg>
