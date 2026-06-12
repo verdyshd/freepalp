@@ -573,6 +573,16 @@ class Orchestrator:
                              "model": model_config.name})
                 worker_msg = await worker.run(request, iteration=iteration, prev_feedback=prev_feedback)
 
+            # Учёт реальных трат в TokenBudget — иначе квоты в UI всегда
+            # рисуются нетронутыми (record_success раньше не звался вообще)
+            try:
+                from . import token_budget as _tb
+                _wt = (worker_msg.metadata.get("tokens_in", 0)
+                       + worker_msg.metadata.get("tokens_out", 0))
+                _tb.get().record_success(model_config.provider, _wt)
+            except Exception:
+                pass
+
             # Report tool calls used
             tools_used = worker_msg.metadata.get("tools_called", [])
             for t in tools_used:
@@ -617,6 +627,13 @@ class Orchestrator:
                 print("  [C] Critic evaluating...")
                 await _emit({"type": "stage", "stage": "critic", "text": "Проверяю качество ответа..."})
                 _crit_msg, feedback = await critic_agent.evaluate(request, worker_msg.content, iteration)
+                try:
+                    from . import token_budget as _tb
+                    _ct = (_crit_msg.metadata.get("tokens_in", 0)
+                           + _crit_msg.metadata.get("tokens_out", 0)) if _crit_msg else 0
+                    _tb.get().record_success(critic_model.provider, _ct)
+                except Exception:
+                    pass
 
             score = feedback.score if feedback else 0.0
             blocks = int(score * 10)
