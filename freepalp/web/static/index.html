@@ -1132,6 +1132,7 @@
           <span style="font-size:12px;color:var(--text-3)">
             Узлы — реальные записи векторного индекса памяти; рёбра — косинусная близость
             их настоящих векторов (те же данные, которыми память ищет). Это не картинка.
+            <br>🖱 Колесо — зум · перетаскивание — панорама · двойной клик — сброс · при зуме ≥2.2× видны подписи узлов.
           </span>
           <button class="btn" onclick="loadMemGraph()">↻</button>
         </div>
@@ -2443,37 +2444,88 @@ async function loadMemGraph(upto = 0) {
     }
   }
 
+  // Вид: зум колесом (к курсору) + панорамирование перетаскиванием
+  const view = { scale: 1, ox: 0, oy: 0 };
+
   function draw(highlight) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
+    ctx.setTransform(dpr * view.scale, 0, 0, dpr * view.scale,
+                     dpr * view.ox, dpr * view.oy);
     for (const e of d.edges) {
       const a = nodes[e.a], b = nodes[e.b];
       ctx.strokeStyle = `rgba(160,174,192,${0.08 + e.w*0.35})`;
-      ctx.lineWidth = e.w * 1.6;
+      ctx.lineWidth = e.w * 1.6 / view.scale;
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
     for (const n of nodes) {
-      const r = 3 + Math.min(7, n.deg * 0.8);
+      const r = (3 + Math.min(7, n.deg * 0.8)) / Math.sqrt(view.scale);
       ctx.fillStyle = LAYER_COLORS[n.layer] || '#a0aec0';
       ctx.globalAlpha = highlight && highlight !== n ? 0.35 : 1;
       ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 2*Math.PI); ctx.fill();
       ctx.globalAlpha = 1;
       if (highlight === n) {
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(n.x, n.y, r+2, 0, 2*Math.PI); ctx.stroke();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5 / view.scale;
+        ctx.beginPath(); ctx.arc(n.x, n.y, r+2/view.scale, 0, 2*Math.PI); ctx.stroke();
+      }
+      // При сильном зуме подписываем узлы прямо на холсте
+      if (view.scale >= 2.2) {
+        ctx.fillStyle = 'rgba(226,232,240,0.85)';
+        ctx.font = `${10/view.scale}px sans-serif`;
+        ctx.fillText(n.text.slice(0, 38), n.x + r + 3/view.scale, n.y + 3/view.scale);
       }
     }
   }
   draw(null);
   _graphState = { nodes, draw };
 
-  // Hover: показать полный текст реальной записи
+  // Экранные координаты → мировые (с учётом зума/пана)
+  const toWorld = (mx, my) => ({
+    x: (mx - view.ox) / view.scale,
+    y: (my - view.oy) / view.scale,
+  });
+
+  // Колесо: зум к точке под курсором, 0.5×–8×
+  canvas.onwheel = (ev) => {
+    ev.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    const factor = ev.deltaY < 0 ? 1.18 : 1/1.18;
+    const ns = Math.max(0.5, Math.min(8, view.scale * factor));
+    // Точка под курсором остаётся на месте
+    view.ox = mx - (mx - view.ox) * (ns / view.scale);
+    view.oy = my - (my - view.oy) * (ns / view.scale);
+    view.scale = ns;
+    draw(null);
+  };
+
+  // Перетаскивание: панорама
+  let _drag = null;
+  canvas.onmousedown = (ev) => {
+    const rect = canvas.getBoundingClientRect();
+    _drag = { x: ev.clientX - rect.left, y: ev.clientY - rect.top, moved: false };
+    canvas.style.cursor = 'grabbing';
+  };
+  canvas.onmouseup = () => { _drag = null; canvas.style.cursor = 'grab'; };
+  canvas.style.cursor = 'grab';
+
+  // Hover: показать полный текст реальной записи (+ пан при зажатой кнопке)
   const tip = document.getElementById('mem-graph-tip');
   canvas.onmousemove = (ev) => {
     const rect = canvas.getBoundingClientRect();
     const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    if (_drag) {
+      view.ox += mx - _drag.x; view.oy += my - _drag.y;
+      _drag.x = mx; _drag.y = my; _drag.moved = true;
+      tip.style.display = 'none';
+      draw(null);
+      return;
+    }
+    const w = toWorld(mx, my);
+    const hitR2 = 130 / (view.scale * view.scale);
     let hit = null;
     for (const n of nodes) {
-      if ((n.x-mx)**2 + (n.y-my)**2 < 130) { hit = n; break; }
+      if ((n.x-w.x)**2 + (n.y-w.y)**2 < hitR2) { hit = n; break; }
     }
     if (hit) {
       tip.style.display = 'block';
@@ -2485,7 +2537,9 @@ async function loadMemGraph(upto = 0) {
     }
     draw(hit);
   };
-  canvas.onmouseleave = () => { tip.style.display = 'none'; draw(null); };
+  canvas.onmouseleave = () => { tip.style.display = 'none'; _drag = null; canvas.style.cursor = 'grab'; draw(null); };
+  // Двойной клик — сброс вида
+  canvas.ondblclick = () => { view.scale = 1; view.ox = 0; view.oy = 0; draw(null); };
 }
 
 // ════════════════════════════════════════════════
@@ -2546,27 +2600,71 @@ async function loadMemStats() {
       card(s.warm_files||0, 'Демотированных', 'Записи, вытесненные из HOT за невостребованностью.', '', '⬇️') +
       card(s.projects||0, 'Проектов', 'Папки project memory — контекст по конкретным проектам.', '', '📁');
 
-    // Визуальная схема жизненного цикла памяти (те же реальные числа,
-    // что в карточках выше): воронка HOT → WARM → COLD + датчик исправлений
+    // Концептуальная схема: мозг, зоны которого светятся от реальных чисел.
+    // HOT — лобная кора (активное мышление), WARM — височная зона (недавнее),
+    // COLD — мозжечок (глубокий архив). Яркость зон ∝ log(количества).
     const hot = s.hot_lines||0, warm = s.sessions||0, cold = s.archived||0;
     const demoted = s.warm_files||0, corr = s.corrections||0, projects = s.projects||0;
     const maxV = Math.max(hot, warm, cold, 1);
-    const tw = v => Math.round(110 + 290 * Math.log(1+v) / Math.log(1+maxV));  // лог-шкала ширин
-    const tier = (w, grad, icon, label, val, desc) => `
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <div style="width:${w}px;max-width:100%;background:${grad};border-radius:10px;
-                    padding:8px 14px;text-align:center;box-shadow:0 0 14px rgba(0,0,0,.25)">
-          <span style="font-size:15px">${icon}</span>
-          <b style="font-size:16px;margin-left:6px">${val}</b>
-          <span style="font-size:11px;opacity:.9;margin-left:6px">${label}</span>
-        </div>
-        <div style="font-size:10px;color:var(--text-3);margin-top:4px;max-width:340px;text-align:center">${desc}</div>
-      </div>`;
-    const arrow = (label) => `
-      <div style="display:flex;flex-direction:column;align-items:center;margin:2px 0">
-        <div style="color:var(--text-3);font-size:14px;line-height:1">⬇</div>
-        <div style="font-size:10px;color:var(--text-3)">${label}</div>
-      </div>`;
+    const glow = v => (0.30 + 0.70 * Math.log(1+v) / Math.log(1+maxV)).toFixed(2);
+    const brainSvg = `
+    <svg viewBox="0 0 480 320" style="width:100%;max-width:560px" font-family="inherit">
+      <defs>
+        <radialGradient id="gHot"><stop offset="0%" stop-color="#f56565" stop-opacity="${glow(hot)}"/><stop offset="100%" stop-color="#ed8936" stop-opacity="0"/></radialGradient>
+        <radialGradient id="gWarm"><stop offset="0%" stop-color="#ecc94b" stop-opacity="${glow(warm)}"/><stop offset="100%" stop-color="#ed8936" stop-opacity="0"/></radialGradient>
+        <radialGradient id="gCold"><stop offset="0%" stop-color="#63b3ed" stop-opacity="${glow(cold)}"/><stop offset="100%" stop-color="#4299e1" stop-opacity="0"/></radialGradient>
+        <clipPath id="brainClip">
+          <path d="M 96,162 C 88,108 142,62 212,58 C 286,53 350,92 354,150 C 357,188 336,220 298,231 C 293,253 266,269 239,261 C 228,279 196,281 183,266 C 152,274 124,257 121,235 C 96,224 80,193 96,162 Z"/>
+        </clipPath>
+      </defs>
+      <!-- контур мозга -->
+      <path d="M 96,162 C 88,108 142,62 212,58 C 286,53 350,92 354,150 C 357,188 336,220 298,231 C 293,253 266,269 239,261 C 228,279 196,281 183,266 C 152,274 124,257 121,235 C 96,224 80,193 96,162 Z"
+            fill="rgba(255,255,255,0.025)" stroke="rgba(160,174,192,0.45)" stroke-width="1.5"/>
+      <!-- мозжечок -->
+      <path d="M 296,233 C 322,230 344,242 342,258 C 340,274 316,283 296,277 C 280,272 276,254 282,244 Z"
+            fill="rgba(255,255,255,0.03)" stroke="rgba(160,174,192,0.45)" stroke-width="1.5"/>
+      <!-- ствол -->
+      <path d="M 290,276 C 292,290 288,300 280,310" fill="none" stroke="rgba(160,174,192,0.45)" stroke-width="3" stroke-linecap="round"/>
+      <!-- извилины -->
+      <g fill="none" stroke="rgba(160,174,192,0.22)" stroke-width="1.2" clip-path="url(#brainClip)">
+        <path d="M 130,120 C 160,100 180,130 210,108 C 235,92 260,115 285,100"/>
+        <path d="M 115,180 C 150,165 165,195 200,178 C 235,162 255,190 295,172"/>
+        <path d="M 140,230 C 170,212 195,238 225,222 C 250,209 270,228 300,212"/>
+        <path d="M 200,70 C 215,90 240,75 255,95"/>
+        <path d="M 320,130 C 305,150 330,165 318,185"/>
+      </g>
+      <!-- зоны: яркость от реальных чисел -->
+      <g clip-path="url(#brainClip)">
+        <circle cx="190" cy="125" r="86" fill="url(#gHot)">
+          <animate attributeName="r" values="82;90;82" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="160" cy="215" r="62" fill="url(#gWarm)"/>
+      </g>
+      <circle cx="308" cy="256" r="40" fill="url(#gCold)"/>
+      <!-- подписи с выносками -->
+      <g font-size="12" fill="#e2e8f0">
+        <line x1="190" y1="118" x2="78" y2="62" stroke="rgba(160,174,192,0.4)" stroke-width="1"/>
+        <text x="8" y="50" font-weight="700">🔥 ${hot} <tspan font-weight="400" fill="#a0aec0">HOT строк</tspan></text>
+        <text x="8" y="64" font-size="9" fill="#8b9ab8">активное мышление — в каждом промпте</text>
+
+        <line x1="152" y1="222" x2="70" y2="282" stroke="rgba(160,174,192,0.4)" stroke-width="1"/>
+        <text x="8" y="296" font-weight="700">🌡 ${warm} <tspan font-weight="400" fill="#a0aec0">WARM сессий</tspan></text>
+        <text x="8" y="310" font-size="9" fill="#8b9ab8">недавнее — подгружается при продолжении</text>
+
+        <line x1="322" y1="262" x2="396" y2="296" stroke="rgba(160,174,192,0.4)" stroke-width="1"/>
+        <text x="398" y="296" font-weight="700">🧊 ${cold} <tspan font-weight="400" fill="#a0aec0">COLD</tspan></text>
+        <text x="398" y="310" font-size="9" fill="#8b9ab8">глубокий архив</text>
+
+        <text x="356" y="40" font-size="10" fill="#8b9ab8">потоки памяти:</text>
+        <text x="356" y="56" font-size="10" fill="#a0aec0">HOT ⤵ WARM — ${demoted}</text>
+        <text x="356" y="70" font-size="10" fill="#a0aec0">WARM ⤵ COLD</text>
+      </g>
+      <!-- стрелки потоков внутри мозга -->
+      <g fill="none" stroke="rgba(226,232,240,0.35)" stroke-width="1.5" stroke-dasharray="4 4">
+        <path d="M 195,160 C 185,180 175,190 168,200"/>
+        <path d="M 200,235 C 235,250 265,252 285,252"/>
+      </g>
+    </svg>`;
     // Датчик исправлений: дуга-прогресс до консолидации (50)
     const corrPct = Math.min(100, corr/50*100);
     const dash = 2 * Math.PI * 26;
@@ -2582,14 +2680,10 @@ async function loadMemStats() {
       </svg>`;
     grid.innerHTML += `
       <div style="grid-column:1/-1;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:6px">
-        <div style="font-size:12px;color:var(--text-2);margin-bottom:12px">Жизненный цикл памяти (реальные числа сейчас)</div>
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:12px">Мозг памяти — яркость зон от реальных чисел сейчас</div>
         <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:stretch">
-          <div style="flex:1;min-width:300px;display:flex;flex-direction:column;align-items:center">
-            ${tier(tw(hot),  'linear-gradient(135deg,#f56565,#ed8936)', '🔥', 'HOT строк', hot, 'Активная память — в каждом промпте целиком')}
-            ${arrow('демотирование за невостребованность — ' + demoted)}
-            ${tier(tw(warm), 'linear-gradient(135deg,#ed8936,#ecc94b)', '🌡', 'WARM сессий', warm, 'Журналы недавних диалогов — при продолжении темы')}
-            ${arrow('архивация и сжатие')}
-            ${tier(tw(cold), 'linear-gradient(135deg,#4299e1,#63b3ed)', '🧊', 'COLD архивов', cold, 'Старые записи — достаются только поиском')}
+          <div style="flex:1;min-width:300px;display:flex;justify-content:center;align-items:center">
+            ${brainSvg}
           </div>
           <div style="display:flex;flex-direction:column;gap:12px;justify-content:center;min-width:170px">
             <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
@@ -2875,7 +2969,12 @@ async function loadMetrics() {
     } catch(_) {}
 
     // ── Chart 2: Avg score by task type (bar) ────────────────
-    const byType = m.by_type || {};
+    // Берём детальную разбивку (окно 300 записей) — в by_type (окно 50)
+    // редкие типы задач выпадали из графика
+    const detail0 = m.by_type_detail || {};
+    const byType = Object.keys(detail0).length
+      ? Object.fromEntries(Object.entries(detail0).map(([t, d]) => [t, d.avg_score]))
+      : (m.by_type || {});
     const typeKeys = Object.keys(byType);
     const typesEmpty = document.getElementById('chart-types-empty');
     const typesCanvas = document.getElementById('chart-types');

@@ -1025,8 +1025,9 @@ async def api_metrics():
         from freepalp.core.self_improvement.metrics import Evaluator
         ev = Evaluator()
         summary = ev.get_stats_summary()
-        # Добавляем подробную разбивку по типам (исключаем API-ошибки)
-        records = ev.load_recent(100)
+        # Добавляем подробную разбивку по типам (исключаем API-ошибки).
+        # Окно 300: при 100 редкие типы (file_ops, search...) выпадали из графика
+        records = ev.load_recent(300)
         from collections import defaultdict
         by_type_detail: dict = defaultdict(lambda: {"count": 0, "errors": 0, "scores": [], "elapsed": [], "iterations": []})
         for r in records:
