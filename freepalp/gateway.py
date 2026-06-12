@@ -874,17 +874,25 @@ async def api_memory_search(q: str = ""):
 
 
 @app.get("/api/memory/graph")
-async def api_memory_graph(max_nodes: int = 120, threshold: float = 0.35):
+async def api_memory_graph(max_nodes: int = 120, threshold: float = 0.35,
+                           upto: int = 0):
     """Честный граф памяти: узлы — реальные записи vector_store, рёбра —
     косинусная близость их НАСТОЯЩИХ векторов (тех же, которыми ищет память).
-    Ничего не рисуется «для красоты» — только фактические данные индекса."""
+    Ничего не рисуется «для красоты» — только фактические данные индекса.
+
+    upto > 0 — «машина времени»: граф по первым upto записям (индекс
+    append-only хронологический), для прокрутки развития памяти."""
     import math
     try:
         idx_path = Path(__file__).parent / "memory" / "vector_index.json"
         if not idx_path.exists():
             return {"ok": False, "error": "vector_index.json не найден"}
         data = json.loads(idx_path.read_text(encoding="utf-8"))
-        entries = (data.get("entries") or [])[-max_nodes:]   # свежие важнее
+        all_entries = data.get("entries") or []
+        if upto > 0:
+            entries = all_entries[:upto][-max_nodes:]   # срез истории
+        else:
+            entries = all_entries[-max_nodes:]          # свежие важнее
 
         nodes = []
         vecs = []

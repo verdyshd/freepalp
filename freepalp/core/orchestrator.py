@@ -768,8 +768,26 @@ class Orchestrator:
             pass
 
     async def _auto_improve_and_restart(self) -> None:
-        """Авто-улучшение + перезапуск сервера если версия активирована."""
+        """Авто-улучшение + перезапуск сервера если версия активирована.
+
+        Ждёт, пока пользователь не активен ≥90с (SI конкурировал за квоту и CPU
+        с живыми запросами — наблюдалось: held-out валидация на 15 задачах
+        во время ответа пользователю). Максимум ждём 30 минут, потом пропуск —
+        счётчик задач снова вызовет SI позже."""
         try:
+            try:
+                from freepalp import gateway as _gw
+                deadline = time.time() + 1800
+                while time.time() < deadline:
+                    idle = time.time() - getattr(_gw, "_last_activity", 0)
+                    if idle >= 90:
+                        break
+                    await asyncio.sleep(30)
+                else:
+                    _p("[Self-improve] Пользователь активен 30 мин — SI отложен")
+                    return
+            except ImportError:
+                pass  # CLI-режим — ждать нечего
             report = await self.self_improvement.run()
             if report.get("version_activated"):
                 ver = report.get("version_proposed", "?")
