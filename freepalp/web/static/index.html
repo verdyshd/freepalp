@@ -1171,6 +1171,14 @@
         </div>
         <div id="versions-list" style="font-size:11px;color:var(--text-2)"></div>
       </div>
+      <!-- Версии кода системы (git) — отдельно от версий промптов -->
+      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+        <div class="rp-title">🛠 Версии системы (код)</div>
+        <div style="font-size:10px;color:var(--text-3);margin-bottom:6px">
+          История изменений исходников FreePalp (git). Самомодификации агента коммитятся автоматически.
+        </div>
+        <div id="sys-versions-list" style="font-size:11px;color:var(--text-2);line-height:1.7">Загрузка...</div>
+      </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn primary" onclick="triggerImprove()">🧬 Самоулучшение</button>
         <button class="btn" onclick="triggerMemClean()">🧹 Очистить память</button>
@@ -2620,6 +2628,26 @@ async function loadSettings() {
       <b>Задач в сессии:</b> ${state.tasks}
     `;
   } catch(e) {}
+  loadSystemVersions();
+}
+
+async function loadSystemVersions() {
+  const el = document.getElementById('sys-versions-list');
+  if (!el) return;
+  try {
+    const d = await (await fetch('/api/system/versions')).json();
+    if (!d.ok || !d.commits?.length) {
+      el.innerHTML = '⚠️ ' + (d.error || 'история пуста');
+      return;
+    }
+    el.innerHTML = d.commits.map(c => `
+      <div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <code style="color:var(--accent);flex-shrink:0">${c.hash}</code>
+        <span style="color:var(--text-3);flex-shrink:0">${c.date}</span>
+        ${c.tag ? `<span style="color:var(--accent-3);flex-shrink:0">${escapeHtml(c.tag)}</span>` : ''}
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.message)}</span>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '⚠️ ' + e.message; }
 }
 
 async function triggerImprove() {

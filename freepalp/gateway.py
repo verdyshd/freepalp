@@ -965,6 +965,39 @@ async def api_improve():
         return {"error": str(e)}
 
 
+@app.get("/api/system/versions")
+async def api_system_versions():
+    """Версии кода самой системы (git-история) — не путать с версиями промптов.
+
+    Версии промптов (v1.0.x) ведёт самоулучшение; здесь — история изменений
+    исходников FreePalp (orchestrator, gateway, агенты и т.д.)."""
+    import subprocess
+    from pathlib import Path as _Path
+    repo_root = str(_Path(__file__).parent.parent)
+    try:
+        r = subprocess.run(
+            ["git", "log", "--max-count=30",
+             "--pretty=format:%h|%ad|%d|%s", "--date=format:%Y-%m-%d %H:%M"],
+            capture_output=True, cwd=repo_root, timeout=10,
+        )
+        if r.returncode != 0:
+            return {"ok": False, "error": r.stderr.decode("utf-8", errors="replace")}
+        commits = []
+        for line in r.stdout.decode("utf-8", errors="replace").splitlines():
+            parts = line.split("|", 3)
+            if len(parts) == 4:
+                commits.append({
+                    "hash": parts[0], "date": parts[1],
+                    "tag": parts[2].strip().strip("()").replace("tag: ", ""),
+                    "message": parts[3],
+                })
+        return {"ok": True, "commits": commits}
+    except FileNotFoundError:
+        return {"ok": False, "error": "git не установлен"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @app.get("/api/improve/status")
 async def api_improve_status():
     """Статус само-улучшения: текущая версия, кандидаты, история версий."""

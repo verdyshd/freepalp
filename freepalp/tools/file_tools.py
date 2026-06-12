@@ -227,6 +227,26 @@ def list_source(path: str = ".") -> dict:
         return {"ok": False, "error": str(e)}
 
 
+def _git_autocommit(abs_path, rel_path: str) -> None:
+    """Автокоммит самомодификации в git (тихо; если git нет — просто пропускаем).
+
+    Каждое изменение исходников агентом попадает в историю версий системы,
+    видимую в /api/system/versions и через `git log`."""
+    import subprocess
+    from pathlib import Path as _P
+    repo_root = str(_P(__file__).parent.parent.parent)  # корень репозитория
+    try:
+        subprocess.run(["git", "add", str(abs_path)],
+                       capture_output=True, cwd=repo_root, timeout=10)
+        subprocess.run(
+            ["git", "-c", "user.name=FreePalp", "-c", "user.email=freepalp@local",
+             "commit", "-m", f"self-mod: {rel_path} (изменено агентом)"],
+            capture_output=True, cwd=repo_root, timeout=15,
+        )
+    except Exception:
+        pass  # отсутствие git не должно ломать запись файла
+
+
 def write_source(path: str, content: str) -> dict:
     """
     Записывает/изменяет исходный файл системы FreePalp.
@@ -253,6 +273,7 @@ def write_source(path: str, content: str) -> dict:
         safe.parent.mkdir(parents=True, exist_ok=True)
         safe.write_text(content, encoding="utf-8")
         _read_source_cached.cache_clear()  # инвалидируем кэш при записи
+        _git_autocommit(safe, path)        # автолог самомодификаций (см. /api/system/versions)
         return {"ok": True, "path": path, "size": len(content),
                 "message": "Файл обновлён. Перезапусти сервер для применения изменений."}
     except PermissionError as e:
