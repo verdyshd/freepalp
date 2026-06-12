@@ -220,6 +220,43 @@ def _detect_system_error_answer(answer: str) -> Optional[str]:
     return None
 
 
+def _detect_leaked_tool_call(answer: str) -> Optional[str]:
+    """Финальный ответ содержит сырой протокол tool calls — неисполненный вызов
+    или маркер __NATIVE_TOOL__. Наблюдалось на экзамене: последний write_file
+    не исполнился, его tool_call-блок стал «ответом», критик дал 0.96."""
+    a = answer or ""
+    if "__NATIVE_TOOL__" in a or "```tool_call" in a:
+        return (
+            "Финальный ответ содержит сырой tool_call-блок — это неисполненная "
+            "команда, а не ответ пользователю. Заверши начатые действия "
+            "инструментами и дай человеку текстовый итог: что сделано, где лежит."
+        )
+    return None
+
+
+# Инструменты, создающие/меняющие файлы — их результаты нельзя терять при ретрае
+_WORK_TOOLS = {"write_file", "write_source", "create_dir", "copy_file"}
+
+
+def _preserve_done_work_hint(tools_used: list) -> Optional[str]:
+    """Если попытка провалилась ПОСЛЕ реальной tool-работы — ретрай должен
+    продолжить с места провала, а не пересоздавать всё с нуля (наблюдалось:
+    groq создал каркас, финальный вызов упал в 429, работа выброшена)."""
+    done = []
+    for t in tools_used or []:
+        if t.get("tool") in _WORK_TOOLS:
+            arg = t.get("args", {}) if isinstance(t.get("args"), dict) else {}
+            path = arg.get("path") or ""
+            done.append(f"{t['tool']}({path})" if path else t["tool"])
+    if not done:
+        return None
+    return (
+        "Прошлая попытка УЖЕ выполнила часть работы: " + ", ".join(done[:10]) +
+        ". НЕ пересоздавай это с нуля — проверь сделанное, доделай недостающее "
+        "и дай финальный текстовый ответ."
+    )
+
+
 # Вопрос об идентичности агента + чужие бренды, которыми слабые модели себя называют
 _IDENTITY_QUESTION_RE = _re.compile(
     r"(как тебя зовут|кто ты\b|ты кто\b|какая ты модель|тво[её] имя|представься|"
@@ -548,6 +585,15 @@ class Orchestrator:
             sys_error = _detect_system_error_answer(worker_msg.content)
             if sys_error:
                 cheap_issues.append(sys_error)
+            leaked_call = _detect_leaked_tool_call(worker_msg.content)
+            if leaked_call:
+                cheap_issues.append(leaked_call)
+            # Провал после реальной работы → ретраю передаём список сделанного,
+            # чтобы он продолжил, а не начинал с нуля
+            if (sys_error or leaked_call):
+                work_hint = _preserve_done_work_hint(tools_used)
+                if work_hint:
+                    cheap_issues.append(work_hint)
             unfulfilled = _detect_unfulfilled_file_request(request.user_input, worker_msg.content, tools_used)
             if unfulfilled:
                 cheap_issues.append(unfulfilled)

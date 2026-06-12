@@ -113,6 +113,12 @@
       z-index: 100;
     }
     .nav-btn:hover .tooltip { opacity: 1; }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    /* Анимированный аватар, пока ассистент пишет */
+    .msg-avatar img.avatar-anim {
+      width: 26px; height: 26px; display: block;
+    }
 
     .sidebar-bottom { margin-top: auto; }
 
@@ -861,24 +867,30 @@
   </div>
 
   <button class="nav-btn active" onclick="switchPanel('chat')" id="nav-chat">
-    💬 <span class="tooltip">Чат</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    <span class="tooltip">Чат</span>
   </button>
   <button class="nav-btn" onclick="switchPanel('providers')" id="nav-providers">
-    🌐 <span class="tooltip">Провайдеры</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    <span class="tooltip">Провайдеры</span>
   </button>
   <button class="nav-btn" onclick="switchPanel('memory')" id="nav-memory">
-    🧠 <span class="tooltip">Память</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+    <span class="tooltip">Память</span>
   </button>
   <button class="nav-btn" onclick="switchPanel('tools')" id="nav-tools">
-    🔧 <span class="tooltip">Инструменты</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    <span class="tooltip">Инструменты</span>
   </button>
   <button class="nav-btn" onclick="switchPanel('metrics')" id="nav-metrics">
-    📊 <span class="tooltip">Метрики</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+    <span class="tooltip">Метрики</span>
   </button>
 
   <div class="sidebar-bottom">
     <button class="nav-btn" onclick="switchPanel('settings')" id="nav-settings">
-      ⚙️ <span class="tooltip">Настройки</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span class="tooltip">Настройки</span>
     </button>
   </div>
 </nav>
@@ -1050,6 +1062,7 @@
     <div class="memory-tabs">
       <div class="mem-tab active" onclick="switchMemTab('hot', this)">HOT память</div>
       <div class="mem-tab" onclick="switchMemTab('stats', this)">Статистика</div>
+      <div class="mem-tab" onclick="switchMemTab('graph', this)">Связи</div>
       <div class="mem-tab" onclick="switchMemTab('search', this)">Поиск</div>
     </div>
     <div class="memory-content">
@@ -1067,6 +1080,19 @@
           <div style="color:var(--text-3)">Загрузка...</div>
         </div>
       </div>
+      <!-- GRAPH: честные связи памяти -->
+      <div id="mem-graph" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;color:var(--text-3)">
+            Узлы — реальные записи векторного индекса памяти; рёбра — косинусная близость
+            их настоящих векторов (те же данные, которыми память ищет). Это не картинка.
+          </span>
+          <button class="btn" onclick="loadMemGraph()">↻</button>
+        </div>
+        <div style="display:flex;gap:14px;font-size:11px;color:var(--text-3);margin-bottom:8px" id="mem-graph-legend"></div>
+        <canvas id="mem-graph-canvas" style="width:100%;height:520px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius)"></canvas>
+        <div id="mem-graph-tip" style="position:fixed;display:none;max-width:380px;background:var(--bg-3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--text);pointer-events:none;z-index:200"></div>
+      </div>
       <!-- SEARCH -->
       <div id="mem-search" style="display:none">
         <div class="search-bar">
@@ -1075,6 +1101,8 @@
           <button class="btn primary" onclick="searchMemory()">Найти</button>
         </div>
         <div id="mem-search-results" style="font-size:13px;color:var(--text-3)">Введите запрос для поиска</div>
+        <!-- Архивы: реальные файлы archive/ + таймлайн сессий по дням -->
+        <div id="mem-archives" style="margin-top:18px"></div>
       </div>
     </div>
   </section>
@@ -1543,6 +1571,7 @@ async function sendMessage() {
     if (!finalData || finalData.type === 'error') {
       appendMsg('assistant', '❌ ' + (finalData?.text || 'Ошибка соединения'));
     } else {
+      playBubbles();   // 🫧 ответ готов
       const data = finalData;
       appendMsg('assistant', data.answer, {
         model:      data.model,
@@ -1563,6 +1592,7 @@ async function sendMessage() {
         renderChatList();
       }
       updateSessionStats(data);
+      loadTokenBudget();   // мгновенно показать списанные токены/квоты
     }
   } catch(e) {
     removeMsg(progressId);
@@ -1585,6 +1615,36 @@ const STAGE_ICON = {
   tool:     '🔧', error:   '❌',
 };
 
+// 🫧 Звук пузырей по завершении ответа — синтез WebAudio, без внешних файлов
+let _audioCtx = null;
+function playBubbles() {
+  try {
+    _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+    // 4 пузырька: короткий синус со взлётом частоты и быстрым затуханием
+    const bubbles = [
+      { t: 0.00, f: 420, d: 0.09 },
+      { t: 0.09, f: 560, d: 0.08 },
+      { t: 0.17, f: 700, d: 0.07 },
+      { t: 0.26, f: 920, d: 0.10 },
+    ];
+    for (const b of bubbles) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const t0 = ctx.currentTime + b.t;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(b.f, t0);
+      osc.frequency.exponentialRampToValueAtTime(b.f * 2.2, t0 + b.d); // «бульк» вверх
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.12, t0 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + b.d);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0); osc.stop(t0 + b.d + 0.02);
+    }
+  } catch (e) { /* нет аудио — молча пропускаем */ }
+}
+
 function appendProgress() {
   const msgs = document.getElementById('messages');
   const id = 'msg-' + Date.now();
@@ -1592,7 +1652,7 @@ function appendProgress() {
   div.id = id;
   div.className = 'msg-row assistant';
   div.innerHTML = `
-    <div class="msg-avatar">🐙</div>
+    <div class="msg-avatar"><img class="avatar-anim" src="/static/octopus-anim.png" alt="🐙"></div>
     <div class="msg-content">
       <div class="progress-panel" id="pp-${id}">
         <div class="progress-steps" id="ps-${id}"></div>
@@ -2225,8 +2285,150 @@ function switchMemTab(tab, el) {
   el.classList.add('active');
   document.getElementById('mem-hot').style.display    = tab === 'hot'    ? 'block' : 'none';
   document.getElementById('mem-stats').style.display  = tab === 'stats'  ? 'block' : 'none';
+  document.getElementById('mem-graph').style.display  = tab === 'graph'  ? 'block' : 'none';
   document.getElementById('mem-search').style.display = tab === 'search' ? 'block' : 'none';
   if (tab === 'stats') loadMemStats();
+  if (tab === 'graph') loadMemGraph();
+  if (tab === 'search') loadMemArchives();
+}
+
+// ════════════════════════════════════════════════
+// ГРАФ ПАМЯТИ — force-layout по реальным векторным связям
+// ════════════════════════════════════════════════
+const LAYER_COLORS = { semantic: '#63b3ed', episodic: '#9f7aea', procedural: '#48bb78' };
+let _graphState = null;
+
+async function loadMemGraph() {
+  const canvas = document.getElementById('mem-graph-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth, H = 520;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('Загрузка реальных связей...', 20, 30);
+
+  const d = await fetch('/api/memory/graph').then(r => r.json());
+  if (!d.ok) { ctx.clearRect(0,0,W,H); ctx.fillText('Ошибка: ' + d.error, 20, 30); return; }
+
+  // Легенда с реальными количествами
+  const counts = {};
+  d.nodes.forEach(n => counts[n.layer] = (counts[n.layer]||0)+1);
+  document.getElementById('mem-graph-legend').innerHTML =
+    Object.entries(LAYER_COLORS).map(([l,c]) =>
+      `<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:4px"></span>${l}: ${counts[l]||0}</span>`
+    ).join('') + `<span style="margin-left:auto">записей в индексе: ${d.total_entries} · связей ≥${d.threshold}: ${d.edges.length}</span>`;
+
+  // Инициализация позиций: связные узлы стартуют ближе (по кругу + jitter)
+  const N = d.nodes.length;
+  const nodes = d.nodes.map((n, i) => ({
+    ...n,
+    x: W/2 + Math.cos(2*Math.PI*i/N) * Math.min(W,H)*0.35 + (Math.random()-0.5)*40,
+    y: H/2 + Math.sin(2*Math.PI*i/N) * Math.min(W,H)*0.35 + (Math.random()-0.5)*40,
+    vx: 0, vy: 0,
+    deg: 0,
+  }));
+  d.edges.forEach(e => { nodes[e.a].deg++; nodes[e.b].deg++; });
+
+  // Force layout: 250 итераций — отталкивание с пределом радиуса, притяжение
+  // по рёбрам ∝ весу, мягкая гравитация к центру (иначе всё липнет к краям)
+  for (let it = 0; it < 250; it++) {
+    const k = 1 - it/270;
+    for (let i = 0; i < N; i++) for (let j = i+1; j < N; j++) {
+      const a = nodes[i], b = nodes[j];
+      let dx = a.x-b.x, dy = a.y-b.y;
+      let dist2 = dx*dx + dy*dy + 0.01;
+      if (dist2 > 8000) continue;            // отталкиваются только соседи
+      const rep = 220 / dist2 * k;
+      a.vx += dx*rep; a.vy += dy*rep; b.vx -= dx*rep; b.vy -= dy*rep;
+    }
+    for (const e of d.edges) {
+      const a = nodes[e.a], b = nodes[e.b];
+      const dx = b.x-a.x, dy = b.y-a.y;
+      const att = 0.02 * e.w * k;
+      a.vx += dx*att; a.vy += dy*att; b.vx -= dx*att; b.vy -= dy*att;
+    }
+    for (const n of nodes) {
+      n.vx += (W/2 - n.x) * 0.006 * k;       // гравитация к центру
+      n.vy += (H/2 - n.y) * 0.006 * k;
+      n.x = Math.max(14, Math.min(W-14, n.x + n.vx));
+      n.y = Math.max(14, Math.min(H-14, n.y + n.vy));
+      n.vx *= 0.5; n.vy *= 0.5;
+    }
+  }
+
+  function draw(highlight) {
+    ctx.clearRect(0, 0, W, H);
+    for (const e of d.edges) {
+      const a = nodes[e.a], b = nodes[e.b];
+      ctx.strokeStyle = `rgba(160,174,192,${0.08 + e.w*0.35})`;
+      ctx.lineWidth = e.w * 1.6;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    for (const n of nodes) {
+      const r = 3 + Math.min(7, n.deg * 0.8);
+      ctx.fillStyle = LAYER_COLORS[n.layer] || '#a0aec0';
+      ctx.globalAlpha = highlight && highlight !== n ? 0.35 : 1;
+      ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 2*Math.PI); ctx.fill();
+      ctx.globalAlpha = 1;
+      if (highlight === n) {
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(n.x, n.y, r+2, 0, 2*Math.PI); ctx.stroke();
+      }
+    }
+  }
+  draw(null);
+  _graphState = { nodes, draw };
+
+  // Hover: показать полный текст реальной записи
+  const tip = document.getElementById('mem-graph-tip');
+  canvas.onmousemove = (ev) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    let hit = null;
+    for (const n of nodes) {
+      if ((n.x-mx)**2 + (n.y-my)**2 < 130) { hit = n; break; }
+    }
+    if (hit) {
+      tip.style.display = 'block';
+      tip.style.left = (ev.clientX + 14) + 'px';
+      tip.style.top  = (ev.clientY + 14) + 'px';
+      tip.innerHTML = `<span style="color:${LAYER_COLORS[hit.layer]}">[${hit.layer}]</span> ${escHtml(hit.text)}`;
+    } else {
+      tip.style.display = 'none';
+    }
+    draw(hit);
+  };
+  canvas.onmouseleave = () => { tip.style.display = 'none'; draw(null); };
+}
+
+// ════════════════════════════════════════════════
+// АРХИВЫ под поиском — реальные файлы + таймлайн сессий
+// ════════════════════════════════════════════════
+async function loadMemArchives() {
+  const el = document.getElementById('mem-archives');
+  if (!el) return;
+  try {
+    const d = await fetch('/api/memory/archives').then(r => r.json());
+    if (!d.ok) { el.innerHTML = ''; return; }
+    const maxS = Math.max(1, ...d.timeline.map(t => t.sessions));
+    const bars = d.timeline.map(t => `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px" title="${t.date}: ${t.sessions} сессий">
+        <div style="width:14px;height:${8 + 52*t.sessions/maxS}px;background:linear-gradient(180deg,var(--accent),rgba(99,179,237,.25));border-radius:3px 3px 0 0"></div>
+        <div style="font-size:8px;color:var(--text-3);writing-mode:vertical-rl">${t.date.slice(5)}</div>
+      </div>`).join('');
+    const archCards = d.archives.map(a => `
+      <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;min-width:130px">
+        <div style="font-size:11px;color:var(--accent)">🗄 ${a.name}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:3px">${a.lines} записей · ${(a.size/1024).toFixed(1)} КБ</div>
+      </div>`).join('');
+    el.innerHTML = `
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:8px">📦 Архивы (реальные файлы памяти, по порядку)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${archCards || '<span style="font-size:11px;color:var(--text-3)">пока пусто</span>'}</div>
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:6px">Сессии по дням (${d.timeline.reduce((s,t)=>s+t.sessions,0)} всего)</div>
+      <div style="display:flex;align-items:flex-end;gap:5px;padding:10px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto">${bars}</div>`;
+  } catch(e) { el.innerHTML = ''; }
 }
 
 async function loadMemory() {
@@ -3003,6 +3205,25 @@ _initFirstChat();
 loadSidebarData();
 loadStatus();
 _initAttachments();
+
+// ── Реал-тайм правой панели ──────────────────────────────
+// Квоты/доступные токены — каждые 15с; активные модели — каждые 60с
+setInterval(loadTokenBudget, 15000);
+setInterval(async () => {
+  try {
+    const data = await fetch('/api/models').then(r => r.json());
+    const list = document.getElementById('rp-models');
+    if (!list || !data.models) return;
+    const top4 = data.models.slice(0, 4);
+    const extra = data.models.length > 4 ? `<div style="font-size:11px;color:var(--text-3);padding:4px 10px">+${data.models.length - 4} моделей</div>` : '';
+    list.innerHTML = top4.map(m => `
+      <div class="model-item">
+        <div class="dot"></div>
+        <div class="name" title="${m.model_id}">${m.name}</div>
+        <div class="provider">${m.provider}</div>
+      </div>`).join('') + extra;
+  } catch(e) {}
+}, 60000);
 </script>
 </body>
 </html>

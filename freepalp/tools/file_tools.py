@@ -63,9 +63,31 @@ def read_file(path: str) -> dict:
         return {"ok": False, "error": f"Ошибка чтения: {e}"}
 
 
+# Заглушки вместо контента: модель «копирует» файл, печатая плейсхолдер.
+# Наблюдалось: «копии» игр по 39 байт с содержимым «<!-- полный код файла -->».
+import re as _re
+_STUB_RE = _re.compile(
+    r"(полный код|содержимое файла|код файла|вставь(те)? код|full code|"
+    r"code here|content here|insert code|\.\.\.\s*$)", _re.IGNORECASE)
+
+
+def _looks_like_stub(content: str) -> bool:
+    stripped = (content or "").strip()
+    if not stripped:
+        return True
+    # Короткий контент, состоящий из плейсхолдер-фразы (в т.ч. в комментарии)
+    return len(stripped) < 120 and bool(_STUB_RE.search(stripped))
+
+
 def write_file(path: str, content: str) -> dict:
     """Записывает файл в sandbox. Создаёт директории если нужно."""
     try:
+        if _looks_like_stub(content):
+            return {"ok": False, "error": (
+                "Содержимое выглядит как заглушка-плейсхолдер, а не реальный "
+                "контент. Если нужно скопировать существующий файл — используй "
+                "copy_file. Если создаёшь новый — передай его ПОЛНОЕ содержимое."
+            )}
         safe = _safe_path(path)
         safe.parent.mkdir(parents=True, exist_ok=True)
         safe.write_text(content, encoding="utf-8")
@@ -75,6 +97,29 @@ def write_file(path: str, content: str) -> dict:
         return {"ok": False, "error": str(e)}
     except Exception as e:
         return {"ok": False, "error": f"Ошибка записи: {e}"}
+
+
+def copy_file(src: str, dst: str) -> dict:
+    """Детерминированная копия файла внутри sandbox — байт в байт, без участия
+    LLM (перепечатка контента моделью даёт заглушки и потери)."""
+    try:
+        import shutil
+        safe_src = _safe_path(src)
+        safe_dst = _safe_path(dst)
+        if not safe_src.exists():
+            return {"ok": False, "error": f"Источник не найден: {src}"}
+        if safe_src.is_dir():
+            return {"ok": False, "error": "Источник — директория; копируй файлы по одному"}
+        safe_dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(safe_src, safe_dst)
+        _read_cached.cache_clear()
+        return {"ok": True,
+                "copied": str(safe_dst.relative_to(SANDBOX_ROOT)),
+                "size": safe_dst.stat().st_size}
+    except PermissionError as e:
+        return {"ok": False, "error": str(e)}
+    except Exception as e:
+        return {"ok": False, "error": f"Ошибка копирования: {e}"}
 
 
 def list_files(path: str = ".") -> dict:
@@ -303,6 +348,11 @@ FILE_TOOLS = {
         "fn": delete_file,
         "description": "Удаляет файл из sandbox. Аргумент: path (str)",
         "args": ["path"],
+    },
+    "copy_file": {
+        "fn": copy_file,
+        "description": "Копирует файл внутри sandbox байт в байт (НЕ перепечатывай содержимое через write_file — используй этот инструмент). Аргументы: src (str), dst (str)",
+        "args": ["src", "dst"],
     },
     "create_dir": {
         "fn": create_dir,

@@ -873,6 +873,76 @@ async def api_memory_search(q: str = ""):
         return {"results": [], "error": str(e)}
 
 
+@app.get("/api/memory/graph")
+async def api_memory_graph(max_nodes: int = 120, threshold: float = 0.35):
+    """Честный граф памяти: узлы — реальные записи vector_store, рёбра —
+    косинусная близость их НАСТОЯЩИХ векторов (тех же, которыми ищет память).
+    Ничего не рисуется «для красоты» — только фактические данные индекса."""
+    import math
+    try:
+        idx_path = Path(__file__).parent / "memory" / "vector_index.json"
+        if not idx_path.exists():
+            return {"ok": False, "error": "vector_index.json не найден"}
+        data = json.loads(idx_path.read_text(encoding="utf-8"))
+        entries = (data.get("entries") or [])[-max_nodes:]   # свежие важнее
+
+        nodes = []
+        vecs = []
+        for e in entries:
+            v = e.get("vec") or []
+            norm = math.sqrt(sum(x * x for x in v)) or 1.0
+            vecs.append([x / norm for x in v])
+            nodes.append({
+                "id":    e.get("id"),
+                "text":  (e.get("text") or "")[:120],
+                "layer": e.get("layer") or "episodic",
+            })
+
+        edges = []
+        for i in range(len(vecs)):
+            for j in range(i + 1, len(vecs)):
+                sim = sum(a * b for a, b in zip(vecs[i], vecs[j]))
+                if sim >= threshold:
+                    edges.append({"a": i, "b": j, "w": round(sim, 3)})
+        # Не топим браузер: максимум 400 самых сильных рёбер
+        edges.sort(key=lambda e: -e["w"])
+        return {"ok": True, "nodes": nodes, "edges": edges[:400],
+                "total_entries": len(data.get("entries") or []),
+                "threshold": threshold}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/memory/archives")
+async def api_memory_archives():
+    """Реальные архивы памяти: файлы archive/ + сессии по дням (sessions/*.jsonl)."""
+    try:
+        mem_dir = Path(__file__).parent / "memory"
+        archives = []
+        arch_dir = mem_dir / "archive"
+        if arch_dir.exists():
+            for f in sorted(arch_dir.glob("*.md")):
+                txt = f.read_text(encoding="utf-8", errors="replace")
+                archives.append({
+                    "name":  f.name,
+                    "lines": sum(1 for l in txt.splitlines() if l.strip()),
+                    "size":  f.stat().st_size,
+                })
+        # Сессии по дням — для таймлайна
+        days: dict = {}
+        sess_dir = mem_dir / "sessions"
+        if sess_dir.exists():
+            for f in sess_dir.glob("*.jsonl"):
+                day = f.name[:8]   # YYYYMMDD
+                if len(day) == 8 and day.isdigit():
+                    days[day] = days.get(day, 0) + 1
+        timeline = [{"date": f"{d[:4]}-{d[4:6]}-{d[6:]}", "sessions": n}
+                    for d, n in sorted(days.items())]
+        return {"ok": True, "archives": archives, "timeline": timeline}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @app.post("/api/memory/clean")
 async def api_memory_clean():
     try:
