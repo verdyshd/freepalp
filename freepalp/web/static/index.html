@@ -802,6 +802,17 @@
     }
     @keyframes caretBlink { 50% { opacity: 0; } }
 
+    /* Кнопки превью артефактов под сообщением */
+    .artifact-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .artifact-btn {
+      font-size: 12px; padding: 5px 12px;
+      background: linear-gradient(135deg, rgba(99,179,237,.16), rgba(159,122,234,.12));
+      border: 1px solid var(--border-glow, var(--border));
+      color: var(--accent); border-radius: 8px; cursor: pointer;
+      transition: var(--transition);
+    }
+    .artifact-btn:hover { background: rgba(99,179,237,.28); color: var(--text); }
+
     /* ══ Пометки / sticky notes ══ */
     .note-card {
       background: #1e2235;
@@ -1015,6 +1026,7 @@
             <span class="hint-chip" onclick="fillInput('покажи список провайдеров и моделей')">🌐 Провайдеры</span>
             <span class="hint-chip" onclick="fillInput('что в HOT памяти?')">🧠 Память</span>
             <span class="hint-chip" onclick="fillInput('покажи метрики за все задачи')">📊 Метрики</span>
+            <span class="hint-chip" onclick="openArtifactGallery()" style="border-color:rgba(99,179,237,.3);color:var(--accent)">🎨 Артефакты</span>
           </div>
         </div>
       </div>
@@ -1313,6 +1325,22 @@
   </section>
 
 </main>
+
+<!-- Модал превью артефактов -->
+<div id="artifact-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center">
+  <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:14px;width:min(92vw,1000px);height:min(88vh,760px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;color:var(--text);font-weight:600">🎨 <span id="artifact-title">Артефакт</span></div>
+      <div style="display:flex;gap:8px">
+        <a id="artifact-open" href="#" target="_blank" class="btn" title="Открыть в новой вкладке">↗ Вкладка</a>
+        <button class="btn" onclick="closeArtifact()">✕ Закрыть</button>
+      </div>
+    </div>
+    <iframe id="artifact-frame" sandbox="allow-scripts allow-pointer-lock"
+            style="flex:1;border:0;border-radius:0 0 14px 14px;background:#fff;width:100%"></iframe>
+    <div id="artifact-gallery" style="display:none;flex:1;overflow-y:auto;padding:16px;border-radius:0 0 14px 14px"></div>
+  </div>
+</div>
 
 <script>
 // ════════════════════════════════════════════════
@@ -1664,6 +1692,7 @@ async function sendMessage() {
         tokens_out: data.tokens_out,
         cost_usd:   data.cost_usd,
         tool_calls: data.tool_calls || [],
+        artifacts:  data.artifacts || [],
       });
       spawnBubblesAt(_doneId);
       if (data.history_len !== undefined) {
@@ -1846,6 +1875,15 @@ function appendMsg(role, text, meta = {}, rawHtml = false) {
     ).join('');
   }
 
+  // Артефакты: кнопки превью созданных HTML/SVG прямо в чате
+  let artifactBtns = '';
+  if (meta.artifacts && meta.artifacts.length > 0) {
+    artifactBtns = '<div class="artifact-bar">' + meta.artifacts.map(p => {
+      const name = p.split('/').pop();
+      return `<button class="artifact-btn" onclick="openArtifact('${encodeURIComponent(p)}','${escHtml(name)}')">▶ ${escHtml(name)}</button>`;
+    }).join('') + '</div>';
+  }
+
   const formattedText = rawHtml ? text : formatText(text);
 
   msgs.innerHTML += `
@@ -1854,6 +1892,7 @@ function appendMsg(role, text, meta = {}, rawHtml = false) {
       <div>
         ${toolBadges}
         <div class="msg-content">${formattedText}</div>
+        ${artifactBtns}
         ${metaHtml}
       </div>
     </div>`;
@@ -3433,6 +3472,51 @@ async function loadSidebarData() {
 // ════════════════════════════════════════════════
 // TOAST
 // ════════════════════════════════════════════════
+// ── Артефакты: превью в iframe ──────────────────────────────
+function openArtifact(encPath, name) {
+  const src = '/api/sandbox/raw?path=' + encPath;
+  document.getElementById('artifact-title').textContent = name || 'Артефакт';
+  document.getElementById('artifact-frame').src = src;
+  document.getElementById('artifact-open').href = src;
+  document.getElementById('artifact-modal').style.display = 'flex';
+  _artifactViewMode(true);
+}
+function closeArtifact() {
+  document.getElementById('artifact-modal').style.display = 'none';
+  document.getElementById('artifact-frame').src = 'about:blank';
+}
+// Открыть в режиме просмотра одного артефакта (iframe виден, галерея скрыта)
+function _artifactViewMode(frame) {
+  document.getElementById('artifact-frame').style.display = frame ? 'block' : 'none';
+  document.getElementById('artifact-gallery').style.display = frame ? 'none' : 'block';
+}
+async function openArtifactGallery() {
+  document.getElementById('artifact-title').textContent = 'Артефакты песочницы';
+  document.getElementById('artifact-modal').style.display = 'flex';
+  _artifactViewMode(false);
+  const g = document.getElementById('artifact-gallery');
+  g.innerHTML = '<div style="color:var(--text-3)">Загрузка...</div>';
+  try {
+    const d = await fetch('/api/sandbox/artifacts').then(r => r.json());
+    if (!d.ok || !d.artifacts.length) {
+      g.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:40px">Пока нет HTML/SVG-артефактов. Попроси «сделай игру на html» — появится здесь.</div>';
+      return;
+    }
+    g.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">' +
+      d.artifacts.map(a => `
+        <div onclick="openArtifact('${encodeURIComponent(a.path)}','${escHtml(a.name)}')"
+             style="background:var(--bg-glass);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:var(--transition)"
+             onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:13px;color:var(--text);font-weight:600">🎨 ${escHtml(a.name)}</div>
+          <div style="font-size:10px;color:var(--text-3);margin-top:5px">${escHtml(a.path)} · ${(a.size/1024).toFixed(1)} КБ</div>
+          <div style="margin-top:8px;font-size:11px;color:var(--accent)">▶ Открыть превью</div>
+        </div>`).join('') + '</div>';
+  } catch(e) { g.innerHTML = `<div style="color:var(--accent-err)">${e.message}</div>`; }
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('artifact-modal').style.display === 'flex') closeArtifact();
+});
+
 function showToast(msg) {
   const t = document.createElement('div');
   t.className = 'toast'; t.textContent = msg;

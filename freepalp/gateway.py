@@ -598,6 +598,14 @@ async def chat_stream(req: ChatRequest):
             tool_calls = [{"tool": m, "ok": True}
                           for msg in result.messages
                           for m in _re.findall(r"TOOL RESULT \[(\w+)\]", msg.content)]
+            # Превьюабельные артефакты, созданные в этой задаче (HTML/SVG)
+            artifacts = []
+            for msg in result.messages:
+                for t in (msg.metadata.get("tools_called") or []):
+                    pth = (t.get("path") or "").replace("\\", "/")
+                    if pth and pth.lower().endswith((".html", ".htm", ".svg")):
+                        artifacts.append(pth)
+            artifacts = list(dict.fromkeys(artifacts))
 
             if result.final_answer and not result.final_answer.startswith("[Ошибка"):
                 new_hist = _conversations.get(conv_id, []) + [
@@ -628,6 +636,7 @@ async def chat_stream(req: ChatRequest):
                 "history_len":     len(_conversations.get(conv_id, [])) // 2,
                 "task_type":       result.messages[0].metadata.get("task_type", "") if result.messages else "",
                 "critic_score":    fb.score if fb else 0.0,
+                "artifacts":       artifacts,
             })
         except asyncio.CancelledError:
             # Пользователь нажал Стоп — фиксируем в истории, чтобы контекст не потерялся
@@ -959,6 +968,48 @@ async def api_mcp_reconnect():
         return {"ok": True, "summary": summary}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/sandbox/artifacts")
+async def api_sandbox_artifacts():
+    """Список превьюабельных артефактов (HTML/SVG) в песочнице — для галереи."""
+    try:
+        from freepalp.tools.file_tools import SANDBOX_ROOT
+        items = []
+        for p in SANDBOX_ROOT.rglob("*"):
+            if p.is_file() and p.suffix.lower() in (".html", ".htm", ".svg"):
+                rel = p.relative_to(SANDBOX_ROOT)
+                items.append({
+                    "name":  p.name,
+                    "path":  str(rel).replace("\\", "/"),
+                    "size":  p.stat().st_size,
+                    "mtime": p.stat().st_mtime,
+                })
+        items.sort(key=lambda x: -x["mtime"])
+        return {"ok": True, "artifacts": items[:60]}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/sandbox/raw")
+async def api_sandbox_raw(path: str):
+    """Отдаёт файл песочницы для превью в iframe. Путь валидируется через
+    _safe_path (никаких выходов за SANDBOX_ROOT). Рендерится в iframe с
+    sandbox=allow-scripts — скрипты игр работают, но изолированы от родителя."""
+    try:
+        from freepalp.tools.file_tools import _safe_path
+        from fastapi.responses import FileResponse
+        p = _safe_path(path)
+        if not p.exists() or not p.is_file():
+            return JSONResponse(status_code=404, content={"error": "Файл не найден"})
+        if p.suffix.lower() not in (".html", ".htm", ".svg", ".css", ".js", ".png",
+                                    ".jpg", ".jpeg", ".gif", ".json", ".txt"):
+            return JSONResponse(status_code=415, content={"error": "Тип не поддержан для превью"})
+        return FileResponse(str(p))
+    except PermissionError:
+        return JSONResponse(status_code=403, content={"error": "Путь вне песочницы"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.get("/api/skills")
