@@ -119,6 +119,16 @@ python test_security.py   # security suite
 
 CI runs both on Ubuntu and Windows (Python 3.11 / 3.12).
 
+## Support
+
+FreePalp is free and MIT-licensed. If it's useful to you, support keeps it going:
+
+- ☕ **Ko-fi:** https://ko-fi.com/&lt;username&gt; <!-- TODO: твой ko-fi -->
+- 🪙 **USDT (TRC-20):** `<YOUR_TRC20_ADDRESS>` <!-- TODO: вставь адрес -->
+- 🪙 **BTC:** `<YOUR_BTC_ADDRESS>` <!-- TODO: вставь адрес -->
+
+Anyone, anywhere can send crypto; it cashes out in Moldova via P2P exchanges.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
