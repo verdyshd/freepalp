@@ -31,8 +31,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/dmitrychaiko/freepalp"
-Repository = "https://github.com/dmitrychaiko/freepalp"
+Homepage = "https://github.com/dmitryverdysh/freepalp"
+Repository = "https://github.com/dmitryverdysh/freepalp"
 
 [project.scripts]
 freepalp = "freepalp.app:cli"

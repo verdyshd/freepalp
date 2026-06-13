@@ -4,7 +4,7 @@
 
 <p align="center">
   <b>Multi-agent AI orchestrator that runs on free models.</b><br>
-  Self-improving · persistent memory · autonomous tool use · WebUI
+  Self-improving · persistent memory · MCP · token streaming · WebUI
 </p>
 
 <p align="center">
@@ -26,8 +26,10 @@ executes via a ReAct tool loop, and a two-tier critic verifies the result —
 cheap deterministic checks first, an LLM critic only when needed.
 
 The differentiator: **corrections accumulate**. When a cheap model fails and a
-stronger one succeeds, the working procedure is distilled into memory so the
-cheap model handles it next time. Free students, paid teachers, growing skill.
+stronger one succeeds, the working procedure is distilled into a reusable
+`SKILL.md` (Claude-Code-compatible) and injected into the prompt next time the
+same kind of task shows up — so the cheap model gets it right on the first try.
+Free students, paid teachers, growing skill.
 
 ```
 User input
@@ -48,7 +50,7 @@ Result
 ## Quick start
 
 ```bash
-git clone https://github.com/dmitrychaiko/freepalp
+git clone https://github.com/dmitryverdysh/freepalp
 cd freepalp
 pip install -e .          # installs the `freepalp` command
 freepalp                  # launches the WebUI at http://localhost:28800
@@ -69,14 +71,27 @@ adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
 
 - **10+ providers, 50+ models** with automatic routing by task type and live
   quota/cooldown awareness.
-- **Local-first** via Ollama — unlimited fallback, fully offline-capable.
+- **Local-first** via Ollama — unlimited fallback, fully offline-capable, and
+  auto-started on launch if you used it before.
+- **Teacher→skill distillation** — successful retries become reusable
+  `SKILL.md` procedures that make the cheap model stronger over time.
+- **MCP client** — connect any [Model Context Protocol](https://modelcontextprotocol.io)
+  server in `config/mcp_servers.json` and its tools appear to the agent
+  automatically (filesystem, GitHub, databases, hundreds of ready servers).
+- **Token streaming** — the final answer types out token-by-token in the WebUI.
+- **Deep research** — one tool does a multi-angle web search, fetches the top
+  pages, and the agent writes a report citing **real** sources (no hallucinated
+  links — a deterministic trigger forces the live search).
+- **Artifacts preview** — HTML the agent creates (games, pages) opens and plays
+  right inside the chat, in a sandboxed iframe.
 - **Persistent memory** — HOT / WARM / COLD tiers + a vector index you can
-  explore as a real graph in the UI.
+  explore as a real graph, plus **FTS5 search over your whole session history**
+  ("when did we discuss X?").
 - **Self-improvement** — proposes prompt versions, gated by a held-out metric,
   auto-rollback on regression.
 - **Reliability over LLM trust** — deterministic detectors catch hallucinated
-  file writes, identity slips, blind rewrites, and leaked tool calls before they
-  reach you.
+  file writes, identity slips, blind rewrites, leaked tool calls, and stub
+  content before they reach you.
 - **WebUI** — chat, live token/quota meters, memory graph, metrics, settings.
 - **Stop button** — interrupt the agent mid-task (UI and Ctrl+C in CLI).
 
