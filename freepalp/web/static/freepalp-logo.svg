@@ -56,14 +56,21 @@
       <circle cx="126" cy="60"  r="4.5" opacity="0.7"/>
       <circle cx="146" cy="72"  r="3.5" opacity="0.7"/>
     </g>
+    <!-- Ключ зажат в завитке-«хвате» кончика щупальца -->
     <g filter="url(#lgSh)">
-      <circle cx="142" cy="143" r="19" fill="none" stroke="url(#lgKey)" stroke-width="10"/>
-      <rect x="136.5" y="159" width="11" height="36" rx="5.5" fill="url(#lgKey)"/>
-      <rect x="144"   y="170" width="16" height="8"  rx="4"   fill="url(#lgKey)"/>
-      <rect x="144"   y="183" width="12" height="8"  rx="4"   fill="url(#lgKey)"/>
+      <circle cx="137" cy="99" r="15" fill="none" stroke="url(#lgKey)" stroke-width="8.5"/>
+      <rect x="132" y="112" width="10" height="48" rx="5" fill="url(#lgKey)"/>
+      <rect x="139" y="128" width="15" height="7.5" rx="3.7" fill="url(#lgKey)"/>
+      <rect x="139" y="143" width="11" height="7.5" rx="3.7" fill="url(#lgKey)"/>
     </g>
-    <path d="M 126,136 A 19,19 0 0 1 157,135" fill="none"
-          stroke="#fff" stroke-opacity="0.35" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M 124,93 A 15,15 0 0 1 149,92" fill="none"
+          stroke="#fff" stroke-opacity="0.35" stroke-width="4" stroke-linecap="round"/>
+    <rect x="132" y="113" width="4" height="44" rx="2" fill="#fff" opacity="0.18"/>
+    <!-- Кончик щупальца поверх кольца — «хват» -->
+    <path d="M 124,85 C 131,79 141,82 143,90 C 145,97 139,104 132,101"
+          fill="none" stroke="url(#lgTent)" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 124,85 C 131,79 141,82 143,90"
+          fill="none" stroke="#ffd2c2" stroke-opacity="0.4" stroke-width="4" stroke-linecap="round"/>
   </g>
 
   <!-- ═══ Словесная часть ═══ -->
