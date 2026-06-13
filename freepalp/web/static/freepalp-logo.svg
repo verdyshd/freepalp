@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 210" width="720" height="210">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 210" width="620" height="210">
   <!--
-    FreePalp ЛОГО (горизонтальный lockup, EN) — для README/сайта/промо.
-    Знак: щупальце-конус с завитком держит ключ. Слово FreePalp + AI ORCHESTRATOR
-    + три чипа-фичи (ReAct Loop / Self-Correction / Multi-Agent).
+    FreePalp ЛОГО — изогнутое щупальце + ключ (моя марка) + ТОЧНЫЕ буквы и линия
+    из freepalp-wordmark.svg (серебристый градиент FreePalp + свечение, сине-
+    фиолетовая акцентная черта), AI ORCHESTRATOR + три чипа.
   -->
   <defs>
     <linearGradient id="lgTent" x1="10%" y1="100%" x2="80%" y2="0%">
@@ -15,18 +15,25 @@
       <stop offset="55%"  stop-color="#f2a93b"/>
       <stop offset="100%" stop-color="#d97e16"/>
     </linearGradient>
-    <linearGradient id="lgWord" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#ff7a59"/>
-      <stop offset="60%"  stop-color="#e0354b"/>
-      <stop offset="100%" stop-color="#b22743"/>
+    <!-- ТОЧНЫЕ градиенты текста из wordmark -->
+    <linearGradient id="wm-textMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#e8eaf0"/>
+      <stop offset="100%" stop-color="#c5cde0"/>
     </linearGradient>
+    <linearGradient id="wm-accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#63b3ed"/>
+      <stop offset="100%" stop-color="#9b87f5"/>
+    </linearGradient>
+    <filter id="wm-textGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#63b3ed" flood-opacity="0.25"/>
+    </filter>
     <filter id="lgSh" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.30"/>
     </filter>
   </defs>
 
-  <!-- ═══ Знак (изогнутое щупальце + ключ в хвате) ═══ -->
-  <g transform="translate(6,4)">
+  <!-- ═══ Знак: изогнутое щупальце + ключ в хвате ═══ -->
+  <g transform="translate(6,5)">
     <g filter="url(#lgSh)">
       <path d="M 26,200 C 18,150 22,100 44,62 C 64,28 106,12 140,26
                C 168,38 182,66 174,92 C 168,113 148,124 131,116
@@ -62,23 +69,26 @@
           fill="none" stroke="#ffd2c2" stroke-opacity="0.4" stroke-width="4" stroke-linecap="round"/>
   </g>
 
-  <!-- ═══ Словесная часть (EN) ═══ -->
-  <g font-family="'Segoe UI', 'Segoe UI Variable Display', system-ui, sans-serif">
-    <text x="214" y="92" font-size="78" font-weight="800" letter-spacing="-2">
-      <tspan fill="#e8edf6">Free</tspan><tspan fill="url(#lgWord)">Palp</tspan>
-    </text>
-    <rect x="218" y="106" width="332" height="3.5" rx="1.75" fill="url(#lgKey)" opacity="0.85"/>
-    <text x="219" y="130" font-size="17" font-weight="600" letter-spacing="5"
-          fill="#8b9ab8">AI ORCHESTRATOR</text>
+  <!-- ═══ Текст — ТОЧНО как в wordmark ═══ -->
+  <text x="212" y="104"
+        font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+        font-size="74" font-weight="800" letter-spacing="-2.5"
+        fill="url(#wm-textMain)" filter="url(#wm-textGlow)">FreePalp</text>
 
-    <!-- Чипы-фичи -->
-    <g font-size="13" font-weight="600">
-      <rect x="218" y="150" width="96" height="26" rx="13" fill="rgba(99,179,237,0.12)" stroke="#63b3ed" stroke-opacity="0.6"/>
-      <text x="266" y="167" fill="#63b3ed" text-anchor="middle">ReAct Loop</text>
-      <rect x="322" y="150" width="124" height="26" rx="13" fill="rgba(159,122,234,0.12)" stroke="#9f7aea" stroke-opacity="0.6"/>
-      <text x="384" y="167" fill="#9f7aea" text-anchor="middle">Self-Correction</text>
-      <rect x="454" y="150" width="104" height="26" rx="13" fill="rgba(72,187,120,0.12)" stroke="#48bb78" stroke-opacity="0.6"/>
-      <text x="506" y="167" fill="#48bb78" text-anchor="middle">Multi-Agent</text>
-    </g>
+  <rect x="214" y="114" width="300" height="3" rx="1.5" fill="url(#wm-accent)" opacity="0.7"/>
+
+  <text x="216" y="140"
+        font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+        font-size="17" font-weight="400" letter-spacing="3.5"
+        fill="#8b9ab8">AI ORCHESTRATOR</text>
+
+  <!-- Чипы — как в wordmark -->
+  <g font-family="'Inter',system-ui,sans-serif" font-size="11" font-weight="600">
+    <rect x="215" y="152" width="74" height="22" rx="6" fill="rgba(99,179,237,0.1)" stroke="rgba(99,179,237,0.4)"/>
+    <text x="252" y="167" text-anchor="middle" fill="#63b3ed">ReAct Loop</text>
+    <rect x="297" y="152" width="110" height="22" rx="6" fill="rgba(155,135,245,0.1)" stroke="rgba(155,135,245,0.4)"/>
+    <text x="352" y="167" text-anchor="middle" fill="#9b87f5">Self-Correction</text>
+    <rect x="416" y="152" width="98" height="22" rx="6" fill="rgba(72,187,120,0.1)" stroke="rgba(72,187,120,0.4)"/>
+    <text x="465" y="167" text-anchor="middle" fill="#48bb78">Multi-Agent</text>
   </g>
 </svg>
