@@ -40,6 +40,55 @@
       --font-mono:    'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
     }
 
+    /* ── Светлая тема (явная или системная) ── */
+    :root[data-theme="light"], :root[data-theme="system"] {
+      --bg:           #f4f6fa;
+      --bg-2:         #ffffff;
+      --bg-3:         #eceff4;
+      --bg-glass:     rgba(20,30,50,0.035);
+      --bg-glass-h:   rgba(20,30,50,0.07);
+      --border:       rgba(20,30,50,0.12);
+      --border-glow:  rgba(49,130,206,0.45);
+      --text:         #1a2233;
+      --text-2:       #46546e;
+      --text-3:       #828ea6;
+      --accent:       #2b6cb0;
+      --accent-2:     #6b5bb5;
+      --accent-3:     #2f855a;
+      --accent-warn:  #c77700;
+      --accent-err:   #d53f3f;
+      --glow:         0 0 16px rgba(43,108,176,0.14);
+      --glow-sm:      0 0 8px rgba(43,108,176,0.10);
+      --shadow-neu:   4px 4px 12px rgba(20,30,50,0.10), -2px -2px 8px rgba(255,255,255,0.7);
+      --shadow-card:  0 4px 20px rgba(20,30,50,0.10);
+    }
+    /* «Системная» = светлая ТОЛЬКО если ОС светлая; иначе остаётся тёмной */
+    @media (prefers-color-scheme: dark) {
+      :root[data-theme="system"] {
+        --bg:#0f1117; --bg-2:#151820; --bg-3:#1c2030;
+        --bg-glass:rgba(255,255,255,0.04); --bg-glass-h:rgba(255,255,255,0.07);
+        --border:rgba(255,255,255,0.08); --border-glow:rgba(99,179,237,0.5);
+        --text:#e8eaf0; --text-2:#8b9ab8; --text-3:#5a6580;
+        --accent:#63b3ed; --accent-2:#7c6fcd; --accent-3:#48bb78;
+        --accent-warn:#f6ad55; --accent-err:#fc8181;
+        --glow:0 0 20px rgba(99,179,237,0.25); --glow-sm:0 0 10px rgba(99,179,237,0.15);
+        --shadow-neu:4px 4px 12px rgba(0,0,0,0.5), -2px -2px 8px rgba(255,255,255,0.03);
+        --shadow-card:0 4px 24px rgba(0,0,0,0.4);
+      }
+    }
+
+    .theme-btn {
+      flex: 1; font-size: 12px; padding: 8px 10px;
+      background: var(--bg-glass); border: 1px solid var(--border);
+      color: var(--text-2); border-radius: var(--radius-sm); cursor: pointer;
+      transition: var(--transition);
+    }
+    .theme-btn:hover { background: var(--bg-glass-h); color: var(--text); }
+    .theme-btn.active {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--bg-glass-h); box-shadow: var(--glow-sm);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -1275,6 +1324,14 @@
       <p>Конфигурация FreePalp</p>
     </div>
     <div style="padding:24px;overflow-y:auto">
+      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+        <div class="rp-title">🎨 Тема</div>
+        <div id="theme-switch" style="display:flex;gap:8px;margin-top:10px">
+          <button class="theme-btn" data-t="light"  onclick="setTheme('light')">☀️ Светлая</button>
+          <button class="theme-btn" data-t="dark"   onclick="setTheme('dark')">🌙 Тёмная</button>
+          <button class="theme-btn" data-t="system" onclick="setTheme('system')">💻 Системная</button>
+        </div>
+      </div>
       <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
         <div class="rp-title">Информация о системе</div>
         <div id="settings-info" style="font-size:13px;color:var(--text-2);line-height:1.8">Загрузка...</div>
@@ -3663,6 +3720,20 @@ window.addEventListener('beforeunload', () => {
     else el.style.color = '';
   }, 1000);
 })();
+
+// ── Темы: применение/сохранение/инициализация ──
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem('freepalp-theme', t); } catch(e) {}
+  document.querySelectorAll('.theme-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.t === t));
+}
+function initTheme() {
+  let t = 'dark';
+  try { t = localStorage.getItem('freepalp-theme') || 'dark'; } catch(e) {}
+  setTheme(t);
+}
+initTheme();
 
 _initFirstChat();
 loadSidebarData();
