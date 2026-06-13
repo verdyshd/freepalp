@@ -55,6 +55,9 @@ MAX_ITERATIONS = 3
 # Простые задачи — максимум 2 попытки (меньше задержек)
 _FAST_TASK_TYPES = frozenset({"coding_small", "text", "shell", "search", "general"})
 _FAST_MAX_ITERATIONS = 2
+# DAG-исполнение сложных задач (декомпозиция + параллельные субагенты)
+_DAG_ENABLED = True
+_DAG_CONCURRENCY = 2     # параллельных узлов max (защита от 429 на free-провайдерах)
 STATE_DIR = (Path(__file__).parent.parent / "state").resolve()
 RULES_FILE = (Path(__file__).parent.parent / "FREEPALP_RULES.md").resolve()
 MAX_BUFFER_SIZE = 10_000  # safeguard against OOM in long‑running sessions
@@ -234,6 +237,26 @@ def _detect_leaked_tool_call(answer: str) -> Optional[str]:
     return None
 
 
+# Интент многофайловости/декомпозиции → форсим DAG-путь (классификатор
+# консервативен и часто недооценивает сложность многофайловых проектов).
+_DECOMPOSE_INTENT_RE = _re.compile(
+    r"(раздел\w+ на файл|несколько файл|каждый в отдельн|отдельны\w+ файл|"
+    r"многофайл|по шагам|пошагов|веб-?приложени|several files|multiple files|"
+    r"split into files|full project|целое приложение)",
+    _re.IGNORECASE)
+_FILENAME_RE = _re.compile(r"\b[\w\-]+\.(html|css|js|py|json|md|ts|tsx|jsx|java|go|rs|cpp|c|h)\b",
+                           _re.IGNORECASE)
+
+
+def _is_decompose_intent(text: str) -> bool:
+    """True, если задача явно многофайловая: спец-фразы ИЛИ ≥2 разных файла."""
+    t = text or ""
+    if _DECOMPOSE_INTENT_RE.search(t):
+        return True
+    files = {m.group(0).lower() for m in _FILENAME_RE.finditer(t)}
+    return len(files) >= 2
+
+
 # Исследовательский интент → форсим deep_research (реальный веб, не память)
 _RESEARCH_INTENT_RE = _re.compile(
     r"(исследу|research|собери информ|сделай обзор|сделай ресёрч|"
@@ -358,6 +381,173 @@ class Orchestrator:
         except OSError as exc:
             logger.error("Failed to create state directory %s: %s", STATE_DIR, exc)
             raise
+
+    # ------------------------------------------------------------------
+    # DAG-исполнение: декомпозиция сложной задачи + параллельные субагенты
+    # ------------------------------------------------------------------
+    async def _execute_dag(self, request, _emit, on_token, start_time):
+        """Планирует задачу через Architect и исполняет DAG: узлы по волнам
+        (зависимости соблюдаются), независимые — параллельно. Каждый узел —
+        фокусный воркер с контекстом того, что создали его зависимости.
+        Возвращает TaskResult или None (если планирование дало ≤1 шаг → обычный путь)."""
+        from ..agents.architect_agent import ArchitectAgent
+        from .models import TaskRequest, TaskResult, AgentMessage, CriticFeedback, TaskStatus
+
+        arch_model = self.router.get_architect_model()
+        if not arch_model:
+            return None
+        await _emit({"type": "stage", "stage": "architect", "text": "Планирую: разбиваю на шаги..."})
+        try:
+            _amsg, graph = await ArchitectAgent(arch_model).plan(request)
+        except Exception:
+            return None
+        nodes = graph.nodes
+        if len(nodes) <= 1:
+            return None   # нечего параллелить — обычный путь надёжнее
+
+        await _emit({"type": "stage", "stage": "plan",
+                     "text": f"План из {len(nodes)} шагов — исполняю (параллельно где можно)"})
+
+        node_by_id = {n.node_id: n for n in nodes}
+        done: dict[str, dict] = {}     # node_id -> {summary, files}
+        order: list[str] = []
+        all_msgs: list[AgentMessage] = []
+        sem = asyncio.Semaphore(_DAG_CONCURRENCY)
+
+        async def _run_node(node):
+            async with sem:
+                dep_ctx = ""
+                for d in node.depends_on:
+                    if d in done:
+                        info = done[d]
+                        dep_ctx += (f"\n[Шаг {d}] {node_by_id[d].description}\n"
+                                    f"  создано: {', '.join(info['files']) or '—'}\n"
+                                    f"  итог: {info['summary'][:200]}\n")
+                sub_input = (
+                    f"Общая цель: {request.user_input}\n\n"
+                    f"ТВОЙ ШАГ: {node.description}\n"
+                    + (f"\nЧто уже сделали предыдущие шаги (используй, не переделывай):{dep_ctx}"
+                       if dep_ctx else "")
+                    + "\nВыполни ТОЛЬКО свой шаг. Файлы создавай реально (write_file)."
+                )
+                sub_req = TaskRequest(user_input=sub_input, task_type=node.task_type,
+                                      context={"complexity": 3})
+                model = self.router.route(sub_req)
+                await _emit({"type": "stage", "stage": "node",
+                             "text": f"▸ {node.node_id}: {node.description[:60]} ({model.name})"})
+                worker = WorkerAgent(model, self.tool_agent)
+                msg = await worker.run(sub_req, iteration=0)
+                # Фолбэк при ошибке провайдера (429/недоступен) — как в основном
+                # пути: иначе узел молча падает и файл не создаётся.
+                _fb = 0
+                while msg.content.startswith("[Ошибка") and _fb < 3:
+                    _fb += 1
+                    if "429" in msg.content or "rate" in msg.content.lower():
+                        self.router.mark_provider_unavailable(model.provider)
+                        try:
+                            from . import token_budget as _tb
+                            _tb.get().record_429(model.provider)
+                        except Exception:
+                            pass
+                    else:
+                        self.router.mark_unavailable(model.name)
+                    try:
+                        model = self.router.route(sub_req)
+                    except RuntimeError:
+                        break
+                    await _emit({"type": "stage", "stage": "node",
+                                 "text": f"  ↻ {node.node_id}: fallback → {model.name}"})
+                    worker = WorkerAgent(model, self.tool_agent)
+                    msg = await worker.run(sub_req, iteration=0)
+                tools = msg.metadata.get("tools_called", [])
+                # Детерминированная проверка «обещал файл — создай файл» (как в
+                # основном пути): один форс-ретрай, иначе узлы описывают вместо дела.
+                if _detect_unfulfilled_file_request(sub_input, msg.content, tools):
+                    retry_req = TaskRequest(
+                        user_input=sub_input + "\n\nКРИТИК: файл не создан. НЕ описывай "
+                        "код текстом — ВЫЗОВИ write_file(path, content) с полным содержимым.",
+                        task_type=node.task_type, context={"complexity": 3})
+                    msg = await worker.run(retry_req, iteration=1)
+                    tools = msg.metadata.get("tools_called", [])
+                files = [(t.get("path") or "") for t in tools
+                         if t.get("tool") in ("write_file", "write_source", "create_dir", "copy_file") and t.get("path")]
+                # учёт трат
+                try:
+                    from . import token_budget as _tb
+                    _tb.get().record_success(model.provider,
+                                             msg.metadata.get("tokens_in", 0) + msg.metadata.get("tokens_out", 0))
+                except Exception:
+                    pass
+                done[node.node_id] = {"summary": (msg.content or "")[:400],
+                                      "files": [f.replace("\\", "/") for f in files]}
+                order.append(node.node_id)
+                all_msgs.append(msg)
+                await _emit({"type": "tool", "tool": node.node_id,
+                             "text": f"✓ {node.node_id} готов" + (f" · файлы: {', '.join(files)}" if files else "")})
+
+        # Волны: на каждой — все узлы, чьи зависимости уже выполнены
+        guard = 0
+        while len(done) < len(nodes) and guard < len(nodes) + 2:
+            guard += 1
+            wave = [n for n in nodes if n.node_id not in done
+                    and all(d in done for d in n.depends_on)]
+            if not wave:
+                break   # цикл/неразрешимые зависимости — выходим с тем, что есть
+            await asyncio.gather(*[_run_node(n) for n in wave], return_exceptions=True)
+
+        if not order:
+            return None   # ничего не выполнилось — отдаём управление обычному пути
+
+        # Агрегация финального ответа (детерминированно, без лишнего LLM-вызова)
+        all_files = []
+        for nid in order:
+            for f in done[nid]["files"]:
+                if f not in all_files:
+                    all_files.append(f)
+        lines = [f"Задача выполнена по плану из {len(nodes)} шагов "
+                 f"({len(order)} исполнено, до {_DAG_CONCURRENCY} параллельно):\n"]
+        for nid in order:
+            n = node_by_id[nid]
+            fl = done[nid]["files"]
+            lines.append(f"• {nid}: {n.description}" + (f" → {', '.join(fl)}" if fl else ""))
+        if all_files:
+            lines.append(f"\nСоздано файлов: {len(all_files)} — {', '.join(all_files)}")
+        final_answer = "\n".join(lines)
+
+        tin = sum(m.metadata.get("tokens_in", 0) for m in all_msgs)
+        tout = sum(m.metadata.get("tokens_out", 0) for m in all_msgs)
+        cost = sum(m.metadata.get("cost_usd", 0.0) for m in all_msgs)
+        agg = AgentMessage(role="worker", content=final_answer,
+                           model_used=f"DAG×{len(order)}",
+                           metadata={"tokens_in": tin, "tokens_out": tout, "cost_usd": cost,
+                                     "tools_called": [t for m in all_msgs for t in m.metadata.get("tools_called", [])],
+                                     "task_type": request.task_type.value if request.task_type else "general"})
+        feedback = CriticFeedback(passed=True, score=0.9,
+                                  issues=[], suggestions=[], must_retry=False)
+        result = TaskResult(
+            task_id=request.task_id if hasattr(request, "task_id") else "dag",
+            status=TaskStatus.COMPLETED, final_answer=final_answer,
+            model_used=f"DAG×{len(order)}", iterations=1,
+            elapsed_seconds=time.time() - start_time, messages=[agg],
+            critic_feedback=feedback, files_created=all_files)
+
+        await _emit({"type": "scored", "score": 0.9,
+                     "text": f"DAG: {len(order)} шагов, {len(all_files)} файлов", "issues": []})
+
+        # Метрики + эпизодическая память (как в обычном пути)
+        try:
+            self.self_improvement.record_task(
+                task_type=request.task_type.value if request.task_type else "general",
+                user_input=request.user_input, critic_score=0.9, iterations=1,
+                model=f"DAG×{len(order)}", elapsed=time.time() - start_time,
+                issues=[], suggestions=[], tokens_in=tin, tokens_out=tout, cost_usd=cost)
+            if self.hooks:
+                await self.hooks.fire("task_complete",
+                                      task_type=request.task_type.value if request.task_type else "general",
+                                      user_input=request.user_input, score=0.9)
+        except Exception:
+            pass
+        return result
 
     # ------------------------------------------------------------------
     # Public API – main processing entry point
@@ -553,6 +743,24 @@ class Orchestrator:
                 request.context["agent_memory"] = "\n\n".join(
                     filter(None, [version_header, user_ctx, hot_mem, recalled, skills, research])
                 )
+
+        # 4b️⃣ Сложные задачи → декомпозиция Architect + параллельное исполнение
+        # DAG (субагенты). Закрывает слабую многофайловость: задача дробится на
+        # шаги, независимые идут параллельно, каждый — фокусный воркер с контекстом
+        # того, что уже создали зависимости. Самодостаточный путь — не трогает
+        # проверенный one-worker цикл ниже (надёжное ядро).
+        if _DAG_ENABLED and (
+                (complexity_val >= 3 and task_key_str in ("coding_large", "architecture"))
+                or _is_decompose_intent(request.user_input)):
+            try:
+                dag_result = await self._execute_dag(request, _emit,
+                                                     _on_token if on_event else None,
+                                                     start_time)
+            except Exception as exc:
+                logger.warning("DAG exec failed, fallback to single worker: %s", exc)
+                dag_result = None
+            if dag_result is not None:
+                return dag_result
 
         # 5️⃣ Main execution loop (retry up to MAX_ITERATIONS)
         result: Optional[TaskResult] = None

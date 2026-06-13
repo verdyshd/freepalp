@@ -73,6 +73,10 @@ adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
   quota/cooldown awareness.
 - **Local-first** via Ollama — unlimited fallback, fully offline-capable, and
   auto-started on launch if you used it before.
+- **DAG decomposition + parallel subagents** — complex multi-file tasks are
+  split by an Architect into a dependency graph; independent steps run in
+  parallel, each a focused worker that sees what previous steps produced (with
+  provider fallback and deterministic "you promised a file — create it" checks).
 - **Teacher→skill distillation** — successful retries become reusable
   `SKILL.md` procedures that make the cheap model stronger over time.
 - **MCP client** — connect any [Model Context Protocol](https://modelcontextprotocol.io)

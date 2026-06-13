@@ -501,7 +501,7 @@ async def chat(req: ChatRequest):
 
         result = await asyncio.wait_for(
             orch.run(req.message, context=ctx),
-            timeout=120.0,   # глобальный таймаут запроса
+            timeout=300.0,   # глобальный таймаут запроса (DAG-задачи дольше)
         )
         fb     = result.critic_feedback
         tin  = sum(m.metadata.get("tokens_in",  0)   for m in result.messages)
@@ -600,7 +600,7 @@ async def chat_stream(req: ChatRequest):
 
             result = await asyncio.wait_for(
                 orch.run(req.message, context=ctx, on_event=on_event),
-                timeout=120.0,
+                timeout=300.0,   # сложные DAG-задачи (многофайловые) дольше
             )
             fb   = result.critic_feedback
             tin  = sum(m.metadata.get("tokens_in",  0)   for m in result.messages)
