@@ -234,6 +234,13 @@ def _detect_leaked_tool_call(answer: str) -> Optional[str]:
     return None
 
 
+# Исследовательский интент → форсим deep_research (реальный веб, не память)
+_RESEARCH_INTENT_RE = _re.compile(
+    r"(исследу|research|собери информ|сделай обзор|сделай ресёрч|"
+    r"что (говорят|пишут|известно) (про|о)|найди информаци|"
+    r"что нового (про|о|в)|актуальн\w+ (данн|информ|обзор))",
+    _re.IGNORECASE)
+
 # Инструменты, создающие/меняющие файлы — их результаты нельзя терять при ретрае
 _WORK_TOOLS = {"write_file", "write_source", "create_dir", "copy_file"}
 
@@ -529,9 +536,22 @@ class Orchestrator:
             except Exception as exc:
                 logger.debug("Skill recall failed: %s", exc)
 
-            if hot_mem or user_ctx or recalled or skills:
+            # Детерминированный триггер deep_research: при исследовательском
+            # интенте заставляем реально искать в сети, а не выдумывать источники
+            # из обучения (наблюдалось: модель отвечала с http-ссылками из памяти).
+            research = ""
+            if _RESEARCH_INTENT_RE.search(request.user_input or ""):
+                research = (
+                    "ЭТО ИССЛЕДОВАТЕЛЬСКАЯ ЗАДАЧА. ОБЯЗАТЕЛЬНО сначала вызови "
+                    "инструмент deep_research(topic, queries=[2-4 угла поиска]). "
+                    "Строй ответ ТОЛЬКО на полученных источниках и цитируй их URL. "
+                    "НЕ выдумывай ссылки из памяти — используй только реальные из "
+                    "результата deep_research."
+                )
+
+            if hot_mem or user_ctx or recalled or skills or research:
                 request.context["agent_memory"] = "\n\n".join(
-                    filter(None, [version_header, user_ctx, hot_mem, recalled, skills])
+                    filter(None, [version_header, user_ctx, hot_mem, recalled, skills, research])
                 )
 
         # 5️⃣ Main execution loop (retry up to MAX_ITERATIONS)

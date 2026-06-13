@@ -120,6 +120,50 @@ def _clean_text(text: str) -> str:
 
 
 # Реестр инструментов
+async def deep_research(topic: str, queries: Optional[list] = None,
+                        max_pages: int = 3) -> dict:
+    """Глубокое исследование за один вызов: многоугловой поиск + выжимка из
+    топ-страниц + список источников. LLM потом синтезирует отчёт с цитатами.
+
+    Аргументы:
+      topic   — тема исследования (str)
+      queries — список поисковых углов (list[str]); если пусто — берём тему
+      max_pages — сколько страниц прогрузить ради контента (default 3)
+    Returns: {ok, topic, findings:[{query, results}], pages:[{url,title,excerpt}],
+              sources:[url]}
+    """
+    try:
+        # Нормализуем углы поиска (макс 5)
+        if isinstance(queries, str):
+            queries = [queries]
+        angles = [q for q in (queries or []) if q and q.strip()][:5] or [topic]
+
+        findings = []
+        seen_urls: list[str] = []
+        for q in angles:
+            r = await web_search(q, max_results=4)
+            res = r.get("results", []) if r.get("ok") else []
+            findings.append({"query": q, "results": res})
+            for item in res:
+                u = item.get("url") or item.get("href")
+                if u and u not in seen_urls:
+                    seen_urls.append(u)
+
+        # Грузим топ-страницы ради реального контента (не только сниппетов)
+        pages = []
+        for u in seen_urls[:max_pages]:
+            p = await fetch_page(u, max_chars=2000)
+            if p.get("ok"):
+                title = next((it.get("title", "") for f in findings
+                              for it in f["results"] if (it.get("url") or it.get("href")) == u), "")
+                pages.append({"url": u, "title": title, "excerpt": p.get("content", "")})
+
+        return {"ok": True, "topic": topic, "angles": angles,
+                "findings": findings, "pages": pages, "sources": seen_urls[:12]}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 WEB_TOOLS = {
     "web_search": {
         "fn": web_search,
@@ -131,6 +175,12 @@ WEB_TOOLS = {
         "fn": fetch_page,
         "description": "Загружает веб-страницу. Аргументы: url (str), max_chars (int, default=3000)",
         "args": ["url"],
+        "async": True,
+    },
+    "deep_research": {
+        "fn": deep_research,
+        "description": "Глубокое исследование темы за один вызов: многоугловой поиск + выжимка страниц + источники. Аргументы: topic (str), queries (list[str] — углы поиска, опционально). Используй для запросов «исследуй», «собери информацию», «сделай обзор». Потом синтезируй отчёт с цитатами на источники.",
+        "args": ["topic", "queries"],
         "async": True,
     },
 }
