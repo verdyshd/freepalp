@@ -26,3 +26,8 @@ tunnel_*.txt
 
 # Бенчмарк-прогоны (runtime)
 benchmarks/
+
+# Рантайм-логи сервера
+server_log.txt
+server_err.txt
+server_*.txt

@@ -1,4 +1,0 @@
-TokenBudget: 429 на groq (слот 0), кулдаун 90s
-TokenBudget: 429 на groq (слот 0), кулдаун 180s
-TokenBudget: 429 на mistral (слот 0), кулдаун 60s
-TokenBudget: 429 на cerebras (слот 0), кулдаун 60s
