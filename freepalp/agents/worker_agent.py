@@ -148,10 +148,19 @@ class WorkerAgent:
             {"role": "system", "content": system_prompt},
         ]
 
-        # Инжектируем историю диалога (short-term memory) — последние N обменов
+        # Инжектируем историю диалога (short-term memory) — последние N обменов.
+        # Всё, что старше окна, сжимаем в детерминированный чекпойнт (MiMo-идея):
+        # длинная сессия не теряет ранний контекст, а промпт остаётся ограниченным.
         conv_history = request.context.get("conversation_history", [])
         if conv_history:
-            # Берём последние 3 обмена (6 сообщений) для экономии токенов
+            try:
+                from ..core.session_checkpoint import build as _build_ckpt
+                ckpt = _build_ckpt(conv_history)
+                if ckpt:
+                    messages.append({"role": "user", "content": ckpt})
+            except Exception:
+                pass
+            # Последние 3 обмена (6 сообщений) — дословно
             for h in conv_history[-6:]:
                 role = h.get("role", "user")
                 # Нормализуем role: только "user" или "assistant"
