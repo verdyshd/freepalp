@@ -2,7 +2,9 @@
   <img src="freepalp/web/static/freepalp-logo.svg" alt="FreePalp" width="520">
 </p>
 
-> 🇬🇧 English version: [README.md](README.md)
+<p align="center">
+  <a href="README.md">English</a> · <b>Русский</b> · <a href="README.zh.md">中文</a>
+</p>
 
 # FreePalp AI Orchestrator
 

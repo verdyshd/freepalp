@@ -14,6 +14,10 @@
   <a href="README.ru.md"><img src="https://img.shields.io/badge/lang-Русский-red.svg" alt="Russian"></a>
 </p>
 
+<p align="center">
+  <b>English</b> · <a href="README.ru.md">Русский</a> · <a href="README.zh.md">中文</a>
+</p>
+
 ---
 
 ## What is it
