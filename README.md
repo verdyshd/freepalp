@@ -124,7 +124,7 @@ CI runs both on Ubuntu and Windows (Python 3.11 / 3.12).
 FreePalp is free and MIT-licensed. If it's useful to you, support keeps it going:
 
 - 💖 **GitHub Sponsors:** https://github.com/sponsors/verdyshd
-- 🪙 **USDT (TRC-20):** `<YOUR_TRC20_ADDRESS>` <!-- TODO: вставь адрес -->
+- 🪙 **USDT (TRC-20):** `TFAfqkvNDpJPeKWqm4QiFiU5fa7RC97GZx`
 
 GitHub Sponsors takes cards from anyone, anywhere; crypto works worldwide too.
 

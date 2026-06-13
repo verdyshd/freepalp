@@ -237,7 +237,7 @@ freepalp/
 FreePalp бесплатен (MIT). Если он тебе полезен — поддержка помогает его развивать:
 
 - 💖 **GitHub Sponsors:** https://github.com/sponsors/verdyshd
-- 🪙 **USDT (TRC-20):** `<АДРЕС>` <!-- TODO: вставь адрес -->
+- 🪙 **USDT (TRC-20):** `TFAfqkvNDpJPeKWqm4QiFiU5fa7RC97GZx`
 
 GitHub Sponsors принимает карты откуда угодно; крипту обнал в Молдове через P2P.
 
