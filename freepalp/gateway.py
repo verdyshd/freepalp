@@ -280,6 +280,22 @@ async def _startup_logic():
     except Exception:
         pass
 
+    # 3a. MCP-серверы (если сконфигурированы) — в фоне, чтобы npx не тормозил
+    #     старт; инструменты регистрируются в ALL_TOOLS по готовности.
+    async def _connect_mcp():
+        import asyncio as _asyncio
+        try:
+            from freepalp.core import mcp_client as _mcp
+            summary = await _asyncio.to_thread(_mcp.get().connect_all)
+            if summary["connected"]:
+                print(f"  [MCP] Подключено {len(summary['connected'])} серверов, "
+                      f"{summary['tools']} инструментов: {', '.join(summary['connected'])}")
+            if summary["failed"]:
+                print(f"  [MCP] Не поднялись: {', '.join(summary['failed'])}")
+        except Exception as e:
+            print(f"  [MCP] Ошибка подключения: {e}")
+    asyncio.create_task(_connect_mcp())
+
     # 3b. Startup self-improvement check — улучшаем если есть проблемные типы задач
     async def _startup_improve():
         import asyncio as _asyncio
@@ -917,6 +933,30 @@ async def api_memory_graph(max_nodes: int = 120, threshold: float = 0.35,
         return {"ok": True, "nodes": nodes, "edges": edges[:400],
                 "total_entries": len(data.get("entries") or []),
                 "threshold": threshold}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/mcp")
+async def api_mcp():
+    """Статус подключённых MCP-серверов и их инструментов."""
+    try:
+        from freepalp.core import mcp_client as _mcp
+        return {"ok": True, **_mcp.get().status()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/mcp/reconnect")
+async def api_mcp_reconnect():
+    """Переподключить MCP-серверы (после правки конфига)."""
+    try:
+        import asyncio as _asyncio
+        from freepalp.core import mcp_client as _mcp
+        mgr = _mcp.get()
+        mgr.close_all()
+        summary = await _asyncio.to_thread(mgr.connect_all)
+        return {"ok": True, "summary": summary}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 

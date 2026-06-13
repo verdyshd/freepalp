@@ -1177,6 +1177,14 @@
       <p>Агент автономно вызывает эти инструменты через ReAct loop</p>
     </div>
     <div style="padding:16px 24px 8px">
+      <!-- MCP-серверы: подключённые внешние наборы инструментов -->
+      <div id="mcp-section" style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-size:13px;color:var(--text);font-weight:600">🔌 MCP-серверы</div>
+          <button class="btn" onclick="reconnectMcp()" title="Переподключить после правки конфига">↻ Переподключить</button>
+        </div>
+        <div id="mcp-status" style="font-size:12px;color:var(--text-3);margin-top:8px">Загрузка...</div>
+      </div>
       <div class="search-bar">
         <span style="color:var(--text-3)">🔍</span>
         <input type="text" id="tools-search" placeholder="Поиск инструментов..." oninput="filterTools(this.value)">
@@ -2795,6 +2803,38 @@ async function loadTools() {
   } catch(e) {
     grid.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
   }
+  loadMcpStatus();
+}
+
+async function loadMcpStatus() {
+  const el = document.getElementById('mcp-status');
+  if (!el) return;
+  try {
+    const d = await fetch('/api/mcp').then(r => r.json());
+    if (!d.ok) { el.innerHTML = `<span style="color:var(--accent-err)">Ошибка: ${d.error}</span>`; return; }
+    if (!d.total_servers) {
+      el.innerHTML = `Не подключено ни одного. Добавь сервер в <code style="color:var(--accent-2)">freepalp/config/mcp_servers.json</code> — и его инструменты появятся у воркера автоматически (формат как у Claude Desktop).`;
+      return;
+    }
+    el.innerHTML = d.servers.map(s => `
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 0">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--accent-3);box-shadow:0 0 6px var(--accent-3)"></span>
+        <b style="color:var(--text)">${s.name}</b>
+        <span style="color:var(--text-3)">— ${s.tool_count} инстр.: ${s.tools.join(', ')}</span>
+      </div>`).join('') +
+      `<div style="margin-top:6px;font-size:11px;color:var(--text-3)">Всего из MCP: ${d.total_tools} инструментов (видны в списке ниже как <code>mcp__…</code>)</div>`;
+  } catch(e) { el.innerHTML = `<span style="color:var(--accent-err)">${e.message}</span>`; }
+}
+
+async function reconnectMcp() {
+  const el = document.getElementById('mcp-status');
+  el.innerHTML = 'Переподключение...';
+  try {
+    const d = await fetch('/api/mcp/reconnect', {method:'POST'}).then(r => r.json());
+    if (d.ok) showToast(`🔌 MCP: ${d.summary.connected.length} серверов, ${d.summary.tools} инструментов`);
+    else showToast('❌ ' + (d.error || 'ошибка'));
+  } catch(e) { showToast('❌ ' + e.message); }
+  await loadTools();
 }
 
 function renderTools(tools) {

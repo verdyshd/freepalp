@@ -1,0 +1,11 @@
+{
+  "_comment": "MCP-серверы (Model Context Protocol). Добавь сервер — его инструменты появятся у воркера автоматически под именем mcp__<server>__<tool>. Формат как у Claude Desktop. Пример (перенеси в mcpServers и впиши свой путь):",
+  "_example": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:/Users/user/Documents"],
+      "env": {}
+    }
+  },
+  "mcpServers": {}
+}
