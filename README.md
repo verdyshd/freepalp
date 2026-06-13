@@ -50,7 +50,7 @@ Result
 ## Quick start
 
 ```bash
-git clone https://github.com/dmitryverdysh/freepalp
+git clone https://github.com/verdyshd/freepalp
 cd freepalp
 pip install -e .          # installs the `freepalp` command
 freepalp                  # launches the WebUI at http://localhost:28800
