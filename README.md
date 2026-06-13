@@ -29,6 +29,10 @@
   <em>Real vector-memory graph (semantic / episodic / procedural) · per-task metrics & analytics</em>
 </p>
 
+<p align="center">
+  📝 <b>The story behind the design:</b> <a href="https://dev.to/verdyshd/free-students-paid-teachers-how-cheap-llms-learn-from-expensive-ones-520m">Free students, paid teachers — how cheap LLMs learn from expensive ones</a>
+</p>
+
 ---
 
 ## What is it

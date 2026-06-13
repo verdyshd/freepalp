@@ -17,6 +17,10 @@
   <em>Настоящий граф векторной памяти (semantic / episodic / procedural) · метрики и аналитика по задачам</em>
 </p>
 
+<p align="center">
+  📝 <b>История за дизайном:</b> <a href="https://dev.to/verdyshd/free-students-paid-teachers-how-cheap-llms-learn-from-expensive-ones-520m">Free students, paid teachers — how cheap LLMs learn from expensive ones</a>
+</p>
+
 # FreePalp AI Orchestrator
 
 **Мультиагентный AI-оркестратор на бесплатных моделях: самокоррекция, ReAct loop, автономное использование инструментов.**

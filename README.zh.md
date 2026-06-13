@@ -24,6 +24,10 @@
   <em>真实的向量记忆图（语义 / 情景 / 程序）· 按任务的指标与分析</em>
 </p>
 
+<p align="center">
+  📝 <b>设计背后的故事：</b> <a href="https://dev.to/verdyshd/free-students-paid-teachers-how-cheap-llms-learn-from-expensive-ones-520m">Free students, paid teachers — how cheap LLMs learn from expensive ones</a>
+</p>
+
 ---
 
 ## 这是什么
