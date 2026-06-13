@@ -273,6 +273,18 @@ async def _startup_logic():
     except Exception as e:
         print(f"  [Memory] Digest injection error: {e}")
 
+    # 2b. Автозапуск Ollama (если была подключена раньше) — до discovery,
+    #     чтобы локальные модели сразу попали в роутер.
+    try:
+        from freepalp.core import ollama_autostart as _oa
+        status = await asyncio.to_thread(_oa.ensure_running)
+        if status == "started":
+            print("  [Ollama] Авто-поднята при старте (была подключена ранее)")
+        elif status == "failed":
+            print("  [Ollama] Была подключена, но поднять не удалось (проверь установку)")
+    except Exception as e:
+        print(f"  [Ollama] autostart error: {e}")
+
     # 3. Live discovery
     try:
         orch = _get_orch()
