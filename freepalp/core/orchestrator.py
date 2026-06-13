@@ -383,6 +383,10 @@ class Orchestrator:
                 except Exception:
                     pass
 
+        async def _on_token(delta: str):
+            """Форвардит токен-дельту ответа воркера в SSE-поток."""
+            await _emit({"type": "token", "delta": delta})
+
         # 0️⃣ session_start hook → авто-восстановление провайдеров (cooldown)
         if self.hooks:
             await self.hooks.fire("session_start")
@@ -561,7 +565,9 @@ class Orchestrator:
             await _emit({"type": "stage", "stage": "worker",
                          "text": f"Генерирую ответ{'...' if iteration == 0 else ' (повтор ' + str(iteration+1) + ')...'}",
                          "iteration": iteration + 1})
-            worker_msg = await worker.run(request, iteration=iteration, prev_feedback=prev_feedback)
+            worker_msg = await worker.run(request, iteration=iteration,
+                                          prev_feedback=prev_feedback,
+                                          on_token=_on_token if on_event else None)
 
             # Fallback loop: try up to 3 different models if provider fails
             _fallback_attempts = 0
@@ -594,7 +600,9 @@ class Orchestrator:
                 await _emit({"type": "stage", "stage": "fallback",
                              "text": f"Fallback → {model_config.name} ({model_config.provider})",
                              "model": model_config.name})
-                worker_msg = await worker.run(request, iteration=iteration, prev_feedback=prev_feedback)
+                worker_msg = await worker.run(request, iteration=iteration,
+                                              prev_feedback=prev_feedback,
+                                              on_token=_on_token if on_event else None)
 
             # Учёт реальных трат в TokenBudget — иначе квоты в UI всегда
             # рисуются нетронутыми (record_success раньше не звался вообще)

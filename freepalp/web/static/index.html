@@ -793,6 +793,17 @@
     @keyframes shimmerText { to { background-position: -200% center; } }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Живой текст токен-стриминга (пока модель печатает ответ) */
+    .stream-text {
+      font-size: 14px; line-height: 1.55; color: var(--text);
+      white-space: pre-wrap; word-break: break-word; margin-top: 2px;
+    }
+    .stream-text::after {
+      content: '▋'; color: var(--accent);
+      animation: caretBlink 1s steps(1) infinite; margin-left: 1px;
+    }
+    @keyframes caretBlink { 50% { opacity: 0; } }
+
     /* ══ Пометки / sticky notes ══ */
     .note-card {
       background: #1e2235;
@@ -1630,6 +1641,8 @@ async function sendMessage() {
           const ev = JSON.parse(line.slice(6));
           if (ev.type === 'done' || ev.type === 'error') {
             finalData = ev;
+          } else if (ev.type === 'token') {
+            appendStreamToken(progressId, ev.delta);
           } else {
             updateProgress(progressId, ev);
           }
@@ -1715,6 +1728,25 @@ function playBubbles() {
       osc.start(t0); osc.stop(t0 + b.d + 0.02);
     }
   } catch (e) { /* нет аудио — молча пропускаем */ }
+}
+
+// Токен-стриминг: живой вывод ответа в прогресс-панель, пока модель печатает
+function appendStreamToken(msgId, delta) {
+  if (!delta) return;
+  const panel = document.getElementById('pp-' + msgId);
+  if (!panel) return;
+  let el = document.getElementById('stream-' + msgId);
+  if (!el) {
+    const sp = panel.querySelector('.progress-spinner');
+    if (sp) sp.style.display = 'none';
+    el = document.createElement('div');
+    el.id = 'stream-' + msgId;
+    el.className = 'stream-text';
+    panel.appendChild(el);
+  }
+  el.textContent += delta;
+  const msgs = document.getElementById('messages');
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 // 🫧 Визуальные пузырьки у аватара завершённого сообщения

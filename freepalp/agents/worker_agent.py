@@ -20,7 +20,7 @@ import re
 import json
 import time
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, Any, TYPE_CHECKING
 
 from ..core import session_keys as _skeys
 from ..core.models import (
@@ -82,16 +82,20 @@ class WorkerAgent:
         self._pending_call_id: Optional[str] = None   # native FC: call_id текущего tool call
         self._native_mode: bool     = False            # True если провайдер поддерживает native FC
         self._openai_tools: Optional[list] = None      # схема инструментов для native FC
+        self._on_token: Optional[Any] = None           # callback токен-стриминга
+        self._stream_final: bool    = False            # стримить ли финальный ответ
 
     async def run(
         self,
         request: TaskRequest,
         iteration: int = 0,
         prev_feedback: Optional[str] = None,
+        on_token: Optional[Any] = None,
     ) -> AgentMessage:
         """
         Выполняет задачу. Возвращает AgentMessage с результатом.
         prev_feedback — замечания критика (если это retry).
+        on_token — async callback(delta:str) для токен-стриминга ответа.
         """
         self._task_key    = request.task_type.value if request.task_type else "general"
         task_key          = self._task_key
@@ -108,6 +112,14 @@ class WorkerAgent:
         )
         if self._native_mode:
             self._openai_tools = self._build_openai_tools_spec(task_key)
+
+        # Токен-стриминг безопасен везде, КРОМЕ нон-нейтив режима с инструментами:
+        # там tool_call приходит фенсед-текстом и протёк бы в поток пользователю.
+        # В native FC tool_call — структурный (отдельно от content), в lean и без
+        # инструментов tool_call невозможен — значит content = финальный ответ.
+        self._on_token = on_token
+        _risky_fenced = (not _lean) and (self.tool_agent is not None) and (not self._native_mode)
+        self._stream_final = bool(on_token) and not _risky_fenced
 
         # Инжектируем описание инструментов в system prompt если есть tool_agent
         if self.tool_agent and not _lean:
@@ -497,6 +509,97 @@ class WorkerAgent:
         task_limit = TASK_MAX_TOKENS.get(self._task_key, self.model.max_tokens)
         return min(self.model.max_tokens, task_limit)
 
+    async def _stream_openai_like(self, client, messages: list[dict],
+                                  timeout: float = 90.0) -> tuple[str, int, int]:
+        """Стримит ответ построчно (OpenAI/Groq-совместимый API), форвардит
+        дельты в self._on_token. Без инструментов — вызывается только когда
+        ответ гарантированно финальный (lean / нет tool_agent)."""
+        async def _consume():
+            stream = await client.chat.completions.create(
+                model=self.model.model_id,
+                messages=messages,
+                max_tokens=self._effective_max_tokens(),
+                temperature=self.model.temperature,
+                stream=True,
+                stream_options={"include_usage": True},
+            )
+            buf: list[str] = []
+            t_in = t_out = 0
+            async for chunk in stream:
+                if getattr(chunk, "usage", None):
+                    t_in  = chunk.usage.prompt_tokens or t_in
+                    t_out = chunk.usage.completion_tokens or t_out
+                if chunk.choices:
+                    delta = chunk.choices[0].delta
+                    piece = getattr(delta, "content", None)
+                    if piece:
+                        buf.append(piece)
+                        try:
+                            await self._on_token(piece)
+                        except Exception:
+                            pass
+            return "".join(buf), t_in, t_out
+        try:
+            return await asyncio.wait_for(_consume(), timeout=timeout)
+        except asyncio.TimeoutError:
+            return f"[Ошибка {self.model.provider}: timeout {int(timeout)}s]", 0, 0
+
+    async def _stream_openai_native(self, client, messages: list[dict],
+                                    extra_headers: dict, timeout: float = 90.0
+                                    ) -> tuple[str, int, int]:
+        """Стрим native-FC вызова: форвардит content-дельты (финальный ответ),
+        а tool_call собирает из дельт и возвращает как __NATIVE_TOOL__."""
+        async def _consume():
+            stream = await client.chat.completions.create(
+                model=self.model.model_id, messages=messages,
+                max_tokens=self._effective_max_tokens(),
+                temperature=self.model.temperature,
+                tools=self._openai_tools, tool_choice="auto",
+                extra_headers=extra_headers,
+                stream=True, stream_options={"include_usage": True},
+            )
+            content: list[str] = []
+            tcalls: dict[int, dict] = {}
+            t_in = t_out = 0
+            async for chunk in stream:
+                if getattr(chunk, "usage", None):
+                    t_in  = chunk.usage.prompt_tokens or t_in
+                    t_out = chunk.usage.completion_tokens or t_out
+                if not chunk.choices:
+                    continue
+                delta = chunk.choices[0].delta
+                piece = getattr(delta, "content", None)
+                if piece:
+                    content.append(piece)
+                    try:
+                        await self._on_token(piece)
+                    except Exception:
+                        pass
+                for tc in (getattr(delta, "tool_calls", None) or []):
+                    acc = tcalls.setdefault(tc.index, {"id": None, "name": "", "args": ""})
+                    if tc.id:
+                        acc["id"] = tc.id
+                    if tc.function and tc.function.name:
+                        acc["name"] = tc.function.name
+                    if tc.function and tc.function.arguments:
+                        acc["args"] += tc.function.arguments
+            if tcalls:
+                first = tcalls[min(tcalls)]
+                self._pending_call_id = first["id"]
+                try:
+                    args = json.loads(first["args"] or "{}")
+                except json.JSONDecodeError:
+                    args = {}
+                encoded = json.dumps({"tool": first["name"], "args": args},
+                                     ensure_ascii=False)
+                return f"__NATIVE_TOOL__{encoded}", t_in, t_out
+            self._pending_call_id = None
+            return "".join(content), t_in, t_out
+        try:
+            return await asyncio.wait_for(_consume(), timeout=timeout)
+        except asyncio.TimeoutError:
+            return f"[Ошибка {self.model.provider}: timeout {int(timeout)}s]", 0, 0
+
     async def _call_llm(self, messages: list[dict]) -> tuple[str, int, int]:
         """Роутит вызов к нужному провайдеру."""
         if self.model.provider == "ollama":
@@ -522,15 +625,39 @@ class WorkerAgent:
     async def _call_ollama(self, messages: list[dict]) -> tuple[str, int, int]:
         try:
             import httpx
-            payload = {
-                "model":    self.model.model_id,
-                "messages": messages,
-                "stream":   False,
-                "options":  {
-                    "temperature": self.model.temperature,
-                    "num_predict": self._effective_max_tokens(),
-                },
-            }
+            opts = {"temperature": self.model.temperature,
+                    "num_predict": self._effective_max_tokens()}
+            if self._stream_final:
+                # Стрим: Ollama отдаёт по одному JSON-объекту на строку
+                buf: list[str] = []
+                t_in = t_out = 0
+                payload = {"model": self.model.model_id, "messages": messages,
+                           "stream": True, "options": opts}
+                async with httpx.AsyncClient(timeout=120.0) as client:
+                    async with client.stream("POST", "http://localhost:11434/api/chat",
+                                             json=payload) as resp:
+                        resp.raise_for_status()
+                        async for line in resp.aiter_lines():
+                            if not line.strip():
+                                continue
+                            try:
+                                obj = json.loads(line)
+                            except json.JSONDecodeError:
+                                continue
+                            piece = (obj.get("message") or {}).get("content", "")
+                            if piece:
+                                buf.append(piece)
+                                try:
+                                    await self._on_token(piece)
+                                except Exception:
+                                    pass
+                            if obj.get("done"):
+                                t_in  = obj.get("prompt_eval_count", t_in)
+                                t_out = obj.get("eval_count", t_out)
+                return "".join(buf), t_in, t_out
+
+            payload = {"model": self.model.model_id, "messages": messages,
+                       "stream": False, "options": opts}
             async with httpx.AsyncClient(timeout=120.0) as client:
                 resp = await client.post("http://localhost:11434/api/chat", json=payload)
                 resp.raise_for_status()
@@ -549,6 +676,8 @@ class WorkerAgent:
                 return "[Ошибка: GROQ_API_KEY не задан. Добавь его в .env]", 0, 0
 
             client = AsyncGroq(api_key=api_key)
+            if self._stream_final:
+                return await self._stream_openai_like(client, messages, timeout=90.0)
             resp = await asyncio.wait_for(
                 client.chat.completions.create(
                     model=self.model.model_id,
@@ -637,6 +766,30 @@ class WorkerAgent:
                     },
                 )
             else:
+                # Стрим финального ответа (gemini поддерживает stream=True)
+                if self._stream_final:
+                    stream = await model_obj.generate_content_async(
+                        last_user,
+                        generation_config={
+                            "max_output_tokens": self._effective_max_tokens(),
+                            "temperature":       self.model.temperature,
+                        },
+                        stream=True,
+                    )
+                    buf, t_in, t_out = [], 0, 0
+                    async for chunk in stream:
+                        piece = getattr(chunk, "text", "") or ""
+                        if piece:
+                            buf.append(piece)
+                            try:
+                                await self._on_token(piece)
+                            except Exception:
+                                pass
+                        um = getattr(chunk, "usage_metadata", None)
+                        if um:
+                            t_in  = getattr(um, "prompt_token_count", 0) or t_in
+                            t_out = getattr(um, "candidates_token_count", 0) or t_out
+                    return "".join(buf), t_in, t_out
                 resp = await model_obj.generate_content_async(
                     last_user,
                     generation_config={
@@ -692,6 +845,12 @@ class WorkerAgent:
             # ── Native function calling ──────────────────────────────
             if self._native_mode and self._openai_tools:
                 try:
+                    # Стрим: tool_call приходит структурно (отдельно от content),
+                    # поэтому стримим content-дельты безопасно, а tool_call
+                    # собираем из дельт и возвращаем как __NATIVE_TOOL__.
+                    if self._stream_final:
+                        return await self._stream_openai_native(
+                            client, messages, extra_headers, timeout=90.0)
                     resp = await client.chat.completions.create(
                         model=self.model.model_id,
                         messages=messages,
@@ -731,6 +890,8 @@ class WorkerAgent:
                         raise  # другая ошибка — пробрасываем
 
             # ── Текстовый режим (fallback) ───────────────────────────
+            if self._stream_final:
+                return await self._stream_openai_like(client, messages, timeout=90.0)
             resp = await client.chat.completions.create(
                 model=self.model.model_id,
                 messages=messages,
