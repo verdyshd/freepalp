@@ -9,7 +9,8 @@ __pycache__/
 logs/
 
 # Рабочие данные агента (не код системы)
-freepalp/memory/
+freepalp/memory/*
+!freepalp/memory/*.py
 freepalp/sandbox/
 freepalp/state/
 freepalp/logs/
