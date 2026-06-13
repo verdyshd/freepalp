@@ -3,7 +3,11 @@
   "_example": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:/Users/user/Documents"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:/Users/user/Documents"
+      ],
       "env": {}
     }
   },

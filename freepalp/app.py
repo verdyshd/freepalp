@@ -748,6 +748,17 @@ async def main():
         await interactive_mode(orchestrator)  # stop() вызывается внутри
 
 
+def cli():
+    """Точка входа консольной команды `freepalp` (см. pyproject.toml).
+    По умолчанию поднимает WebUI; CLI-режим — через подкоманду/флаг task."""
+    # Без аргументов или с --web/--gateway → веб-интерфейс (массовый сценарий)
+    if len(sys.argv) == 1 or "--web" in sys.argv or "--gateway" in sys.argv:
+        from freepalp.gateway import run_gateway
+        run_gateway()
+    else:
+        asyncio.run(main())
+
+
 if __name__ == "__main__":
     # Check for --web / --gateway BEFORE asyncio.run to avoid nested event loop
     if "--web" in sys.argv or "--gateway" in sys.argv:

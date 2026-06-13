@@ -6,6 +6,10 @@ httpx>=0.27.0
 # Groq (облако, быстрый 70B)
 groq>=0.9.0
 
+# OpenAI SDK — универсальный клиент для OpenAI-совместимых провайдеров
+# (OpenRouter, Together, Cerebras, Mistral, Novita, models.dev-каталог)
+openai>=1.40.0
+
 # Anthropic (опционально, fallback)
 anthropic>=0.34.0
 
