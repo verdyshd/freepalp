@@ -516,9 +516,18 @@ class Orchestrator:
             except Exception as exc:
                 logger.debug("Semantic recall failed: %s", exc)
 
-            if hot_mem or user_ctx or recalled:
+            # Teacher→skill: инжектим накопленные приёмы для похожих задач —
+            # дешёвая модель получает рабочую процедуру ДО первой попытки.
+            skills = ""
+            try:
+                from . import skill_library as _sl
+                skills = _sl.get().find_relevant(task_key_str, request.user_input)
+            except Exception as exc:
+                logger.debug("Skill recall failed: %s", exc)
+
+            if hot_mem or user_ctx or recalled or skills:
                 request.context["agent_memory"] = "\n\n".join(
-                    filter(None, [version_header, user_ctx, hot_mem, recalled])
+                    filter(None, [version_header, user_ctx, hot_mem, recalled, skills])
                 )
 
         # 5️⃣ Main execution loop (retry up to MAX_ITERATIONS)
@@ -696,22 +705,19 @@ class Orchestrator:
                     pass
 
             if score >= _retry_threshold:
-                # Teacher→skill (мини-дистилляция, идея из Odysseus): успех ПОСЛЕ
-                # провала — ценный приём. Сохраняем процедуру в долгую память,
+                # Teacher→skill (полная дистилляция, идея из Odysseus): успех
+                # ПОСЛЕ провала — ценный приём. Сохраняем процедуру в SKILL.md,
                 # чтобы в следующий раз дешёвая модель справилась с 1-й итерации,
                 # а не сжигала ретраи (коррекция накапливается, а не сгорает).
                 if iteration > 0:
                     try:
-                        from ..memory.consolidation import add_to_long_term
-                        seq = " -> ".join(
-                            t["tool"] + (f"({(t.get('path') or '').replace(chr(92), '/').rsplit('/', 1)[-1]})"
-                                         if t.get("path") else "")
-                            for t in tools_used) or "ответ текстом, без инструментов"
-                        add_to_long_term(
-                            "skill",
-                            f"Приём [{task_key}]: запрос вида «{request.user_input[:90]}» "
-                            f"решён со 2+ попытки (модель {model_config.name}). "
-                            f"Рабочая последовательность: {seq}. Применяй её сразу.",
+                        from . import skill_library as _sl
+                        _sl.get().save_skill(
+                            task_type=task_key,
+                            user_input=request.user_input,
+                            tools_used=tools_used,
+                            model_name=model_config.name,
+                            overcame_issue=prev_feedback,
                         )
                     except Exception:
                         pass

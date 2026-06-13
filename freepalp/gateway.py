@@ -921,6 +921,29 @@ async def api_memory_graph(max_nodes: int = 120, threshold: float = 0.35,
         return {"ok": False, "error": str(e)}
 
 
+@app.get("/api/skills")
+async def api_skills():
+    """Накопленные приёмы teacher→skill (дистилляция: успех после провала →
+    SKILL.md, инжектится в промпт при похожей задаче). Витрина дифференциатора."""
+    try:
+        from freepalp.core import skill_library as _sl
+        out = []
+        for sk in _sl.get().all_skills():
+            out.append({
+                "name":         sk.get("name", ""),
+                "task_type":    sk.get("task_type", ""),
+                "tools":        sk.get("tools", ""),
+                "source_model": sk.get("source_model", ""),
+                "uses":         int(sk.get("uses", "1") or "1"),
+                "created":      sk.get("created", ""),
+                "description":  sk.get("description", ""),
+            })
+        out.sort(key=lambda s: -s["uses"])
+        return {"ok": True, "skills": out, "total": len(out)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @app.get("/api/memory/archives")
 async def api_memory_archives():
     """Реальные архивы памяти: файлы archive/ + сессии по дням (sessions/*.jsonl)."""

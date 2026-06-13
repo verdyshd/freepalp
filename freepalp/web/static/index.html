@@ -1109,6 +1109,7 @@
       <div class="mem-tab active" onclick="switchMemTab('hot', this)">HOT память</div>
       <div class="mem-tab" onclick="switchMemTab('stats', this)">Статистика</div>
       <div class="mem-tab" onclick="switchMemTab('graph', this)">Связи</div>
+      <div class="mem-tab" onclick="switchMemTab('skills', this)">Навыки</div>
       <div class="mem-tab" onclick="switchMemTab('search', this)">Поиск</div>
     </div>
     <div class="memory-content">
@@ -1125,6 +1126,15 @@
         <div class="memory-stats-grid" id="mem-stats-grid">
           <div style="color:var(--text-3)">Загрузка...</div>
         </div>
+      </div>
+      <!-- SKILLS: накопленные приёмы teacher→skill -->
+      <div id="mem-skills" style="display:none">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">
+          Приёмы, которые система выучила сама: когда дешёвая модель решает задачу
+          не с первой попытки, рабочая процедура сохраняется в SKILL.md и в следующий
+          раз подставляется в промпт — справится сразу. Коррекция накапливается.
+        </div>
+        <div id="mem-skills-list" style="display:flex;flex-direction:column;gap:10px">Загрузка...</div>
       </div>
       <!-- GRAPH: честные связи памяти -->
       <div id="mem-graph" style="display:none">
@@ -2359,10 +2369,40 @@ function switchMemTab(tab, el) {
   document.getElementById('mem-hot').style.display    = tab === 'hot'    ? 'block' : 'none';
   document.getElementById('mem-stats').style.display  = tab === 'stats'  ? 'block' : 'none';
   document.getElementById('mem-graph').style.display  = tab === 'graph'  ? 'block' : 'none';
+  document.getElementById('mem-skills').style.display = tab === 'skills' ? 'block' : 'none';
   document.getElementById('mem-search').style.display = tab === 'search' ? 'block' : 'none';
   if (tab === 'stats') loadMemStats();
   if (tab === 'graph') loadMemGraph();
+  if (tab === 'skills') loadSkills();
   if (tab === 'search') loadMemArchives();
+}
+
+async function loadSkills() {
+  const el = document.getElementById('mem-skills-list');
+  try {
+    const d = await fetch('/api/skills').then(r => r.json());
+    if (!d.ok) { el.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${d.error}</div>`; return; }
+    if (!d.skills.length) {
+      el.innerHTML = `<div style="color:var(--text-3);font-size:13px;padding:20px;text-align:center;background:var(--bg-glass);border:1px dashed var(--border);border-radius:var(--radius)">
+        Пока ни одного навыка. Они появятся, когда система решит задачу не с первой
+        попытки — рабочая процедура сохранится автоматически.</div>`;
+      return;
+    }
+    el.innerHTML = d.skills.map(s => `
+      <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span style="font-size:13px;color:var(--text);font-weight:600">🧩 ${escHtml(s.name)}</span>
+          <span style="font-size:10px;color:var(--accent-3);background:rgba(72,187,120,.12);padding:2px 7px;border-radius:10px" title="сколько раз приём подходил под задачу">×${s.uses}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:5px">${escHtml(s.description)}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
+          <span>🏷 ${escHtml(s.task_type)}</span>
+          <span>🔧 ${escHtml(s.tools || '—')}</span>
+          <span>🎓 ${escHtml(s.source_model)}</span>
+          <span>📅 ${escHtml(s.created)}</span>
+        </div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = `<div style="color:var(--accent-err)">${e.message}</div>`; }
 }
 
 // ════════════════════════════════════════════════

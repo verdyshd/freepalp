@@ -188,6 +188,15 @@ class WorkerAgent:
             # Логируем вызов
             tool_name = tool_call.get("tool", "?")
             tool_args = tool_call.get("args", {})
+            # Защита: модель может вернуть args списком/строкой/None вместо словаря —
+            # ниже идёт .items()/.get(), что роняло ВЕСЬ запрос (AttributeError).
+            if not isinstance(tool_args, dict):
+                if isinstance(tool_args, list):
+                    tool_args = {f"arg{i}": v for i, v in enumerate(tool_args)}
+                elif tool_args is None:
+                    tool_args = {}
+                else:
+                    tool_args = {"value": tool_args}
 
             # Loop breaker: тот же инструмент с теми же аргументами 3 раза подряд —
             # агент зациклился (наблюдалось: gemini писал один файл 7 раз).
