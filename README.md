@@ -123,11 +123,10 @@ CI runs both on Ubuntu and Windows (Python 3.11 / 3.12).
 
 FreePalp is free and MIT-licensed. If it's useful to you, support keeps it going:
 
-- ☕ **Ko-fi:** https://ko-fi.com/&lt;username&gt; <!-- TODO: твой ko-fi -->
+- 💖 **GitHub Sponsors:** https://github.com/sponsors/verdyshd
 - 🪙 **USDT (TRC-20):** `<YOUR_TRC20_ADDRESS>` <!-- TODO: вставь адрес -->
-- 🪙 **BTC:** `<YOUR_BTC_ADDRESS>` <!-- TODO: вставь адрес -->
 
-Anyone, anywhere can send crypto; it cashes out in Moldova via P2P exchanges.
+GitHub Sponsors takes cards from anyone, anywhere; crypto works worldwide too.
 
 ## License
 
