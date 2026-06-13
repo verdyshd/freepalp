@@ -23,3 +23,6 @@ node_modules/
 server_*.txt
 tunnel_*.txt
 *.log
+
+# Бенчмарк-прогоны (runtime)
+benchmarks/
