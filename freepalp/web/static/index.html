@@ -1020,7 +1020,7 @@
       <!-- ── Chat list (left column) ── -->
       <div class="chat-list-col">
         <div class="chat-list-header">
-          <span class="chat-list-title">Диалоги</span>
+          <span class="chat-list-title" data-i18n="rp.dialogs">Диалоги</span>
           <button class="chat-new-btn" onclick="newChat()" title="Новый диалог">+</button>
         </div>
         <div class="chat-list-scroll" id="chat-list"></div>
@@ -1117,7 +1117,7 @@
 
         <div class="rp-section">
           <div class="rp-title" style="display:flex;align-items:center;justify-content:space-between">
-            🔋 Квоты API
+            <span data-i18n="rp.quotas">🔋 Квоты API</span>
             <button onclick="resetAllBudgets()" title="Сбросить кулдауны" style="font-size:10px;padding:1px 6px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-3)">↺</button>
           </div>
           <div id="rp-budget" style="margin-top:6px">
@@ -1134,8 +1134,8 @@
 
         <div class="rp-section">
           <div class="rp-title" style="display:flex;align-items:center;gap:6px">
-            🧠 Память сессий
-            <span id="digest-badge" style="font-size:10px;background:rgba(72,187,120,0.15);color:var(--accent-3);padding:1px 6px;border-radius:10px;display:none">загружена</span>
+            <span data-i18n="rp.sessmem">🧠 Память сессий</span>
+            <span id="digest-badge" data-i18n="rp.loaded" style="font-size:10px;background:rgba(72,187,120,0.15);color:var(--accent-3);padding:1px 6px;border-radius:10px;display:none">загружена</span>
           </div>
           <div id="rp-digest" style="font-size:11px;color:var(--text-3);line-height:1.6;max-height:120px;overflow-y:auto">
             <div>Загрузка...</div>
@@ -1176,11 +1176,11 @@
       <p>HOT / WARM / COLD тиры + поиск по архиву</p>
     </div>
     <div class="memory-tabs">
-      <div class="mem-tab active" onclick="switchMemTab('hot', this)">HOT память</div>
-      <div class="mem-tab" onclick="switchMemTab('stats', this)">Статистика</div>
-      <div class="mem-tab" onclick="switchMemTab('graph', this)">Связи</div>
-      <div class="mem-tab" onclick="switchMemTab('skills', this)">Навыки</div>
-      <div class="mem-tab" onclick="switchMemTab('search', this)">Поиск</div>
+      <div class="mem-tab active" onclick="switchMemTab('hot', this)" data-i18n="mem.hot">HOT память</div>
+      <div class="mem-tab" onclick="switchMemTab('stats', this)" data-i18n="mem.stats">Статистика</div>
+      <div class="mem-tab" onclick="switchMemTab('graph', this)" data-i18n="mem.graph">Связи</div>
+      <div class="mem-tab" onclick="switchMemTab('skills', this)" data-i18n="mem.skills">Навыки</div>
+      <div class="mem-tab" onclick="switchMemTab('search', this)" data-i18n="mem.search">Поиск</div>
     </div>
     <div class="memory-content">
       <!-- HOT -->
@@ -3821,6 +3821,15 @@ const I18N = {
   'rp.session':     {ru:'Текущая сессия', en:'Current session', zh:'当前会话'},
   'rp.models':      {ru:'Активные модели', en:'Active models', zh:'活跃模型'},
   'rp.crons':       {ru:'Cron задачи', en:'Cron tasks', zh:'定时任务'},
+  'rp.dialogs':     {ru:'Диалоги', en:'Chats', zh:'对话'},
+  'rp.quotas':      {ru:'🔋 Квоты API', en:'🔋 API quotas', zh:'🔋 API 配额'},
+  'rp.sessmem':     {ru:'🧠 Память сессий', en:'🧠 Session memory', zh:'🧠 会话记忆'},
+  'rp.loaded':      {ru:'загружена', en:'loaded', zh:'已加载'},
+  'mem.hot':        {ru:'HOT память', en:'HOT memory', zh:'HOT 记忆'},
+  'mem.stats':      {ru:'Статистика', en:'Stats', zh:'统计'},
+  'mem.graph':      {ru:'Связи', en:'Graph', zh:'关系图'},
+  'mem.skills':     {ru:'Навыки', en:'Skills', zh:'技能'},
+  'mem.search':     {ru:'Поиск', en:'Search', zh:'搜索'},
   'set.theme':      {ru:'🎨 Тема', en:'🎨 Theme', zh:'🎨 主题'},
   'set.lang':       {ru:'🌐 Язык', en:'🌐 Language', zh:'🌐 语言'},
   'theme.light':    {ru:'☀️ Светлая', en:'☀️ Light', zh:'☀️ 浅色'},

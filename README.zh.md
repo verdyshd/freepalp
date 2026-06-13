@@ -13,6 +13,17 @@
   <b>中文</b>
 </p>
 
+<p align="center">
+  <img src="docs/screenshot-chat.png" alt="FreePalp WebUI — 聊天" width="900"><br>
+  <em>聊天界面：实时 token/配额仪表、活跃模型、会话记忆 —— 运行在免费提供商 + 本地 Ollama 上</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshot-memory.png" alt="记忆图" width="440">
+  <img src="docs/screenshot-metrics.png" alt="指标面板" width="440"><br>
+  <em>真实的向量记忆图（语义 / 情景 / 程序）· 按任务的指标与分析</em>
+</p>
+
 ---
 
 ## 这是什么

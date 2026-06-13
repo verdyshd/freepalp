@@ -18,6 +18,17 @@
   <b>English</b> · <a href="README.ru.md">Русский</a> · <a href="README.zh.md">中文</a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshot-chat.png" alt="FreePalp WebUI — chat" width="900"><br>
+  <em>Chat: live token/quota meters, active models, session memory — runs on free providers + local Ollama</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshot-memory.png" alt="Memory graph" width="440">
+  <img src="docs/screenshot-metrics.png" alt="Metrics dashboard" width="440"><br>
+  <em>Real vector-memory graph (semantic / episodic / procedural) · per-task metrics & analytics</em>
+</p>
+
 ---
 
 ## What is it

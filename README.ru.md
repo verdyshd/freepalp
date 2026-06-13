@@ -6,6 +6,17 @@
   <a href="README.md">English</a> · <b>Русский</b> · <a href="README.zh.md">中文</a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshot-chat.png" alt="FreePalp WebUI — чат" width="900"><br>
+  <em>Чат: живые счётчики токенов/квот, активные модели, память сессии — работает на бесплатных провайдерах + локальный Ollama</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshot-memory.png" alt="Граф памяти" width="440">
+  <img src="docs/screenshot-metrics.png" alt="Метрики" width="440"><br>
+  <em>Настоящий граф векторной памяти (semantic / episodic / procedural) · метрики и аналитика по задачам</em>
+</p>
+
 # FreePalp AI Orchestrator
 
 **Мультиагентный AI-оркестратор на бесплатных моделях: самокоррекция, ReAct loop, автономное использование инструментов.**
