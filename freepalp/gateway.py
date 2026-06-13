@@ -958,6 +958,73 @@ async def api_memory_graph(max_nodes: int = 120, threshold: float = 0.35,
         return {"ok": False, "error": str(e)}
 
 
+def _msg_text(content) -> str:
+    """OpenAI content → плоский текст (бывает строкой или массивом частей)."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return " ".join(c.get("text", "") for c in content
+                        if isinstance(c, dict) and c.get("type") == "text")
+    return str(content or "")
+
+
+@app.post("/v1/chat/completions")
+async def openai_compat(request: Request):
+    """OpenAI-совместимый эндпоинт — FreePalp как бэкенд для ЛЮБОГО IDE-плагина
+    (Continue.dev, Cursor, и т.п.), умеющего в OpenAI API. Указываешь base_url
+    http://localhost:28800/v1 — и весь оркестратор (роутинг, инструменты, DAG,
+    память) работает под капотом редактора."""
+    _touch_activity()
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"error": "невалидный JSON"})
+
+    messages = body.get("messages", []) or []
+    user_msgs = [m for m in messages if m.get("role") == "user"]
+    if not user_msgs:
+        return JSONResponse(status_code=400, content={"error": "нет user-сообщения"})
+    task = _msg_text(user_msgs[-1].get("content"))
+
+    # Предыдущие реплики → история диалога (без system и без последнего user)
+    history = []
+    for m in messages[:-1]:
+        if m.get("role") in ("user", "assistant"):
+            history.append({"role": m["role"], "content": _msg_text(m.get("content"))})
+    ctx = {"conversation_history": history} if history else {}
+
+    try:
+        orch = _get_orch()
+        result = await asyncio.wait_for(orch.run(task, context=ctx), timeout=300.0)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+    answer = result.final_answer or ""
+    tin  = sum(m.metadata.get("tokens_in",  0)   for m in result.messages)
+    tout = sum(m.metadata.get("tokens_out", 0)   for m in result.messages)
+    return {
+        "id": f"chatcmpl-{result.task_id}",
+        "object": "chat.completion",
+        "created": int(time.time()),
+        "model": f"freepalp/{result.model_used}",
+        "choices": [{
+            "index": 0,
+            "message": {"role": "assistant", "content": answer},
+            "finish_reason": "stop",
+        }],
+        "usage": {"prompt_tokens": tin, "completion_tokens": tout,
+                  "total_tokens": tin + tout},
+    }
+
+
+@app.get("/v1/models")
+async def openai_models():
+    """OpenAI-совместимый список моделей (некоторые IDE-плагины его требуют)."""
+    return {"object": "list", "data": [
+        {"id": "freepalp", "object": "model", "created": int(time.time()),
+         "owned_by": "freepalp"}]}
+
+
 @app.get("/api/mcp")
 async def api_mcp():
     """Статус подключённых MCP-серверов и их инструментов."""

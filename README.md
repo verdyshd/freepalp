@@ -82,6 +82,9 @@ adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
 - **MCP client** — connect any [Model Context Protocol](https://modelcontextprotocol.io)
   server in `config/mcp_servers.json` and its tools appear to the agent
   automatically (filesystem, GitHub, databases, hundreds of ready servers).
+- **OpenAI-compatible API** — point any IDE plugin (Continue.dev, etc.) or
+  OpenAI client at `http://localhost:28800/v1` and the whole orchestrator
+  (routing, tools, DAG, memory) runs under your editor.
 - **Token streaming** — the final answer types out token-by-token in the WebUI.
 - **Deep research** — one tool does a multi-angle web search, fetches the top
   pages, and the agent writes a report citing **real** sources (no hallucinated
