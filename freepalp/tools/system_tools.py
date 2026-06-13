@@ -378,11 +378,32 @@ def metrics_summary() -> dict:
         return {"ok": False, "error": str(e)}
 
 
+def search_history(query: str, limit: int = 8) -> dict:
+    """Поиск по собственной истории прошлых диалогов (FTS5 по сессиям).
+
+    Используй, когда пользователь ссылается на прошлое: «когда мы обсуждали…»,
+    «что я просил про…», «помнишь задачу о…».
+    Returns: {"ok": True, "results": [{session_id, ts, preview, snippet}]}
+    """
+    try:
+        from freepalp.core import history_search as _hs
+        _hs.reindex()  # инкрементально подхватываем новые сессии
+        return {"ok": True, "results": _hs.search(query, limit=limit)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Реестр инструментов
 # ══════════════════════════════════════════════════════════════════════════════
 
 SYSTEM_TOOLS: dict = {
+    "search_history": {
+        "description": "Поиск по истории прошлых диалогов (FTS5). Аргумент: query (str). Когда пользователь ссылается на прошлое — «когда мы обсуждали X», «что я просил про Y».",
+        "fn":    search_history,
+        "async": False,
+        "args":  {"query": "str"},
+    },
     # Memory
     "memory_read": {
         "description": "Прочитать HOT память, corrections или статистику памяти агента",

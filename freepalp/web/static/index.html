@@ -1181,7 +1181,7 @@
       <div id="mem-search" style="display:none">
         <div class="search-bar">
           <span style="color:var(--text-3)">🔍</span>
-          <input type="text" id="mem-search-input" placeholder="Поиск по архиву..." onkeydown="if(event.key==='Enter')searchMemory()">
+          <input type="text" id="mem-search-input" placeholder="Поиск по памяти и истории диалогов..." onkeydown="if(event.key==='Enter')searchMemory()">
           <button class="btn primary" onclick="searchMemory()">Найти</button>
         </div>
         <div id="mem-search-results" style="font-size:13px;color:var(--text-3)">Введите запрос для поиска</div>
@@ -2831,17 +2831,31 @@ async function searchMemory() {
   const res = document.getElementById('mem-search-results');
   res.innerHTML = '<div style="color:var(--text-3)">Поиск...</div>';
   try {
-    const resp = await fetch('/api/memory/search?q=' + encodeURIComponent(q));
-    const data = await resp.json();
-    if (!data.results || !data.results.length) {
-      res.innerHTML = '<div style="color:var(--text-3)">Ничего не найдено</div>';
-      return;
+    // Параллельно: память (HOT/архив) + история диалогов (FTS5)
+    const [mem, hist] = await Promise.all([
+      fetch('/api/memory/search?q=' + encodeURIComponent(q)).then(r => r.json()).catch(() => ({})),
+      fetch('/api/history/search?q=' + encodeURIComponent(q)).then(r => r.json()).catch(() => ({})),
+    ]);
+    let html = '';
+    const memRes = mem.results || [];
+    if (memRes.length) {
+      html += '<div style="font-size:11px;color:var(--text-3);margin:4px 0 8px">🧠 Память (HOT/архив)</div>';
+      html += memRes.map(r => `
+        <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px">
+          <div style="font-size:10px;color:var(--accent);margin-bottom:4px">[${r.tier?.toUpperCase()}] ${r.source}</div>
+          <div style="font-size:12px;color:var(--text-2)">${escHtml(r.snippet || '')}</div>
+        </div>`).join('');
     }
-    res.innerHTML = data.results.map(r => `
-      <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px">
-        <div style="font-size:10px;color:var(--accent);margin-bottom:4px">[${r.tier?.toUpperCase()}] ${r.source}</div>
-        <div style="font-size:12px;color:var(--text-2)">${escHtml(r.snippet || '')}</div>
-      </div>`).join('');
+    const histRes = hist.results || [];
+    if (histRes.length) {
+      html += '<div style="font-size:11px;color:var(--text-3);margin:14px 0 8px">💬 История диалогов (' + histRes.length + ')</div>';
+      html += histRes.map(r => `
+        <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px">
+          <div style="font-size:10px;color:var(--accent-2);margin-bottom:4px">📅 ${escHtml((r.ts||'').slice(0,16).replace('T',' '))} · ${escHtml(r.preview||'')}</div>
+          <div style="font-size:12px;color:var(--text-2)">${escHtml(r.snippet || '')}</div>
+        </div>`).join('');
+    }
+    res.innerHTML = html || '<div style="color:var(--text-3)">Ничего не найдено ни в памяти, ни в истории</div>';
   } catch(e) {
     res.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
   }

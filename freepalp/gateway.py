@@ -982,6 +982,28 @@ async def api_mcp_reconnect():
         return {"ok": False, "error": str(e)}
 
 
+@app.get("/api/history/search")
+async def api_history_search(q: str = "", limit: int = 15):
+    """FTS5-поиск по истории прошлых диалогов."""
+    try:
+        from freepalp.core import history_search as _hs
+        if q.strip():
+            await asyncio.to_thread(_hs.reindex)   # подхватить новые сессии
+        return {"ok": True, "results": _hs.search(q, limit=limit), "query": q}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/history/reindex")
+async def api_history_reindex(force: bool = False):
+    try:
+        from freepalp.core import history_search as _hs
+        res = await asyncio.to_thread(_hs.reindex, force)
+        return {"ok": True, **res}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @app.get("/api/sandbox/artifacts")
 async def api_sandbox_artifacts():
     """Список превьюабельных артефактов (HTML/SVG) в песочнице — для галереи."""
