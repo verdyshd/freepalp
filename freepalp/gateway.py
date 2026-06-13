@@ -1049,6 +1049,73 @@ async def api_mcp_reconnect():
         return {"ok": False, "error": str(e)}
 
 
+@app.post("/api/mcp/add")
+async def api_mcp_add(request: Request):
+    """Добавить MCP-сервер из UI (без ручной правки конфига) и переподключить."""
+    try:
+        body = await request.json()
+        name = (body.get("name") or "").strip()
+        command = (body.get("command") or "").strip()
+        raw_args = body.get("args") or []
+        if isinstance(raw_args, str):
+            # shlex с posix=False: уважает кавычки и НЕ ломает Windows-пути
+            # с пробелами (пользователь берёт такой путь в "кавычки").
+            import shlex
+            try:
+                parts = shlex.split(raw_args, posix=False)
+            except ValueError:
+                parts = raw_args.split()
+            # posix=False группирует по кавычкам, но оставляет сами кавычки —
+            # снимаем обрамляющие, чтобы subprocess получил чистый путь.
+            raw_args = [(p[1:-1] if len(p) >= 2 and p[0] == p[-1] and p[0] in "\"'" else p)
+                        for p in parts if p]
+        env = body.get("env") or {}
+        if not name or not command:
+            return JSONResponse(status_code=400, content={"error": "нужны name и command"})
+        cfg_path = Path(__file__).parent / "config" / "mcp_servers.json"
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8")) if cfg_path.exists() else {}
+        cfg.setdefault("mcpServers", {})[name] = {"command": command, "args": raw_args, "env": env}
+        cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+        import asyncio as _asyncio
+        from freepalp.core import mcp_client as _mcp
+        mgr = _mcp.get(); mgr.close_all()
+        summary = await _asyncio.to_thread(mgr.connect_all)
+        ok = name in summary.get("connected", [])
+        return {"ok": ok, "summary": summary,
+                "error": None if ok else f"Сервер '{name}' не поднялся — проверь command/args"}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/skills/add")
+async def api_skills_add(request: Request):
+    """Добавить пользовательский навык (SKILL.md) из UI."""
+    try:
+        import re as _re
+        body = await request.json()
+        name = (body.get("name") or "").strip()
+        desc = (body.get("description") or "").strip()
+        proc = (body.get("procedure") or "").strip()
+        if not name or not proc:
+            return JSONResponse(status_code=400, content={"error": "нужны name и procedure"})
+        # Keep Cyrillic/Unicode буквы в слаге, не только латиницу
+        slug = _re.sub(r"[^\w]+", "_", name.lower(), flags=_re.UNICODE).strip("_")[:60] or "skill"
+        from freepalp.core import skill_library as _sl
+        d = _sl.get().dir
+        path = d / f"user_{slug}.md"
+        from datetime import date as _date
+        content = (
+            f"---\nname: {slug}\ndescription: {desc or name}\ntask_type: user\n"
+            f"keywords: {' '.join(name.lower().split())}\ntools: \nsource_model: ручной\n"
+            f"created: {_date.today().isoformat()}\nuses: 1\n---\n\n"
+            f"# Навык: {name}\n\n## Когда применять\n{desc or name}\n\n"
+            f"## Процедура\n{proc}\n\n_Добавлено пользователем вручную._\n")
+        path.write_text(content, encoding="utf-8")
+        return {"ok": True, "name": slug}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
 @app.get("/api/history/search")
 async def api_history_search(q: str = "", limit: int = 15):
     """FTS5-поиск по истории прошлых диалогов."""

@@ -1204,6 +1204,15 @@
           не с первой попытки, рабочая процедура сохраняется в SKILL.md и в следующий
           раз подставляется в промпт — справится сразу. Коррекция накапливается.
         </div>
+        <details style="margin-bottom:12px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--accent)">➕ Добавить свой навык</summary>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <input id="skill-name" placeholder="название навыка" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+            <input id="skill-desc" placeholder="когда применять (кратко)" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+            <textarea id="skill-proc" placeholder="процедура: шаги, как решать такую задачу" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text);min-height:70px;resize:vertical"></textarea>
+            <button class="btn primary" style="align-self:flex-start" onclick="addSkill()">Сохранить навык</button>
+          </div>
+        </details>
         <div id="mem-skills-list" style="display:flex;flex-direction:column;gap:10px">Загрузка...</div>
       </div>
       <!-- GRAPH: честные связи памяти -->
@@ -1254,6 +1263,12 @@
           <button class="btn" onclick="reconnectMcp()" title="Переподключить после правки конфига">↻ Переподключить</button>
         </div>
         <div id="mcp-status" style="font-size:12px;color:var(--text-3);margin-top:8px">Загрузка...</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+          <input id="mcp-name" placeholder="имя" style="flex:0 0 90px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+          <input id="mcp-cmd" placeholder="command (напр. npx)" style="flex:0 0 130px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+          <input id="mcp-args" placeholder="args (через пробел)" style="flex:1;min-width:140px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+          <button class="btn primary" onclick="addMcpServer()">+ Сервер</button>
+        </div>
       </div>
       <div class="search-bar">
         <span style="color:var(--text-3)">🔍</span>
@@ -2975,6 +2990,39 @@ async function reconnectMcp() {
     else showToast('❌ ' + (d.error || 'ошибка'));
   } catch(e) { showToast('❌ ' + e.message); }
   await loadTools();
+}
+
+async function addMcpServer() {
+  const name = document.getElementById('mcp-name').value.trim();
+  const command = document.getElementById('mcp-cmd').value.trim();
+  const args = document.getElementById('mcp-args').value.trim();
+  if (!name || !command) { showToast('❌ Нужны имя и command'); return; }
+  showToast('🔌 Подключаю...');
+  try {
+    const d = await fetch('/api/mcp/add', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, command, args})}).then(r => r.json());
+    if (d.ok) {
+      showToast(`✅ MCP «${name}» подключён`);
+      ['mcp-name','mcp-cmd','mcp-args'].forEach(id => document.getElementById(id).value = '');
+    } else showToast('❌ ' + (d.error || 'не поднялся'));
+  } catch(e) { showToast('❌ ' + e.message); }
+  await loadTools();
+}
+
+async function addSkill() {
+  const name = document.getElementById('skill-name').value.trim();
+  const description = document.getElementById('skill-desc').value.trim();
+  const procedure = document.getElementById('skill-proc').value.trim();
+  if (!name || !procedure) { showToast('❌ Нужны название и процедура'); return; }
+  try {
+    const d = await fetch('/api/skills/add', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, description, procedure})}).then(r => r.json());
+    if (d.ok) {
+      showToast(`✅ Навык «${name}» сохранён`);
+      ['skill-name','skill-desc','skill-proc'].forEach(id => document.getElementById(id).value = '');
+      loadSkills();
+    } else showToast('❌ ' + (d.error || 'ошибка'));
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 function renderTools(tools) {
