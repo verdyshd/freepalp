@@ -1151,7 +1151,7 @@
               onmouseover="this.style.background='rgba(252,129,129,0.2)'"
               onmouseout="this.style.background='rgba(252,129,129,0.1)'"
               title="Graceful shutdown — сохранит память и завершит сервер"
-            >⏻ Выключить</button>
+              data-i18n="btn.shutdown">⏻ Выключить</button>
           </div>
         </div>
       </div>
@@ -1173,7 +1173,7 @@
   <section class="panel" id="panel-memory">
     <div class="panel-header">
       <h2 data-i18n="panel.memory">🧠 Память агента</h2>
-      <p>HOT / WARM / COLD тиры + поиск по архиву</p>
+      <p data-i18n="mem.sub">HOT / WARM / COLD тиры + поиск поархиву</p>
     </div>
     <div class="memory-tabs">
       <div class="mem-tab active" onclick="switchMemTab('hot', this)" data-i18n="mem.hot">HOT память</div>
@@ -1253,26 +1253,26 @@
   <section class="panel" id="panel-tools">
     <div class="panel-header">
       <h2 data-i18n="panel.tools">🔧 Инструменты</h2>
-      <p>Агент автономно вызывает эти инструменты через ReAct loop</p>
+      <p data-i18n="tools.sub">Агент автономно вызывает эти инструменты через ReAct loop</p>
     </div>
     <div style="padding:16px 24px 8px">
       <!-- MCP-серверы: подключённые внешние наборы инструментов -->
       <div id="mcp-section" style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <div style="font-size:13px;color:var(--text);font-weight:600">🔌 MCP-серверы</div>
-          <button class="btn" onclick="reconnectMcp()" title="Переподключить после правки конфига">↻ Переподключить</button>
+          <div style="font-size:13px;color:var(--text);font-weight:600" data-i18n="tools.mcpServers">🔌 MCP-серверы</div>
+          <button class="btn" onclick="reconnectMcp()" title="Переподключить после правки конфига" data-i18n="tools.reconnect">↻ Переподключить</button>
         </div>
         <div id="mcp-status" style="font-size:12px;color:var(--text-3);margin-top:8px">Загрузка...</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-          <input id="mcp-name" placeholder="имя" style="flex:0 0 90px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-          <input id="mcp-cmd" placeholder="command (напр. npx)" style="flex:0 0 130px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-          <input id="mcp-args" placeholder="args (через пробел)" style="flex:1;min-width:140px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-          <button class="btn primary" onclick="addMcpServer()">+ Сервер</button>
+          <input id="mcp-name" placeholder="имя" data-i18n-ph="tools.phName" style="flex:0 0 90px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+          <input id="mcp-cmd" placeholder="command (напр. npx)" data-i18n-ph="tools.phCommand" style="flex:0 0 130px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+          <input id="mcp-args" placeholder="args (через пробел)" data-i18n-ph="tools.phArgs" style="flex:1;min-width:140px;font-size:12px;padding:6px 8px;background:var(--bg-glass);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+          <button class="btn primary" onclick="addMcpServer()" data-i18n="tools.addServer">+ Сервер</button>
         </div>
       </div>
       <div class="search-bar">
         <span style="color:var(--text-3)">🔍</span>
-        <input type="text" id="tools-search" placeholder="Поиск инструментов..." oninput="filterTools(this.value)">
+        <input type="text" id="tools-search" placeholder="Поиск инструментов..." data-i18n-ph="tools.phSearch" oninput="filterTools(this.value)">
       </div>
     </div>
     <div style="padding:0 24px 24px;overflow-y:auto;flex:1">
@@ -1286,47 +1286,47 @@
   <section class="panel" id="panel-metrics">
     <div class="panel-header">
       <h2 data-i18n="panel.metrics">📊 Метрики и аналитика</h2>
-      <p>Статистика задач, качества ответов, токенов и стоимости</p>
+      <p data-i18n="met.sub">Статистика задач, качества ответов, токенов и стоимости</p>
     </div>
     <div class="metrics-content">
       <div class="metrics-big-grid" id="metrics-big"></div>
       <div class="chart-wrap chart-tall">
-        <div class="chart-title">Тренд оценок (последние сессии)</div>
+        <div class="chart-title" data-i18n="met.chTrend">Тренд оценок (последние сессии)</div>
         <canvas id="chart-trend"></canvas>
         <div id="chart-trend-empty" style="display:none;text-align:center;padding:24px 0;color:#8b9ab8;font-size:13px;">
           📊 Данных пока мало — выполните несколько задач, чтобы увидеть тренд
         </div>
       </div>
       <div class="chart-wrap" style="margin-top:16px;">
-        <div class="chart-title">Средний балл по типам задач</div>
+        <div class="chart-title" data-i18n="met.chByType">Средний балл по типам задач</div>
         <canvas id="chart-types"></canvas>
         <div id="chart-types-empty" style="display:none;text-align:center;padding:24px 0;color:#8b9ab8;font-size:13px;">
           📈 Здесь появятся данные после накопления задач разных типов
         </div>
       </div>
       <div id="type-detail-wrap" style="margin-top:16px;display:none;">
-        <div class="chart-title" style="margin-bottom:8px;">Детали по типам задач</div>
+        <div class="chart-title" style="margin-bottom:8px;" data-i18n="met.chDetails">Детали по типам задач</div>
         <div id="type-detail-table"></div>
       </div>
 
       <!-- ── Квоты провайдеров ── -->
       <div style="margin-top:16px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:16px;" id="budget-section-wrap">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:12px;color:var(--text-3);font-weight:500">🔋 Квоты API провайдеров</div>
+          <div style="font-size:12px;color:var(--text-3);font-weight:500" data-i18n="met.quotasTitle">🔋 Квоты API провайдеров</div>
           <div style="display:flex;gap:8px;align-items:center">
             <span style="font-size:10px;color:var(--text-3)" id="budget-hint"></span>
-            <button onclick="resetAllBudgets()" style="font-size:10px;padding:2px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-3)">↺ Сбросить кулдауны</button>
+            <button onclick="resetAllBudgets()" style="font-size:10px;padding:2px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-3)" data-i18n="met.resetCd">↺ Сбросить кулдауны</button>
           </div>
         </div>
         <div id="budget-full-table"></div>
         <div style="margin-top:8px;font-size:11px;color:var(--text-3)">
-          💡 Несколько ключей = больше квота. Управляй ключами в панели <a href="#" onclick="switchPanel('providers');return false" style="color:var(--accent)">Провайдеры →</a>
+          <span data-i18n="met.hintKeys1">💡 Несколько ключей = больше квота. Управляй ключами в панели</span> <a href="#" onclick="switchPanel('providers');return false" style="color:var(--accent)" data-i18n="met.providersLink">Провайдеры →</a>
         </div>
       </div>
 
       <!-- ── Пометки системы самообучения ── -->
       <div id="notes-wrap" style="margin-top:20px;display:none;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
-        <div style="font-size:12px;color:var(--text-3);font-weight:500;margin-bottom:12px;">🗒️ Пометки системы (кандидаты на улучшение)</div>
+        <div style="font-size:12px;color:var(--text-3);font-weight:500;margin-bottom:12px;" data-i18n="met.notesTitle">🗒️ Пометки системы (кандидаты на улучшение)</div>
         <div id="notes-grid" style="display:flex;flex-wrap:wrap;gap:12px;"></div>
       </div>
     </div>
@@ -1336,7 +1336,7 @@
   <section class="panel" id="panel-settings">
     <div class="panel-header">
       <h2 data-i18n="panel.settings">⚙️ Настройки</h2>
-      <p>Конфигурация FreePalp</p>
+      <p data-i18n="set.sub">Конфигурация FreePalp</p>
     </div>
     <div style="padding:24px;overflow-y:auto">
       <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
@@ -1356,49 +1356,49 @@
         </div>
       </div>
       <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-        <div class="rp-title">Информация о системе</div>
+        <div class="rp-title" data-i18n="set.sysinfo">Информация о системе</div>
         <div id="settings-info" style="font-size:13px;color:var(--text-2);line-height:1.8">Загрузка...</div>
       </div>
       <div id="training-notice" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px;border-left:3px solid var(--accent);padding:10px 12px;display:none">
-        <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">🧬 Самообучение</div>
+        <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px" data-i18n="set.selfTraining">🧬 Самообучение</div>
         <div id="training-status" style="font-size:11px;color:var(--text-2);line-height:1.6"></div>
       </div>
       <!-- Единая версия FreePalp: вехи + код + промпты в одной ленте -->
       <div id="versions-wrap" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="rp-title" style="margin:0">🐙 Версия FreePalp: <span id="fp-version" style="color:var(--accent)">…</span></div>
-          <button class="btn" style="font-size:11px;padding:3px 8px" onclick="rollbackVersion()" title="Откат версии промптов">↩ Откат промптов</button>
+          <div class="rp-title" style="margin:0"><span data-i18n="sys.versionHdr">🐙 Версия FreePalp:</span> <span id="fp-version" style="color:var(--accent)">…</span></div>
+          <button class="btn" style="font-size:11px;padding:3px 8px" onclick="rollbackVersion()" title="Откат версии промптов" data-i18n="set.rollback">↩ Откат промптов</button>
         </div>
-        <div style="font-size:10px;color:var(--text-3);margin-bottom:6px">
+        <div style="font-size:10px;color:var(--text-3);margin-bottom:6px" data-i18n="set.versionsDesc">
           Хронология: вехи проекта, изменения кода (git, автокоммит самомодификаций) и версии промптов (самоулучшение)
         </div>
         <div id="versions-list" style="font-size:11px;color:var(--text-2);max-height:300px;overflow-y:auto"></div>
       </div>
       <!-- Поведение системы (настоящие настройки) -->
       <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-        <div class="rp-title">⚙️ Поведение</div>
+        <div class="rp-title" data-i18n="set.behavior">⚙️ Поведение</div>
         <div style="font-size:12px;color:var(--text-2);display:flex;flex-direction:column;gap:10px;margin-top:8px">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
             <input type="checkbox" id="set-si-startup" onchange="saveSetting('si_on_startup', this.checked)">
-            Самоулучшение при старте сервера <span style="color:var(--text-3)">(жжёт квоту провайдеров)</span>
+            <span data-i18n="set.siStartup">Самоулучшение при старте сервера</span> <span style="color:var(--text-3)" data-i18n="set.siStartupHint">(жжёт квоту провайдеров)</span>
           </label>
           <label style="display:flex;align-items:center;gap:8px">
-            Авто-выключение через
+            <span data-i18n="set.idleBefore">Авто-выключение через</span>
             <input type="number" id="set-idle" min="0" max="1440" style="width:60px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--text-1);padding:2px 6px"
                    onchange="saveSetting('idle_shutdown_minutes', parseInt(this.value)||0)">
-            мин <span style="color:var(--text-3)">(0 = никогда; нужен перезапуск)</span>
+            <span data-i18n="set.idleMin">мин</span> <span style="color:var(--text-3)" data-i18n="set.idleHint">(0 = никогда; нужен перезапуск)</span>
           </label>
           <label style="display:flex;align-items:center;gap:8px">
-            Порог критика для ретрая
+            <span data-i18n="set.retryLabel">Порог критика для ретрая</span>
             <input type="number" id="set-retry" min="0" max="1" step="0.05" style="width:60px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--text-1);padding:2px 6px"
                    onchange="saveSetting('retry_threshold', parseFloat(this.value)||0.7)">
-            <span style="color:var(--text-3)">(score ниже — повтор; 0.7 по умолчанию)</span>
+            <span style="color:var(--text-3)" data-i18n="set.retryHint">(score ниже — повтор; 0.7 по умолчанию)</span>
           </label>
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn primary" onclick="triggerImprove()">🧬 Самоулучшение</button>
-        <button class="btn" onclick="triggerMemClean()">🧹 Очистить память</button>
+        <button class="btn primary" onclick="triggerImprove()" data-i18n="set.improve">🧬 Самоулучшение</button>
+        <button class="btn" onclick="triggerMemClean()" data-i18n="set.clearmem">🧹 Очистить память</button>
         <button class="btn" onclick="window.open('/docs','_blank')">📖 API Docs</button>
       </div>
     </div>
@@ -2361,7 +2361,7 @@ async function loadProviders() {
 
 function renderProviderCard(p) {
   const tagClass = p.isActive ? 'active' : 'inactive';
-  const tagText  = p.isActive ? '✓ Активен' : 'Не настроен';
+  const tagText  = p.isActive ? t('prov.tagActive') : t('prov.tagInactive');
   const freeTag  = p.free ? '<span style="font-size:9px;background:rgba(72,187,120,.12);color:var(--accent-3);padding:1px 5px;border-radius:8px;margin-left:4px">FREE</span>' : '';
 
   // Используем SVG-логотип через providerIconHtml(), если есть svgName — иначе fallback на emoji
@@ -2376,7 +2376,7 @@ function renderProviderCard(p) {
       <div class="key-slot">
         <span class="key-num">#${k.slot}</span>
         <span class="key-val">${k.preview}</span>
-        <span class="key-del" onclick="deleteKey('${p.key}', ${k.slot})" title="Удалить ключ">✕</span>
+        <span class="key-del" onclick="deleteKey('${p.key}', ${k.slot})" title="${t('prov.delKey')}">✕</span>
       </div>`).join('');
 
     // Budget info
@@ -2388,8 +2388,8 @@ function renderProviderCard(p) {
       const rem = b.remaining_today >= 999999 ? '∞' : (b.remaining_today >= 1000 ? (b.remaining_today/1000).toFixed(1)+'k' : b.remaining_today);
       const cd  = b.cooldown_sec > 0 ? ` ⏱${b.cooldown_sec}s` : '';
       budgetLine = `<div style="margin-top:6px;font-size:11px;color:var(--text-3)">
-        Квота:${bar}<span style="color:${p.budget.available ? 'var(--accent-3)' : 'var(--accent-err)'}">${rem} req осталось${cd}</span>
-        ${p.keys.length > 1 ? `<span class="budget-keys-badge">×${p.keys.length} ключей</span>` : ''}
+        ${t('prov.quota')}${bar}<span style="color:${p.budget.available ? 'var(--accent-3)' : 'var(--accent-err)'}">${rem} ${t('prov.reqLeft')}${cd}</span>
+        ${p.keys.length > 1 ? `<span class="budget-keys-badge">×${p.keys.length} ${t('prov.keysCount')}</span>` : ''}
       </div>`;
     }
 
@@ -2402,18 +2402,18 @@ function renderProviderCard(p) {
       ${keyItems ? `<div class="provider-keys">${keyItems}</div>` : ''}
       ${budgetLine}
       <div class="add-key-wrap">
-        <input id="${inputId}" type="password" placeholder="${p.keys.length ? 'Добавить ещё ключ' : 'Вставить API ключ...'}" autocomplete="off"
+        <input id="${inputId}" type="password" placeholder="${p.keys.length ? t('prov.phAddMore') : t('prov.phPasteKey')}" autocomplete="off"
                onkeydown="if(event.key==='Enter') addKey('${p.key}', ${nextSlot}, '${inputId}', '${resultId}')">
         <button class="btn-test-key" onclick="testKey('${p.key}', '${inputId}', '${resultId}')">🧪</button>
-        <button class="btn-add-key" onclick="addKey('${p.key}', ${nextSlot}, '${inputId}', '${resultId}')">+ Добавить</button>
+        <button class="btn-add-key" onclick="addKey('${p.key}', ${nextSlot}, '${inputId}', '${resultId}')">${t('prov.addKey')}</button>
       </div>
       <div id="${resultId}" class="key-test-result"></div>`;
   } else {
     // Ollama — show install link and status
     keysHtml = `<div style="margin-top:8px;font-size:12px;color:var(--text-3)">
-      ${p.isActive ? '✅ Запущен (localhost:11434)' : '❌ Не обнаружен — установите и запустите: <code>ollama serve</code>'}
+      ${p.isActive ? t('prov.ollamaRunning') : t('prov.ollamaNotFound') + ' <code>ollama serve</code>'}
     </div>
-    <div style="margin-top:6px;font-size:11px;color:var(--text-3)">Популярные модели: <code style="color:var(--accent-2)">ollama pull qwen2.5-coder:7b</code></div>`;
+    <div style="margin-top:6px;font-size:11px;color:var(--text-3)">${t('prov.popularModels')} <code style="color:var(--accent-2)">ollama pull qwen2.5-coder:7b</code></div>`;
   }
 
   return `<div class="provider-card ${p.isActive ? 'active' : ''}" id="pcard-${p.key}">
@@ -2425,10 +2425,10 @@ function renderProviderCard(p) {
       </div>
       <span class="provider-tag ${tagClass}" style="margin-left:auto">${tagText}</span>
     </div>
-    ${p.models ? `<div class="provider-detail" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.models}"><span>Модели: </span>${p.models.slice(0,60)}</div>` : ''}
+    ${p.models ? `<div class="provider-detail" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.models}"><span>${t('prov.modelsLabel')}</span>${p.models.slice(0,60)}</div>` : ''}
     ${p.notes  ? `<div class="provider-detail"><span>💡 </span>${p.notes.slice(0,80)}</div>` : ''}
     ${keysHtml}
-    ${p.signup && !p.isLocal ? `<a class="provider-signup" href="${p.signup}" target="_blank">📋 Получить ключ →</a>` : (p.isLocal ? `<a class="provider-signup" href="${p.signup}" target="_blank">📥 Скачать Ollama →</a>` : '')}
+    ${p.signup && !p.isLocal ? `<a class="provider-signup" href="${p.signup}" target="_blank">${t('prov.getKey')}</a>` : (p.isLocal ? `<a class="provider-signup" href="${p.signup}" target="_blank">${t('prov.getOllama')}</a>` : '')}
   </div>`;
 }
 
@@ -2954,7 +2954,7 @@ const TOOL_CATEGORIES = {
   system: ['memory_read','memory_write','memory_search','memory_forget','cron_list','cron_add','cron_remove','providers_list','models_list','mcp_list','skills_list','skill_run','metrics_summary'],
 };
 const getCat = name => Object.entries(TOOL_CATEGORIES).find(([,v])=>v.includes(name))?.[0] || 'other';
-const CAT_LABELS = { file:'Файлы', shell:'Shell', web:'Web', browser:'Браузер', github:'GitHub', notify:'Уведомления', system:'Система', other:'Прочее' };
+const CAT_LABELS = { file:'cat.file', shell:'cat.shell', web:'cat.web', browser:'cat.browser', github:'cat.github', notify:'cat.notify', system:'cat.system', other:'cat.other' };
 
 async function loadTools() {
   const grid = document.getElementById('tools-grid');
@@ -2976,7 +2976,7 @@ async function loadMcpStatus() {
     const d = await fetch('/api/mcp').then(r => r.json());
     if (!d.ok) { el.innerHTML = `<span style="color:var(--accent-err)">Ошибка: ${d.error}</span>`; return; }
     if (!d.total_servers) {
-      el.innerHTML = `Не подключено ни одного. Добавь сервер в <code style="color:var(--accent-2)">freepalp/config/mcp_servers.json</code> — и его инструменты появятся у воркера автоматически (формат как у Claude Desktop).`;
+      el.innerHTML = `${t('tools.mcpNone')} <code style="color:var(--accent-2)">freepalp/config/mcp_servers.json</code> ${t('tools.mcpNoneTail')}`;
       return;
     }
     el.innerHTML = d.servers.map(s => `
@@ -3035,13 +3035,13 @@ async function addSkill() {
 
 function renderTools(tools) {
   const grid = document.getElementById('tools-grid');
-  grid.innerHTML = tools.map(t => {
-    const cat = getCat(t.name);
+  grid.innerHTML = tools.map(tool => {
+    const cat = getCat(tool.name);
     return `
       <div class="tool-card">
-        <div class="tool-name">${t.name}</div>
-        <div class="tool-desc">${t.description || ''}</div>
-        <span class="tool-category">${CAT_LABELS[cat] || cat}</span>
+        <div class="tool-name">${tool.name}</div>
+        <div class="tool-desc">${tool.description || ''}</div>
+        <span class="tool-category">${t(CAT_LABELS[cat]) || cat}</span>
       </div>`;
   }).join('');
 }
@@ -3088,7 +3088,7 @@ function renderBudgetMini(providers, activeSet) {
     const keysLabel = p.keys_count > 1 ? `×${p.keys_count}` : '';
     const cooldownLabel = p.cooldown_sec > 0 ? ` ⏱${p.cooldown_sec}s` : '';
     return `<div class="budget-row">
-      <div class="budget-dot ${dotClass}" title="${isConfirmedActive ? 'Активен' : (p.available ? 'Ключ есть, проверка...' : 'Недоступен')}"></div>
+      <div class="budget-dot ${dotClass}" title="${isConfirmedActive ? t('bud.titActive') : (p.available ? t('bud.titChecking') : t('bud.titUnavail'))}"></div>
       <div class="budget-provider">${p.provider}${keysLabel ? '<span style="font-size:9px;color:var(--accent-3)"> '+keysLabel+'</span>' : ''}</div>
       <div class="budget-bar-wrap"><div class="budget-bar ${barClass}" style="width:${Math.min(100,pct)}%"></div></div>
       <div class="budget-remaining">${remaining}${cooldownLabel}</div>
@@ -3101,25 +3101,25 @@ function renderBudgetFull(providers) {
   const hint = document.getElementById('budget-hint');
   if (!el) return;
   if (!providers || !providers.length) {
-    el.innerHTML = '<div style="color:var(--text-3);font-size:12px">Нет данных</div>';
+    el.innerHTML = `<div style="color:var(--text-3);font-size:12px">${t('bud.noData')}</div>`;
     return;
   }
   const totalRemaining = providers.filter(p=>!p.is_local).reduce((s,p)=>s+p.remaining_today,0);
   const totalLimit     = providers.filter(p=>!p.is_local).reduce((s,p)=>s+p.daily_limit,0);
-  if (hint) hint.textContent = `Облако: ~${fmtRemaining(totalRemaining)} из ${fmtRemaining(totalLimit)} req осталось сегодня`;
+  if (hint) hint.textContent = `${t('bud.cloud')} ~${fmtRemaining(totalRemaining)} / ${fmtRemaining(totalLimit)} ${t('bud.reqToday')}`;
   el.innerHTML = `<table class="budget-table">
     <thead><tr>
-      <th>Провайдер</th><th>Ключей</th><th class="bar-cell">Использовано</th>
-      <th>Осталось</th><th>Лимит/день</th><th>Статус</th>
+      <th>${t('bud.thProvider')}</th><th>${t('bud.thKeys')}</th><th class="bar-cell">${t('bud.thUsed')}</th>
+      <th>${t('bud.thLeft')}</th><th>${t('bud.thLimit')}</th><th>${t('bud.thStatus')}</th>
     </tr></thead>
     <tbody>
     ${providers.map(p => {
       const pct = p.pct_used;
       const barClass = pct >= 90 ? 'crit' : pct >= 70 ? 'warn' : '';
-      let status = '✅ готов';
-      if (!p.available && p.cooldown_sec > 0) status = `⏱ кулдаун ${p.cooldown_sec}s`;
-      else if (!p.available) status = '❌ исчерпан';
-      else if (pct >= 70) status = '⚠️ скоро лимит';
+      let status = t('bud.stReady');
+      if (!p.available && p.cooldown_sec > 0) status = `${t('bud.stCooldown')} ${p.cooldown_sec}s`;
+      else if (!p.available) status = t('bud.stExhausted');
+      else if (pct >= 70) status = t('bud.stSoonLimit');
       const keysHtml = p.keys_count > 1
         ? `${p.keys_count} <span class="budget-keys-badge">×${p.keys_count}</span>`
         : '1';
@@ -3178,11 +3178,11 @@ async function loadMetrics() {
     const m    = await resp.json();
     const big  = document.getElementById('metrics-big');
     big.innerHTML = [
-      { val: m.total || 0,                        lbl: 'Задач выполнено' },
-      { val: m.avg_score ? (m.avg_score*100).toFixed(1)+'%' : '—', lbl: 'Средний балл' },
-      { val: m.total_tokens ? (m.total_tokens/1000).toFixed(1)+'K' : '0', lbl: 'Токенов всего' },
-      { val: m.total_cost_usd ? '$'+m.total_cost_usd.toFixed(4) : '$0', lbl: 'Потрачено USD' },
-      { val: m.retry_rate ? (m.retry_rate*100).toFixed(0)+'%' : '0%', lbl: 'Retry rate' },
+      { val: m.total || 0,                        lbl: t('met.statTotal') },
+      { val: m.avg_score ? (m.avg_score*100).toFixed(1)+'%' : '—', lbl: t('met.statScore') },
+      { val: m.total_tokens ? (m.total_tokens/1000).toFixed(1)+'K' : '0', lbl: t('met.statTokens') },
+      { val: m.total_cost_usd ? '$'+m.total_cost_usd.toFixed(4) : '$0', lbl: t('met.statCost') },
+      { val: m.retry_rate ? (m.retry_rate*100).toFixed(0)+'%' : '0%', lbl: t('met.statRetry') },
     ].map(({ val, lbl }) => `<div class="big-metric"><div class="val">${val}</div><div class="lbl">${lbl}</div></div>`).join('');
 
     // ── Chart 1: Score trend (line) ──────────────────────────
@@ -3276,7 +3276,7 @@ async function loadMetrics() {
           responsive: true, maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { label: item => ` Средний балл: ${item.raw}%` } }
+            tooltip: { callbacks: { label: item => ` ${t('met.scoreLabel')}: ${item.raw}%` } }
           },
           scales: {
             x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b9ab8', font: { size: 11 } } },
@@ -3312,7 +3312,7 @@ async function loadMetrics() {
       }).join('');
       detailTable.innerHTML = `<table class="type-table">
         <thead><tr>
-          <th>Тип задачи</th><th>Кол-во</th><th>Балл</th><th>Время</th><th>Итер.</th>
+          <th>${t('met.thType')}</th><th>${t('met.thCount')}</th><th>${t('met.thScore')}</th><th>${t('met.thTime')}</th><th>${t('met.thIter')}</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
@@ -3377,11 +3377,11 @@ async function loadSettings() {
       if (sv.ok) fpVer = 'v' + sv.version;
     } catch(e) {}
     document.getElementById('settings-info').innerHTML = `
-      <b>Версия FreePalp:</b> ${fpVer}<br>
-      <b>Активная модель:</b> ${d.current_model || '—'}<br>
-      <b>Провайдеров активно:</b> ${d.active_providers || 0}<br>
-      <b>Инструментов:</b> ${d.total_tools || 0}<br>
-      <b>Задач в сессии:</b> ${state.tasks}
+      <b>${t('sys.version')}</b> ${fpVer}<br>
+      <b>${t('sys.model')}</b> ${d.current_model || '—'}<br>
+      <b>${t('sys.provActive')}</b> ${d.active_providers || 0}<br>
+      <b>${t('sys.toolsCount')}</b> ${d.total_tools || 0}<br>
+      <b>${t('sys.tasksSession')}</b> ${state.tasks}
     `;
   } catch(e) {}
   loadUnifiedVersions();
@@ -3490,8 +3490,8 @@ async function loadImproveStatus() {
       const avg = m.avg_score ? (m.avg_score * 100).toFixed(0) + '%' : '—';
       notice.style.display = 'block';
       statusEl.innerHTML = `
-        <b>Версия:</b> v${ver} &nbsp;|&nbsp; <b>Задач:</b> ${m.total || 0} &nbsp;|&nbsp; <b>Avg:</b> ${avg}<br>
-        <b>Кандидатов:</b> ${cands} ${cands > 0 ? '⚠️' : '✅'}<br>
+        <b>${t('imp.version')}</b> v${ver} &nbsp;|&nbsp; <b>${t('imp.tasks')}</b> ${m.total || 0} &nbsp;|&nbsp; <b>Avg:</b> ${avg}<br>
+        <b>${t('imp.candidates')}</b> ${cands} ${cands > 0 ? '⚠️' : '✅'}<br>
         ${d.candidates_preview?.length ? d.candidates_preview.map(c => `<span style="color:var(--accent-warn)">• ${c}</span>`).join('<br>') : ''}
       `;
     }
@@ -3830,6 +3830,101 @@ const I18N = {
   'mem.graph':      {ru:'Связи', en:'Graph', zh:'关系图'},
   'mem.skills':     {ru:'Навыки', en:'Skills', zh:'技能'},
   'mem.search':     {ru:'Поиск', en:'Search', zh:'搜索'},
+  'btn.shutdown':   {ru:'⏻ Выключить', en:'⏻ Shut down', zh:'⏻ 关闭'},
+  'prov.getOllama': {ru:'📥 Скачать Ollama →', en:'📥 Download Ollama →', zh:'📥 下载 Ollama →'},
+  'prov.addKey':    {ru:'+ Добавить', en:'+ Add', zh:'+ 添加'},
+  'prov.getKey':    {ru:'📋 Получить ключ →', en:'📋 Get key →', zh:'📋 获取密钥 →'},
+  'prov.phAddMore': {ru:'Добавить ещё ключ', en:'Add another key', zh:'添加另一个密钥'},
+  'prov.phPasteKey':{ru:'Вставить API ключ...', en:'Paste API key...', zh:'粘贴 API 密钥……'},
+  'prov.tagActive': {ru:'✓ Активен', en:'✓ Active', zh:'✓ 已启用'},
+  'prov.tagInactive':{ru:'Не настроен', en:'Not configured', zh:'未配置'},
+  'prov.delKey':    {ru:'Удалить ключ', en:'Delete key', zh:'删除密钥'},
+  'prov.quota':     {ru:'Квота:', en:'Quota:', zh:'配额：'},
+  'prov.reqLeft':   {ru:'req осталось', en:'req left', zh:'请求剩余'},
+  'prov.keysCount': {ru:'ключей', en:'keys', zh:'个密钥'},
+  'prov.ollamaRunning':{ru:'✅ Запущен (localhost:11434)', en:'✅ Running (localhost:11434)', zh:'✅ 运行中 (localhost:11434)'},
+  'prov.ollamaNotFound':{ru:'❌ Не обнаружен — установите и запустите:', en:'❌ Not detected — install and run:', zh:'❌ 未检测到 — 安装并运行：'},
+  'prov.popularModels':{ru:'Популярные модели:', en:'Popular models:', zh:'热门模型：'},
+  'prov.modelsLabel':{ru:'Модели: ', en:'Models: ', zh:'模型：'},
+  'mem.sub':        {ru:'HOT / WARM / COLD тиры + поиск по архиву', en:'HOT / WARM / COLD tiers + archive search', zh:'HOT / WARM / COLD 分层 + 归档搜索'},
+  'tools.sub':      {ru:'Агент автономно вызывает эти инструменты через ReAct loop', en:'The agent calls these tools autonomously via a ReAct loop', zh:'智能体通过 ReAct 循环自主调用这些工具'},
+  'tools.mcpServers':{ru:'🔌 MCP-серверы', en:'🔌 MCP servers', zh:'🔌 MCP 服务器'},
+  'tools.reconnect':{ru:'↻ Переподключить', en:'↻ Reconnect', zh:'↻ 重新连接'},
+  'tools.addServer':{ru:'+ Сервер', en:'+ Server', zh:'+ 服务器'},
+  'tools.phName':   {ru:'имя', en:'name', zh:'名称'},
+  'tools.phCommand':{ru:'command (напр. npx)', en:'command (e.g. npx)', zh:'command（如 npx）'},
+  'tools.phArgs':   {ru:'args (через пробел)', en:'args (space-separated)', zh:'args（空格分隔）'},
+  'tools.phSearch': {ru:'Поиск инструментов...', en:'Search tools...', zh:'搜索工具……'},
+  'met.sub':        {ru:'Статистика задач, качества ответов, токенов и стоимости', en:'Per-task stats: quality, tokens and cost', zh:'任务统计：质量、令牌与成本'},
+  'met.thType':     {ru:'Тип задачи', en:'Task type', zh:'任务类型'},
+  'met.thCount':    {ru:'Кол-во', en:'Count', zh:'数量'},
+  'met.thScore':    {ru:'Балл', en:'Score', zh:'评分'},
+  'met.thTime':     {ru:'Время', en:'Time', zh:'耗时'},
+  'met.thIter':     {ru:'Итер.', en:'Iter.', zh:'迭代'},
+  'met.resetCd':    {ru:'↺ Сбросить кулдауны', en:'↺ Reset cooldowns', zh:'↺ 重置冷却'},
+  'met.providersLink':{ru:'Провайдеры →', en:'Providers →', zh:'提供商 →'},
+  'met.chTrend':    {ru:'Тренд оценок (последние сессии)', en:'Score trend (recent sessions)', zh:'评分趋势（最近会话）'},
+  'met.chByType':   {ru:'Средний балл по типам задач', en:'Average score by task type', zh:'各任务类型平均分'},
+  'met.chDetails':  {ru:'Детали по типам задач', en:'Details by task type', zh:'各任务类型明细'},
+  'met.quotasTitle':{ru:'🔋 Квоты API провайдеров', en:'🔋 Provider API quotas', zh:'🔋 提供商 API 配额'},
+  'met.statTotal':  {ru:'Задач выполнено', en:'Tasks done', zh:'已完成任务'},
+  'met.statScore':  {ru:'Средний балл', en:'Avg score', zh:'平均评分'},
+  'met.statTokens': {ru:'Токенов всего', en:'Total tokens', zh:'总令牌'},
+  'met.statCost':   {ru:'Потрачено USD', en:'Spent USD', zh:'花费 USD'},
+  'met.statRetry':  {ru:'Retry rate', en:'Retry rate', zh:'重试率'},
+  'met.hintKeys1':  {ru:'💡 Несколько ключей = больше квота. Управляй ключами в панели', en:'💡 More keys = more quota. Manage keys in the', en2:'', zh:'💡 多个密钥 = 更多配额。在面板管理密钥'},
+  'met.scoreLabel': {ru:'Средний балл', en:'Avg score', zh:'平均评分'},
+  'met.notesTitle': {ru:'🗒️ Пометки системы (кандидаты на улучшение)', en:'🗒️ System notes (improvement candidates)', zh:'🗒️ 系统备注（改进候选）'},
+  'cat.file':       {ru:'Файлы', en:'Files', zh:'文件'},
+  'cat.shell':      {ru:'Shell', en:'Shell', zh:'Shell'},
+  'cat.web':        {ru:'Web', en:'Web', zh:'Web'},
+  'cat.browser':    {ru:'Браузер', en:'Browser', zh:'浏览器'},
+  'cat.github':     {ru:'GitHub', en:'GitHub', zh:'GitHub'},
+  'cat.notify':     {ru:'Уведомления', en:'Notifications', zh:'通知'},
+  'cat.system':     {ru:'Система', en:'System', zh:'系统'},
+  'cat.other':      {ru:'Прочее', en:'Other', zh:'其他'},
+  'tools.mcpNone':  {ru:'Не подключено ни одного. Добавь сервер в', en:'None connected. Add a server in', zh:'未连接任何服务器。在以下文件中添加：'},
+  'tools.mcpNoneTail':{ru:'— его инструменты появятся у воркера автоматически (формат как у Claude Desktop).', en:'— its tools appear to the worker automatically (Claude Desktop format).', zh:'— 其工具将自动出现在工作智能体中（Claude Desktop 格式）。'},
+  'sys.version':    {ru:'Версия FreePalp:', en:'FreePalp version:', zh:'FreePalp 版本：'},
+  'sys.versionHdr': {ru:'🐙 Версия FreePalp:', en:'🐙 FreePalp version:', zh:'🐙 FreePalp 版本：'},
+  'sys.model':      {ru:'Активная модель:', en:'Active model:', zh:'活跃模型：'},
+  'sys.provActive': {ru:'Провайдеров активно:', en:'Active providers:', zh:'活跃提供商：'},
+  'sys.toolsCount': {ru:'Инструментов:', en:'Tools:', zh:'工具数：'},
+  'sys.tasksSession':{ru:'Задач в сессии:', en:'Tasks this session:', zh:'本次会话任务：'},
+  'imp.version':    {ru:'Версия:', en:'Version:', zh:'版本：'},
+  'imp.tasks':      {ru:'Задач:', en:'Tasks:', zh:'任务：'},
+  'imp.candidates': {ru:'Кандидатов:', en:'Candidates:', zh:'候选：'},
+  'bud.thProvider': {ru:'Провайдер', en:'Provider', zh:'提供商'},
+  'bud.thKeys':     {ru:'Ключей', en:'Keys', zh:'密钥'},
+  'bud.thUsed':     {ru:'Использовано', en:'Used', zh:'已用'},
+  'bud.thLeft':     {ru:'Осталось', en:'Left', zh:'剩余'},
+  'bud.thLimit':    {ru:'Лимит/день', en:'Limit/day', zh:'每日上限'},
+  'bud.thStatus':   {ru:'Статус', en:'Status', zh:'状态'},
+  'bud.noData':     {ru:'Нет данных', en:'No data', zh:'无数据'},
+  'bud.cloud':      {ru:'Облако:', en:'Cloud:', zh:'云端：'},
+  'bud.reqToday':   {ru:'req осталось сегодня', en:'req left today', zh:'今日请求剩余'},
+  'bud.stReady':    {ru:'✅ готов', en:'✅ ready', zh:'✅ 就绪'},
+  'bud.stCooldown': {ru:'⏱ кулдаун', en:'⏱ cooldown', zh:'⏱ 冷却'},
+  'bud.stExhausted':{ru:'❌ исчерпан', en:'❌ exhausted', zh:'❌ 已用尽'},
+  'bud.stSoonLimit':{ru:'⚠️ скоро лимит', en:'⚠️ near limit', zh:'⚠️ 接近上限'},
+  'bud.titActive':  {ru:'Активен', en:'Active', zh:'已启用'},
+  'bud.titChecking':{ru:'Ключ есть, проверка...', en:'Key present, checking...', zh:'有密钥，检查中……'},
+  'bud.titUnavail': {ru:'Недоступен', en:'Unavailable', zh:'不可用'},
+  'set.sub':        {ru:'Конфигурация FreePalp', en:'FreePalp configuration', zh:'FreePalp 配置'},
+  'set.sysinfo':    {ru:'Информация о системе', en:'System info', zh:'系统信息'},
+  'set.rollback':   {ru:'↩ Откат промптов', en:'↩ Roll back prompts', zh:'↩ 回滚提示词'},
+  'set.behavior':   {ru:'⚙️ Поведение', en:'⚙️ Behavior', zh:'⚙️ 行为'},
+  'set.improve':    {ru:'🧬 Самоулучшение', en:'🧬 Self-improvement', zh:'🧬 自我改进'},
+  'set.clearmem':   {ru:'🧹 Очистить память', en:'🧹 Clear memory', zh:'🧹 清除记忆'},
+  'set.selfTraining':{ru:'🧬 Самообучение', en:'🧬 Self-training', zh:'🧬 自我训练'},
+  'set.versionsDesc':{ru:'Хронология: вехи проекта, изменения кода (git) и версии промптов (самоулучшение)', en:'Timeline: project milestones, code changes (git) and prompt versions (self-improvement)', zh:'时间线：项目里程碑、代码变更（git）与提示词版本（自我改进）'},
+  'set.siStartup':  {ru:'Самоулучшение при старте сервера', en:'Self-improvement on server startup', zh:'服务器启动时自我改进'},
+  'set.siStartupHint':{ru:'(жжёт квоту провайдеров)', en:'(burns provider quota)', zh:'（消耗提供商配额）'},
+  'set.idleBefore': {ru:'Авто-выключение через', en:'Auto-shutdown after', zh:'自动关闭于'},
+  'set.idleMin':    {ru:'мин', en:'min', zh:'分钟'},
+  'set.idleHint':   {ru:'(0 = никогда; нужен перезапуск)', en:'(0 = never; needs restart)', zh:'（0 = 从不；需重启）'},
+  'set.retryLabel': {ru:'Порог критика для ретрая', en:'Critic threshold for retry', zh:'重试的评审阈值'},
+  'set.retryHint':  {ru:'(score ниже — повтор; 0.7 по умолчанию)', en:'(below this score = retry; default 0.7)', zh:'（低于此分则重试；默认 0.7）'},
   'set.theme':      {ru:'🎨 Тема', en:'🎨 Theme', zh:'🎨 主题'},
   'set.lang':       {ru:'🌐 Язык', en:'🌐 Language', zh:'🌐 语言'},
   'theme.light':    {ru:'☀️ Светлая', en:'☀️ Light', zh:'☀️ 浅色'},
@@ -3863,7 +3958,16 @@ function applyLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.l === lang));
 }
-function setLang(lang) { applyLang(lang); }
+function setLang(lang) {
+  applyLang(lang);
+  // Перерисовать JS-генерируемые панели под новый язык (таблицы/карточки строятся через t()).
+  try { if (typeof loadProviders === 'function') loadProviders(); } catch(e) {}
+  try { if (typeof loadTools === 'function') loadTools(); } catch(e) {}
+  try { if (typeof loadMetrics === 'function') loadMetrics(); } catch(e) {}
+  try { if (typeof loadTokenBudget === 'function') loadTokenBudget(); } catch(e) {}
+  try { if (typeof loadSettings === 'function') loadSettings(); } catch(e) {}
+  try { if (typeof loadImproveStatus === 'function') loadImproveStatus(); } catch(e) {}
+}
 function initLang() {
   let l = null;
   try { l = localStorage.getItem('freepalp-lang'); } catch(e) {}
