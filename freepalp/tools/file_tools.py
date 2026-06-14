@@ -279,14 +279,15 @@ def _git_autocommit(abs_path, rel_path: str) -> None:
     видимую в /api/system/versions и через `git log`."""
     import subprocess
     from pathlib import Path as _P
+    from ..core.winproc import no_window
     repo_root = str(_P(__file__).parent.parent.parent)  # корень репозитория
     try:
         subprocess.run(["git", "add", str(abs_path)],
-                       capture_output=True, cwd=repo_root, timeout=10)
+                       capture_output=True, cwd=repo_root, timeout=10, **no_window())
         subprocess.run(
             ["git", "-c", "user.name=FreePalp", "-c", "user.email=freepalp@local",
              "commit", "-m", f"self-mod: {rel_path} (изменено агентом)"],
-            capture_output=True, cwd=repo_root, timeout=15,
+            capture_output=True, cwd=repo_root, timeout=15, **no_window(),
         )
     except Exception:
         pass  # отсутствие git не должно ломать запись файла

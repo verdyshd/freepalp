@@ -81,12 +81,13 @@ def mark_connected() -> None:
 
 def _spawn(exe: str) -> bool:
     try:
+        from .winproc import no_window
         kwargs: dict = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL,
                         "stdin": subprocess.DEVNULL}
         if sys.platform == "win32":
-            # Отдельный процесс без окна, не привязан к нашему
-            kwargs["creationflags"] = (getattr(subprocess, "CREATE_NO_WINDOW", 0)
-                                       | getattr(subprocess, "DETACHED_PROCESS", 0))
+            # CREATE_NO_WINDOW — без мигающего консольного окна. НЕ комбинируем с
+            # DETACHED_PROCESS: эти флаги конфликтуют, и окно может всё равно мелькать.
+            kwargs.update(no_window())
         else:
             kwargs["start_new_session"] = True
         subprocess.Popen([exe, "serve"], **kwargs)

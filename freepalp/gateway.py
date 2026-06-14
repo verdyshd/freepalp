@@ -198,13 +198,16 @@ async def _schedule_restart(delay: float = 3.0, reason: str = "self-improvement"
     print(f"  [Restart] Перезапуск после {reason}...")
     try:
         import subprocess as _sp
+        from .core.winproc import no_window
         _root = Path(__file__).parent.parent
         if sys.platform == "win32":
-            # Новый процесс: ждём 5с (пока освободится порт) → запускаем сервер
+            # Новый процесс: ждём 5с (пока освободится порт) → запускаем сервер.
+            # no_window() — чтобы не мигало чёрное окно cmd при перезапуске.
             _sp.Popen(
                 f'cmd /c "timeout /t 5 /nobreak >nul 2>&1 && python freepalp\\app.py --web"',
                 shell=True,
                 cwd=str(_root),
+                **no_window(),
             )
         else:
             _sp.Popen(
@@ -1433,10 +1436,11 @@ async def api_system_versions():
 
     # Изменения кода — git
     try:
+        from .core.winproc import no_window
         r = subprocess.run(
             ["git", "log", "--max-count=20", "--pretty=format:%h|%ad|%s",
              "--date=format:%Y-%m-%d %H:%M"],
-            capture_output=True, cwd=repo_root, timeout=10,
+            capture_output=True, cwd=repo_root, timeout=10, **no_window(),
         )
         if r.returncode == 0:
             for line in r.stdout.decode("utf-8", errors="replace").splitlines():

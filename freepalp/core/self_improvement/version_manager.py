@@ -133,12 +133,14 @@ class VersionManager:
             shutil.copy2(new_prompts, PROMPTS_FILE)
 
             # Запускаем тесты (явно utf-8 чтобы не сломаться на Windows cp1251)
+            from ..winproc import no_window
             result = subprocess.run(
                 [sys.executable, str(PROJECT_ROOT / "test_mvp.py")],
                 capture_output=True,
                 timeout=120,
                 cwd=str(PROJECT_ROOT),
                 env={**__import__("os").environ, "PYTHONIOENCODING": "utf-8"},
+                **no_window(),
             )
             # Декодируем bytes вручную с fallback
             stdout = result.stdout.decode("utf-8", errors="replace") if result.stdout else ""

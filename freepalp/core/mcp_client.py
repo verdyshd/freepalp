@@ -108,10 +108,12 @@ class MCPServer:
         """Запускает сервер, делает handshake, забирает список инструментов."""
         full_env = {**os.environ, **self.env}
         try:
+            from .winproc import no_window
             self.proc = subprocess.Popen(
                 [self.command, *self.args],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL, env=full_env, bufsize=0,
+                **no_window(),
             )
         except FileNotFoundError:
             return False
