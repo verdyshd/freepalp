@@ -41,3 +41,6 @@ train_*.py
 build/
 dist/
 *.egg-info/
+
+# Локальные (приватные) инструменты — не в публичный репо
+freepalp/tools/reddit_tools.py

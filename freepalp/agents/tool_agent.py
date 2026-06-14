@@ -12,6 +12,12 @@ from ..tools.browser_tools import BROWSER_TOOLS
 from ..tools.github_tools import GITHUB_TOOLS
 from ..tools.notification_tools import NOTIFICATION_TOOLS
 from ..tools.system_tools import SYSTEM_TOOLS
+# Reddit-инструменты — ЛОКАЛЬНЫЕ (reddit_tools.py в .gitignore, не в публичном репо).
+# Импорт защищён: в публичном клоне модуля нет → инструменты просто отсутствуют.
+try:
+    from ..tools.reddit_tools import REDDIT_TOOLS
+except ImportError:
+    REDDIT_TOOLS = {}
 from ..core.models import AgentMessage
 
 # Объединённый реестр всех инструментов
@@ -23,6 +29,7 @@ ALL_TOOLS: dict = {
     **GITHUB_TOOLS,
     **NOTIFICATION_TOOLS,
     **SYSTEM_TOOLS,
+    **REDDIT_TOOLS,
 }
 
 TOOL_DESCRIPTIONS = "\n".join([
