@@ -6,6 +6,8 @@ import asyncio
 import re
 from typing import Optional
 
+from ..core.sanitize import neutralize_untrusted, wrap_untrusted
+
 
 async def web_search(query: str, max_results: int = 5) -> dict:
     """
@@ -17,7 +19,7 @@ async def web_search(query: str, max_results: int = 5) -> dict:
         url = "https://lite.duckduckgo.com/lite/"
         params = {"q": query, "kl": "wt-wt"}
         headers = {
-            "User-Agent": "Mozilla/5.0 (compatible; QClaw-AI/1.0)"
+            "User-Agent": "Mozilla/5.0 (compatible; FreePalp-AI/1.0)"
         }
 
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -26,6 +28,12 @@ async def web_search(query: str, max_results: int = 5) -> dict:
             html = resp.text
 
         results = _parse_ddg_results(html, max_results)
+        # T4: дефанг control-токенов в недоверенных сниппетах/заголовках
+        for r in results:
+            if r.get("title"):
+                r["title"] = neutralize_untrusted(r["title"])
+            if r.get("snippet"):
+                r["snippet"] = neutralize_untrusted(r["snippet"])
         return {"ok": True, "results": results, "query": query}
 
     except ImportError:
@@ -43,7 +51,7 @@ async def fetch_page(url: str, max_chars: int = 3000) -> dict:
         if not url.startswith(("http://", "https://")):
             return {"ok": False, "error": "URL должен начинаться с http:// или https://"}
 
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; QClaw-AI/1.0)"}
+        headers = {"User-Agent": "Mozilla/5.0 (compatible; FreePalp-AI/1.0)"}
         async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
             resp = await client.get(url, headers=headers)
             resp.raise_for_status()
@@ -55,6 +63,8 @@ async def fetch_page(url: str, max_chars: int = 3000) -> dict:
         if len(text) > max_chars:
             text = text[:max_chars] + f"\n\n[... текст обрезан до {max_chars} символов]"
 
+        # T4: контент страницы — недоверенный; оборачиваем в баннер «данные, не инструкции»
+        text = wrap_untrusted(text, source=f"web page {url}")
         return {"ok": True, "url": url, "content": text, "length": len(text)}
 
     except ImportError:

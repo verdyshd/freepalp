@@ -1,4 +1,4 @@
-# QClaw AI Orchestrator — зависимости
+# FreePalp AI Orchestrator — зависимости
 
 # HTTP клиент (нужен для Ollama и web tools)
 httpx>=0.27.0

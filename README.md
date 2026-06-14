@@ -126,7 +126,7 @@ adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
 FreePalp uses tools, shell, and self-modifies its own source, so security is
 taken seriously: sandboxed file access, a shell whitelist that blocks
 metacharacter injection, and a deterministic test suite (`test_security.py`,
-29 cases). See [THREAT_MODEL.md](THREAT_MODEL.md) for the honest picture,
+40 cases, incl. active untrusted-content sanitization). See [THREAT_MODEL.md](THREAT_MODEL.md) for the honest picture,
 including residual risks.
 
 ## Development

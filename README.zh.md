@@ -85,7 +85,7 @@ cp .env.example .env
 ## 安全
 
 FreePalp 使用工具、shell 并会自我修改源码，因此认真对待安全：沙箱化文件访问、
-阻止元字符注入的 shell 白名单、确定性测试套件（`test_security.py`，29 个用例）。
+阻止元字符注入的 shell 白名单、确定性测试套件（`test_security.py`，40 个用例，含对不可信内容的主动消毒）。
 详见 [THREAT_MODEL.md](THREAT_MODEL.md)（含残留风险的诚实说明）。
 
 ## 支持项目
