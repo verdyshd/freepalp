@@ -64,7 +64,6 @@ cp .env.example .env
 | Cerebras | `CEREBRAS_API_KEY` | [inference.cerebras.ai](https://inference.cerebras.ai) — бесплатно |
 | Gemini | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com/apikey) — бесплатно |
 | SambaNova | `SAMBANOVA_API_KEY` | [cloud.sambanova.ai](https://cloud.sambanova.ai) — бесплатно |
-| GitHub Models | `GITHUB_TOKEN` | [github.com/settings/tokens](https://github.com/settings/tokens) — бесплатно |
 | Ollama (локально) | — | [ollama.ai](https://ollama.ai) — установить локально |
 
 ### 3. Запуск
@@ -234,7 +233,7 @@ freepalp/
 | **Cerebras** | llama-3.1-70b (быстро) | 60 req/min |
 | **Gemini** | gemini-1.5-flash, gemini-2.0-flash | 15 req/min |
 | **SambaNova** | llama-3.1-405b | 10 req/min |
-| **GitHub Models** | GPT-4o, Phi-4, Llama | 150 req/day |
+| **Together / Mistral / Novita** | через models.dev-каталог | по ключу |
 | **Ollama** | любые локальные | без лимитов |
 
 ---
