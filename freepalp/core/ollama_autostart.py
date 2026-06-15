@@ -26,9 +26,9 @@ _OLLAMA_URL = "http://localhost:11434/api/tags"
 _KNOWN_PATHS = [
     Path(os.path.expanduser("~")) / "AppData/Local/Programs/Ollama/ollama.exe",
     Path("C:/Program Files/Ollama/ollama.exe"),
-    Path("F:/Tools/Ollama/ollama.exe"),
     Path("/usr/local/bin/ollama"),
     Path("/usr/bin/ollama"),
+    Path("/opt/homebrew/bin/ollama"),
     Path(os.path.expanduser("~")) / ".ollama/bin/ollama",
 ]
 
