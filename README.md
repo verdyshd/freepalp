@@ -11,7 +11,9 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/providers-10%2B-green.svg" alt="10+ providers">
+  <a href="https://github.com/verdyshd/freepalp/actions/workflows/ci.yml"><img src="https://github.com/verdyshd/freepalp/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="README.ru.md"><img src="https://img.shields.io/badge/lang-Русский-red.svg" alt="Russian"></a>
+  <a href="README.zh.md"><img src="https://img.shields.io/badge/lang-中文-red.svg" alt="Chinese"></a>
 </p>
 
 <p align="center">
