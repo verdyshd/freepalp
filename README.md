@@ -90,7 +90,7 @@ adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
 
 ## Features
 
-- **10+ providers, 50+ models** with automatic routing by task type and live
+- **10+ providers, 40+ models** with automatic routing by task type and live
   quota/cooldown awareness.
 - **Local-first** via Ollama — unlimited fallback, fully offline-capable, and
   auto-started on launch if you used it before.
@@ -115,8 +115,8 @@ adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
 - **Persistent memory** — HOT / WARM / COLD tiers + a vector index you can
   explore as a real graph, plus **FTS5 search over your whole session history**
   ("when did we discuss X?").
-- **Self-improvement** — proposes prompt versions, gated by a held-out metric,
-  auto-rollback on regression.
+- **Self-improvement** — proposes prompt/keyword versions, gated by the
+  deterministic test suite (`test_mvp`), auto-rollback on regression.
 - **Reliability over LLM trust** — deterministic detectors catch hallucinated
   file writes, identity slips, blind rewrites, leaked tool calls, and stub
   content before they reach you.

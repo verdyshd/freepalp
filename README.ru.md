@@ -30,7 +30,7 @@ User Input
     ↓
 Task Parser  →  определяет тип задачи (coding / research / text / ...)
     ↓
-Router       →  live discovery: 40+ моделей, 8 провайдеров
+Router       →  live discovery: 40+ моделей, 10+ провайдеров
     ↓
 [Architect]  →  планирование сложных задач (DAG)
     ↓
@@ -96,7 +96,7 @@ Worker думает → вызывает github_list_issues() → получае
              → формирует финальный ответ
 ```
 
-### 🛠️ 41 инструмент из коробки
+### 🛠️ 47 инструментов из коробки
 
 | Категория | Инструменты |
 |-----------|-------------|
@@ -117,7 +117,7 @@ Worker думает → вызывает github_list_issues() → получае
 ### 📈 Самоулучшение
 
 - Метрики по каждой задаче (score, tokens, cost, retry rate)
-- Авто-цикл улучшения каждые 10 задач
+- Авто-цикл улучшения каждые 5 задач (опционально, по флагу)
 - Версионирование конфига с откатом (`/version rollback`)
 - Еженедельный дайджест (cron)
 
@@ -172,7 +172,7 @@ freepalp/
 ├── core/
 │   ├── orchestrator.py     # Главный контроллер
 │   ├── router.py           # Routing + live model discovery
-│   ├── model_discovery.py  # 8 провайдеров, 40+ моделей
+│   ├── model_discovery.py  # 10+ провайдеров, 40+ моделей
 │   ├── task_parser.py      # Определение типа задачи
 │   ├── cron_manager.py     # Периодические задачи
 │   ├── mcp_discovery.py    # MCP-серверы
@@ -184,7 +184,7 @@ freepalp/
 │   ├── worker_agent.py     # Worker + ReAct loop
 │   ├── critic_agent.py     # Оценка качества (0–1)
 │   ├── architect_agent.py  # DAG планирование
-│   └── tool_agent.py       # Прокси инструментов (41 tool)
+│   └── tool_agent.py       # Прокси инструментов (47 tools)
 │
 ├── tools/
 │   ├── file_tools.py       # Файловые операции (sandbox)
