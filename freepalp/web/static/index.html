@@ -199,6 +199,22 @@
     .chat-layout {
       display: flex; flex: 1; overflow: hidden; gap: 0;
     }
+    /* Сворачивание боковых панелей (Chats / Current session) + закрепление состояния */
+    .chat-list-col.collapsed, .right-panel.collapsed { display: none; }
+    .panel-collapse-btn {
+      background: none; border: none; cursor: pointer; color: var(--text-3);
+      font-size: 14px; line-height: 1; padding: 2px 6px; border-radius: 4px;
+    }
+    .panel-collapse-btn:hover { background: rgba(255,255,255,.08); color: var(--text); }
+    .panel-reopen {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 52px; display: none; align-items: center; justify-content: center;
+      background: var(--bg-2); border: 1px solid var(--border); cursor: pointer;
+      color: var(--text-3); font-size: 12px; z-index: 20; padding: 0;
+    }
+    .panel-reopen.left  { left: 0;  border-left: none;  border-radius: 0 7px 7px 0; }
+    .panel-reopen.right { right: 0; border-right: none; border-radius: 7px 0 0 7px; }
+    .panel-reopen:hover { color: var(--text); background: var(--bg-3); }
 
     /* ── Chat list column ───────────────────────────── */
     .chat-list-col {
@@ -276,7 +292,7 @@
 
     .chat-area {
       flex: 1; display: flex; flex-direction: column;
-      overflow: hidden;
+      overflow: hidden; position: relative;
     }
 
     .chat-header {
@@ -1041,12 +1057,18 @@
       <div class="chat-list-col">
         <div class="chat-list-header">
           <span class="chat-list-title" data-i18n="rp.dialogs">Диалоги</span>
-          <button class="chat-new-btn" onclick="newChat()" title="Новый диалог" data-i18n-title="tip.newChat">+</button>
+          <div style="display:flex;gap:2px;align-items:center">
+            <button class="chat-new-btn" onclick="newChat()" title="Новый диалог" data-i18n-title="tip.newChat">+</button>
+            <button class="panel-collapse-btn" onclick="togglePanel('chats')" title="Свернуть панель" data-i18n-title="panel.collapse">«</button>
+          </div>
         </div>
         <div class="chat-list-scroll" id="chat-list"></div>
       </div>
 
       <div class="chat-area">
+        <!-- Вкладки-развернуть боковых панелей (видны только когда панель свёрнута) -->
+        <button id="reopen-chats" class="panel-reopen left" onclick="togglePanel('chats')" title="Показать диалоги" data-i18n-title="panel.expand">›</button>
+        <button id="reopen-session" class="panel-reopen right" onclick="togglePanel('session')" title="Показать сессию" data-i18n-title="panel.expand">‹</button>
         <div class="chat-header">
           <div class="status-dot" id="status-dot"></div>
           <div>
@@ -1103,7 +1125,10 @@
       <!-- Right panel -->
       <div class="right-panel">
         <div class="rp-section">
-          <div class="rp-title" data-i18n="rp.session">Текущая сессия</div>
+          <div class="rp-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span data-i18n="rp.session">Текущая сессия</span>
+            <button class="panel-collapse-btn" onclick="togglePanel('session')" title="Свернуть панель" data-i18n-title="panel.collapse">»</button>
+          </div>
           <div class="metrics-grid">
             <div class="metric-card">
               <div class="metric-value accent" id="rp-tasks">0</div>
@@ -3962,6 +3987,8 @@ const I18N = {
   'imp.candidates': {ru:'Кандидатов:', en:'Candidates:', zh:'候选：'},
   'common.loading': {ru:'Загрузка...', en:'Loading...', zh:'加载中……'},
   'code.copy':      {ru:'Копировать', en:'Copy', zh:'复制'},
+  'panel.collapse': {ru:'Свернуть панель', en:'Collapse panel', zh:'收起面板'},
+  'panel.expand':   {ru:'Развернуть панель', en:'Expand panel', zh:'展开面板'},
   'tip.newChat':    {ru:'Новый диалог', en:'New chat', zh:'新对话'},
   'tip.attach':     {ru:'Прикрепить файл или картинку', en:'Attach a file or image', zh:'附加文件或图片'},
   'tip.resetCd':    {ru:'Сбросить кулдауны', en:'Reset cooldowns', zh:'重置冷却'},
@@ -4060,6 +4087,31 @@ _initFirstChat();
 loadSidebarData();
 loadStatus();
 _initAttachments();
+
+// ── Сворачивание/закрепление боковых панелей (Chats / Current session) ──
+function _panelEl(which) {
+  return which === 'chats' ? document.querySelector('.chat-list-col')
+                           : document.querySelector('.right-panel');
+}
+function setPanel(which, collapsed) {
+  const el = _panelEl(which);
+  const reopen = document.getElementById(which === 'chats' ? 'reopen-chats' : 'reopen-session');
+  if (el) el.classList.toggle('collapsed', collapsed);
+  if (reopen) reopen.style.display = collapsed ? 'flex' : 'none';
+  try { localStorage.setItem('fp-panel-' + which, collapsed ? '1' : '0'); } catch (e) {}
+}
+function togglePanel(which) {
+  const el = _panelEl(which);
+  setPanel(which, !(el && el.classList.contains('collapsed')));
+}
+function initPanels() {
+  for (const w of ['chats', 'session']) {
+    let v = '0';
+    try { v = localStorage.getItem('fp-panel-' + w) || '0'; } catch (e) {}
+    setPanel(w, v === '1');
+  }
+}
+initPanels();
 
 // ── Реал-тайм правой панели ──────────────────────────────
 // Квоты/доступные токены — каждые 15с; активные модели — каждые 60с
