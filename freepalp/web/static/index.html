@@ -368,6 +368,23 @@
       border-radius: 4px; font-family: var(--font-mono);
       font-size: 12px; color: var(--accent);
     }
+    /* Код-блок: шапка (язык + копировать) поверх <pre> */
+    .msg-content .code-block {
+      margin: 10px 0; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); overflow: hidden; background: var(--bg);
+    }
+    .msg-content .code-block pre { margin: 0; border: none; border-radius: 0; }
+    .code-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 10px; background: rgba(255,255,255,.04);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-lang { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; }
+    .code-copy {
+      background: none; border: none; cursor: pointer; font-size: 12px;
+      color: var(--text-3); padding: 2px 6px; border-radius: 4px; line-height: 1;
+    }
+    .code-copy:hover { background: rgba(255,255,255,.08); color: var(--text); }
 
     /* Tool call badge */
     .tool-call-badge {
@@ -972,6 +989,9 @@
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Подсветка синтаксиса кода (опционально; код-блоки работают и без неё) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 </head>
 <body>
 
@@ -1903,6 +1923,7 @@ function appendProgress() {
     </div>`;
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
+  highlightCode(document.getElementById(id));
   return id;
 }
 
@@ -1989,13 +2010,21 @@ function appendMsg(role, text, meta = {}, rawHtml = false) {
       </div>
     </div>`;
   msgs.scrollTop = msgs.scrollHeight;
+  highlightCode(document.getElementById(id));
   return id;
 }
 
 function formatText(text) {
-  // Код-блоки
-  text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
-    `<pre><code>${escHtml(code.trim())}</code></pre>`);
+  // Код-блоки: шапка с языком + кнопка «копировать» + класс для подсветки (hljs)
+  text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    const safe = escHtml(code.trim());
+    const cls  = lang ? ` class="language-${lang}"` : '';
+    const label = (lang || 'code');
+    return `<div class="code-block"><div class="code-head">`
+         + `<span class="code-lang">${label}</span>`
+         + `<button class="code-copy" onclick="copyCode(this)" title="Копировать" data-i18n-title="code.copy">📋</button>`
+         + `</div><pre><code${cls}>${safe}</code></pre></div>`;
+  });
   // Inline code
   text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
   // Bold
@@ -2007,6 +2036,28 @@ function formatText(text) {
 
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escapeHtml(s) { return escHtml(String(s || '')); }
+
+// Копировать код из код-блока в буфер (кнопка 📋 в шапке блока)
+function copyCode(btn) {
+  const block = btn.closest('.code-block');
+  const code = block && block.querySelector('code');
+  if (!code) return;
+  const done = () => { const o = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = o; }, 1200); };
+  try {
+    navigator.clipboard.writeText(code.textContent).then(done).catch(() => {
+      const r = document.createRange(); r.selectNodeContents(code);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      sel.removeAllRanges();
+    });
+  } catch (e) {}
+}
+
+// Подсветка код-блоков в сообщении (если hljs загрузился; иначе тихо пропускаем)
+function highlightCode(rootEl) {
+  if (!window.hljs || !rootEl) return;
+  rootEl.querySelectorAll('pre code').forEach(el => { try { hljs.highlightElement(el); } catch (e) {} });
+}
 
 // ══════════════════════════════════════════════════════════════
 // FILE / IMAGE ATTACHMENTS
@@ -2120,6 +2171,7 @@ function appendTyping() {
       <div class="msg-content"><div class="typing"><span></span><span></span><span></span></div></div>
     </div>`;
   msgs.scrollTop = msgs.scrollHeight;
+  highlightCode(document.getElementById(id));
   return id;
 }
 
@@ -3909,6 +3961,7 @@ const I18N = {
   'imp.tasks':      {ru:'Задач:', en:'Tasks:', zh:'任务：'},
   'imp.candidates': {ru:'Кандидатов:', en:'Candidates:', zh:'候选：'},
   'common.loading': {ru:'Загрузка...', en:'Loading...', zh:'加载中……'},
+  'code.copy':      {ru:'Копировать', en:'Copy', zh:'复制'},
   'tip.newChat':    {ru:'Новый диалог', en:'New chat', zh:'新对话'},
   'tip.attach':     {ru:'Прикрепить файл или картинку', en:'Attach a file or image', zh:'附加文件或图片'},
   'tip.resetCd':    {ru:'Сбросить кулдауны', en:'Reset cooldowns', zh:'重置冷却'},
