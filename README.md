@@ -140,6 +140,12 @@ python test_security.py   # security suite
 
 CI runs both on Ubuntu and Windows (Python 3.11 / 3.12).
 
+## Contributing
+
+Contributions are welcome — bug reports, docs, new tools, provider integrations,
+or eval tasks. See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, the checks to
+run before a PR, and where things live in the codebase.
+
 ## Support
 
 FreePalp is free and MIT-licensed. If it's useful to you, support keeps it going:
