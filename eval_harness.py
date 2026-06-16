@@ -192,7 +192,7 @@ def _metrics(rows: list) -> dict:
     return out
 
 
-async def run(split: str | None, quick: bool) -> dict:
+async def run(split: str | None, quick: bool, runs: int = 1) -> dict:
     from freepalp.core.orchestrator import Orchestrator
     orch = Orchestrator()
     await orch.router.initialize()
@@ -207,15 +207,21 @@ async def run(split: str | None, quick: bool) -> dict:
         suite = q
 
     ver = _active_version()
-    print(f"\n=== FreePalp eval — конфиг v{ver} ({len(suite)} задач) ===\n")
+    runs = max(1, runs)
+    print(f"\n=== FreePalp eval — конфиг v{ver} ({len(suite)} задач × {runs} прогон(ов)) ===\n")
     rows = []
+    per_task: dict = {}   # id -> [passed bool, ...] для усреднения по прогонам (разброс)
     for t in suite:
-        print(f"  ▸ [{t['split']}] {t['id']} ...", flush=True)
-        r = await _run_one(orch, t)
-        mark = "✅" if r["passed"] else "❌"
-        print(f"    {mark} passed={r['passed']} · critic={r['critic_score']} · "
-              f"{r['model']} · {r['elapsed']}с" + (f" · ERR {r.get('error')}" if r.get("error") else ""))
-        rows.append(r)
+        for ri in range(runs):
+            tag = f" #{ri+1}" if runs > 1 else ""
+            print(f"  ▸ [{t['split']}] {t['id']}{tag} ...", flush=True)
+            r = await _run_one(orch, t)
+            r["run"] = ri + 1
+            mark = "✅" if r["passed"] else "❌"
+            print(f"    {mark} passed={r['passed']} · critic={r['critic_score']} · "
+                  f"{r['model']} · {r['elapsed']}с" + (f" · ERR {r.get('error')}" if r.get("error") else ""))
+            rows.append(r)
+            per_task.setdefault(t["id"], []).append(bool(r["passed"]))
 
     m = _metrics(rows)
     print("\n=== Метрики (code-execution-accuracy) ===")
@@ -226,7 +232,9 @@ async def run(split: str | None, quick: bool) -> dict:
     out_dir = ROOT / "eval"
     out_dir.mkdir(exist_ok=True)
     stamp = time.strftime("%Y-%m-%d %H:%M")
-    payload = {"timestamp": stamp, "version": ver, "metrics": m, "results": rows}
+    per_task_frac = {tid: f"{sum(v)}/{len(v)}" for tid, v in per_task.items()}
+    payload = {"timestamp": stamp, "version": ver, "runs": runs, "metrics": m,
+               "per_task": per_task_frac, "results": rows}
     fname = f"v{ver}_{split or 'all'}.json"
     (out_dir / fname).write_text(json.dumps(payload, ensure_ascii=False, indent=2),
                                  encoding="utf-8")
@@ -242,17 +250,23 @@ def _write_scorecard(out_dir: Path, payload: dict) -> None:
               f"\n> ⚠️ Выборка мала ({total_n} задач) — для статистически значимого "
               "вывода о самоулучшении нужно 100-200 (val) + 50-100 (hold-out). "
               "Это seed-набор; схема расширяется без изменений.")
+    runs = payload.get("runs", 1)
     md = [f"# FreePalp eval — конфиг v{payload['version']} — {payload['timestamp']}", "",
+          f"Прогонов на задачу: **{runs}** (усреднение по разбросу бесплатных моделей).",
           "Code-execution-accuracy: сгенерированный код реально запускается и "
           "проверяется ассертами на корректность (не подстроки, не только exit 0).",
           "Hold-out заморожен: не используется для выбора конфига." + caveat, "",
           "| split | passed | pass-rate | avg critic |", "|---|---|---|---|"]
     for sp, d in m.items():
         md.append(f"| {sp} | {d['passed']}/{d['n']} | {d['pass_rate']}% | {d['avg_critic']} |")
-    md += ["", "| задача | split | passed | critic | модель |", "|---|---|---|---|---|"]
+    # Per-task: доля прохождений по прогонам (видно разброс на каждой задаче)
+    pt = payload.get("per_task", {})
+    split_of = {}
     for r in payload["results"]:
-        md.append(f"| {r['id']} | {r['split']} | {'✅' if r['passed'] else '❌'} | "
-                  f"{r['critic_score']} | {r['model']} |")
+        split_of.setdefault(r["id"], r["split"])
+    md += ["", "| задача | split | прошло (k/N прогонов) |", "|---|---|---|"]
+    for tid, frac in pt.items():
+        md.append(f"| {tid} | {split_of.get(tid, '')} | {frac} |")
     (out_dir / "scorecard.md").write_text("\n".join(md), encoding="utf-8")
 
 
@@ -278,10 +292,12 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", choices=["val", "holdout", "all"], default="all")
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--runs", type=int, default=1,
+                    help="прогонов на задачу (усреднение разброса бесплатных моделей)")
     ap.add_argument("--diff", nargs=2, metavar=("A.json", "B.json"),
                     help="сравнить две скоркарты (Δ pass-rate)")
     args = ap.parse_args()
     if args.diff:
         diff(args.diff[0], args.diff[1])
     else:
-        asyncio.run(run(None if args.split == "all" else args.split, args.quick))
+        asyncio.run(run(None if args.split == "all" else args.split, args.quick, args.runs))
