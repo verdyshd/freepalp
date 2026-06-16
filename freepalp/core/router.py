@@ -65,8 +65,8 @@ def _models_from_discovery(discovered: list[dict]) -> list[ModelConfig]:
 # cloud_fast:  Cerebras (1000+ tok/s), Groq (быстро), остальные
 PROVIDER_TIER_PRIORITY: dict[str, list[str]] = {
     # groq первым в cloud_heavy — gpt-oss-120b и groq/compound проверены и стабильны
-    "cloud_heavy": ["groq", "sambanova", "gemini", "mistral", "together", "novita", "anthropic", "openrouter"],
-    "cloud_fast":  ["groq", "cerebras", "sambanova", "gemini", "mistral", "together", "novita", "openrouter"],
+    "cloud_heavy": ["groq", "sambanova", "gemini", "mistral", "nvidia", "cohere", "cloudflare", "zai", "together", "novita", "anthropic", "openrouter"],
+    "cloud_fast":  ["groq", "cerebras", "sambanova", "gemini", "mistral", "zai", "nvidia", "cohere", "cloudflare", "together", "novita", "openrouter"],
     "local_small": ["ollama"],
     "local_large": ["ollama"],
 }

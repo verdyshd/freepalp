@@ -2267,6 +2267,8 @@ const PROVIDER_SVG = {
   // Дополнительные / если появятся
   'Mistral':            'mistral',
   'Cohere':             'cohere',
+  'ZAI (GLM)':          'zhipu',     // z.ai = Zhipu AI
+  'Cloudflare AI':      'cloudflare',
   'DeepSeek':           'deepseek',
   'OpenAI':             'openai',
   'Meta':               'meta',
@@ -2336,6 +2338,10 @@ const PROVIDER_CHIP_BG = {
   'Mistral':            '#fff',        // оранжевый логотип Mistral → белый чип
   'OpenAI':             'transparent', // кастомный SVG со своим тёмным фоном
   'Hugging Face':       '#fff8e7',   // тёплый кремовый — под жёлтый HF
+  'ZAI (GLM)':          '#fff',        // синий логотип Zhipu → белый чип
+  'Nvidia':             '#1a1a1a',     // зелёно-белый логотип → тёмный чип (бренд NVIDIA)
+  'Cohere':             '#fff',        // тёмно-зелёный логотип → белый чип
+  'Cloudflare AI':      '#fff',        // оранжевое облако → белый чип
 };
 
 function providerIconHtml(name, isActive) {
@@ -2368,6 +2374,10 @@ const PROVIDER_META = {
   gemini:     { icon:'✨', svgName:'Google Gemini',      label:'Gemini',       free: true,  limit:'1.5k req/day',       signup:'https://aistudio.google.com/',    color:'#4285F4' },
   sambanova:  { icon:'🚀', svgName:'SambaNova',          label:'SambaNova',    free: true,  limit:'без явных лимитов',  signup:'https://cloud.sambanova.ai/',     color:'#FF6B35' },
   mistral:    { icon:'🌬️', svgName:'Mistral',            label:'Mistral',      free: true,  limit:'1 млрд tok/мес',     signup:'https://console.mistral.ai/',     color:'#FA520F' },
+  zai:        { icon:'🇿',  svgName:'ZAI (GLM)',          label:'z.ai (GLM)',   free: true,  limit:'glm-4.5-flash free', signup:'https://z.ai/',                   color:'#3B82F6' },
+  nvidia:     { icon:'🟩', svgName:'Nvidia',             label:'NVIDIA NIM',   free: true,  limit:'100+ моделей',       signup:'https://build.nvidia.com/',       color:'#76B900' },
+  cohere:     { icon:'🔵', svgName:'Cohere',             label:'Cohere',       free: true,  limit:'free trial-tier',    signup:'https://dashboard.cohere.com/',   color:'#39594D' },
+  cloudflare: { icon:'☁️', svgName:'Cloudflare AI',      label:'Cloudflare AI',free: true,  limit:'Workers AI free',    signup:'https://dash.cloudflare.com/',    color:'#F38020' },
   together:   { icon:'🤝', svgName:'Together AI',        label:'Together AI',  free: false, limit:'$5 кредитов',        signup:'https://api.together.xyz/',       color:'#2563EB' },
   novita:     { icon:'🌟', svgName:'Novita AI',          label:'Novita AI',    free: false, limit:'$0.5 кредитов',      signup:'https://novita.ai/',              color:'#059669' },
   anthropic:  { icon:'🤖', svgName:'Anthropic (Claude)', label:'Anthropic',    free: false, limit:'платный',            signup:'https://console.anthropic.com/',  color:'#CC785C' },

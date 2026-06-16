@@ -1576,6 +1576,10 @@ _PROVIDER_ENV_KEYS: dict[str, str] = {
     "together":   "TOGETHER_API_KEY",
     "novita":     "NOVITA_API_KEY",
     "mistral":    "MISTRAL_API_KEY",
+    "zai":        "ZAI_API_KEY",
+    "nvidia":     "NVIDIA_API_KEY",
+    "cohere":     "COHERE_API_KEY",
+    "cloudflare": "CLOUDFLARE_API_TOKEN",
     "anthropic":  "ANTHROPIC_API_KEY",
     "openai":     "OPENAI_API_KEY",
 }
