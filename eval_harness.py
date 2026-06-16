@@ -33,6 +33,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import subprocess
 import sys
 import time
@@ -206,7 +207,9 @@ async def _run_one(orch, task: dict) -> dict:
         return {"id": task["id"], "split": task["split"], "type": task["type"],
                 "passed": ok, "critic_score": round(score, 2),
                 "model": result.model_used, "elapsed": round(time.time() - t0, 1)}
-    except Exception as e:
+    except (Exception, SystemExit) as e:
+        # SystemExit ловим намеренно: если воркер/исполняемый код задачи вызовет
+        # exit()/sys.exit(), это не должно убивать весь прогон — это провал ОДНОЙ задачи.
         return {"id": task["id"], "split": task["split"], "type": task["type"],
                 "passed": False, "critic_score": 0.0, "model": "—",
                 "elapsed": round(time.time() - t0, 1), "error": str(e)[:80]}
@@ -229,6 +232,9 @@ def _metrics(rows: list) -> dict:
 
 
 async def run(split: str | None, quick: bool, runs: int = 1) -> dict:
+    # Замораживаем конфиг на время эвала: система НЕ должна само-улучшаться
+    # посреди измерения (иначе val и holdout оцениваются на разных конфигах).
+    os.environ.setdefault("FREEPALP_NO_AUTOIMPROVE", "1")
     from freepalp.core.orchestrator import Orchestrator
     orch = Orchestrator()
     await orch.router.initialize()
@@ -247,35 +253,47 @@ async def run(split: str | None, quick: bool, runs: int = 1) -> dict:
     print(f"\n=== FreePalp eval — конфиг v{ver} ({len(suite)} задач × {runs} прогон(ов)) ===\n")
     rows = []
     per_task: dict = {}   # id -> [passed bool, ...] для усреднения по прогонам (разброс)
-    for t in suite:
-        for ri in range(runs):
-            tag = f" #{ri+1}" if runs > 1 else ""
-            print(f"  ▸ [{t['split']}] {t['id']}{tag} ...", flush=True)
-            r = await _run_one(orch, t)
-            r["run"] = ri + 1
-            mark = "✅" if r["passed"] else "❌"
-            print(f"    {mark} passed={r['passed']} · critic={r['critic_score']} · "
-                  f"{r['model']} · {r['elapsed']}с" + (f" · ERR {r.get('error')}" if r.get("error") else ""))
-            rows.append(r)
-            per_task.setdefault(t["id"], []).append(bool(r["passed"]))
+    out_dir = ROOT / "eval"
+    out_dir.mkdir(exist_ok=True)
+    fname = f"v{ver}_{split or 'all'}.json"
 
-    m = _metrics(rows)
+    def _persist() -> dict:
+        """Собрать payload из УЖЕ накопленных строк и записать JSON+скоркарту.
+        Вызывается после каждой задачи и в finally — чтобы краш на одной задаче
+        не терял уже сделанные результаты (раньше exit() в задаче губил весь прогон)."""
+        per_task_frac = {tid: f"{sum(v)}/{len(v)}" for tid, v in per_task.items()}
+        p = {"timestamp": time.strftime("%Y-%m-%d %H:%M"), "version": ver,
+             "runs": runs, "metrics": _metrics(rows),
+             "per_task": per_task_frac, "results": rows, "completed": len(rows)}
+        (out_dir / fname).write_text(json.dumps(p, ensure_ascii=False, indent=2),
+                                     encoding="utf-8")
+        _write_scorecard(out_dir, p)
+        return p
+
+    payload = None
+    try:
+        for t in suite:
+            for ri in range(runs):
+                tag = f" #{ri+1}" if runs > 1 else ""
+                print(f"  ▸ [{t['split']}] {t['id']}{tag} ...", flush=True)
+                r = await _run_one(orch, t)
+                r["run"] = ri + 1
+                mark = "✅" if r["passed"] else "❌"
+                print(f"    {mark} passed={r['passed']} · critic={r['critic_score']} · "
+                      f"{r['model']} · {r['elapsed']}с" + (f" · ERR {r.get('error')}" if r.get("error") else ""))
+                rows.append(r)
+                per_task.setdefault(t["id"], []).append(bool(r["passed"]))
+                payload = _persist()   # инкрементальная фиксация после каждой задачи
+    finally:
+        if rows:
+            payload = _persist()
+
+    m = payload["metrics"] if payload else _metrics(rows)
     print("\n=== Метрики (code-execution-accuracy) ===")
     for sp, d in m.items():
         tag = "VALIDATION" if sp == "val" else "HOLD-OUT (заморожен)"
         print(f"  {tag}: {d['passed']}/{d['n']} = {d['pass_rate']}% · ср.критик {d['avg_critic']}")
-
-    out_dir = ROOT / "eval"
-    out_dir.mkdir(exist_ok=True)
-    stamp = time.strftime("%Y-%m-%d %H:%M")
-    per_task_frac = {tid: f"{sum(v)}/{len(v)}" for tid, v in per_task.items()}
-    payload = {"timestamp": stamp, "version": ver, "runs": runs, "metrics": m,
-               "per_task": per_task_frac, "results": rows}
-    fname = f"v{ver}_{split or 'all'}.json"
-    (out_dir / fname).write_text(json.dumps(payload, ensure_ascii=False, indent=2),
-                                 encoding="utf-8")
-    _write_scorecard(out_dir, payload)
-    print(f"\nСкоркарта: eval/{fname} · eval/scorecard.md")
+    print(f"\nСкоркарта: eval/{fname} · eval/scorecard.md  (готово задач: {len(rows)}/{len(suite)*runs})")
     return payload
 
 

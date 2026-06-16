@@ -15,6 +15,7 @@ SelfImprovementController — главный оркестратор самооб
 
 import json
 import copy
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -120,6 +121,11 @@ class SelfImprovementController:
         - ИЛИ при старте если есть проблемные типы (называется startup check)
         - НО не если улучшение уже идёт
         """
+        # Заморозка конфига (эвал/бенчмарк): если выставлен FREEPALP_NO_AUTOIMPROVE,
+        # система НЕ перетюнивает себя посреди измерения — иначе ранние задачи и
+        # поздние оцениваются на разных конфигах и «hold-out заморожен» нарушается.
+        if os.environ.get("FREEPALP_NO_AUTOIMPROVE"):
+            return False
         if self._improving:
             return False
         if not self.evaluator.has_enough_data():
