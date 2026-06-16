@@ -38,6 +38,28 @@ TOOL_DESCRIPTIONS = "\n".join([
 ])
 
 
+# Pre-execution валидация: аргументы, которые НИКОГДА не валидно-пустые.
+# Слабые модели галлюцинируют вызовы без пути/команды — ловим ДО исполнения и
+# возвращаем понятную ошибку, чтобы воркер исправился (а не падал на TypeError /
+# не писал в мусорный путь). Нулевой риск ложных срабатываний: пустой path/command
+# не имеет смысла ни для одного из этих инструментов.
+_REQUIRED_NONEMPTY = {
+    "read_file": ("path",), "write_file": ("path",), "write_source": ("path",),
+    "read_source": ("path",), "delete_file": ("path",), "create_dir": ("path",),
+    "copy_file": ("src", "dst"), "run_command": ("command",),
+}
+
+
+def _precheck_args(tool_name: str, kwargs: dict):
+    """Возвращает текст ошибки, если обязательный аргумент пуст/не строка; иначе None."""
+    for arg in _REQUIRED_NONEMPTY.get(tool_name, ()):
+        v = kwargs.get(arg)
+        if not isinstance(v, str) or not v.strip():
+            return (f"Аргумент '{arg}' для '{tool_name}' обязателен и должен быть "
+                    f"непустой строкой (получено: {v!r}). Исправь вызов инструмента.")
+    return None
+
+
 class ToolAgent:
     """
     Выполняет вызовы инструментов по запросу Worker/Orchestrator.
@@ -59,6 +81,11 @@ class ToolAgent:
                 "error": f"Инструмент '{tool_name}' не найден. "
                          f"Доступны: {', '.join(sorted(ALL_TOOLS.keys()))}",
             }
+
+        # Pre-execution валидация аргументов (ловим галлюцинации ДО исполнения)
+        precheck_err = _precheck_args(tool_name, kwargs)
+        if precheck_err:
+            return {"ok": False, "error": precheck_err}
 
         tool = ALL_TOOLS[tool_name]
         fn   = tool["fn"]
