@@ -46,10 +46,10 @@ def _catalog_endpoint(provider: str) -> Optional[tuple[str, str]]:
     но захардкоженные ENDPOINTS воркера про них не знают — без этого резолва
     любой каталожный провайдер падал в «не поддерживается»."""
     try:
-        from ..core.model_discovery import _OPENAI_COMPAT_PROVIDERS
+        from ..core.model_discovery import _OPENAI_COMPAT_PROVIDERS, _sub_account
         cfg = _OPENAI_COMPAT_PROVIDERS.get(provider)
         if cfg and cfg.get("base_url") and cfg.get("env_key"):
-            return cfg["base_url"], cfg["env_key"]
+            return _sub_account(cfg["base_url"]), cfg["env_key"]  # {account} → CLOUDFLARE_ACCOUNT_ID
     except Exception:
         pass
     return None

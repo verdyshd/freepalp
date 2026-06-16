@@ -371,7 +371,32 @@ _OPENAI_COMPAT_PROVIDERS = {
             {"id": "command-r-plus-08-2024", "tier": "cloud_heavy", "max_tokens": 4096, "cost": 0.0},
         ],
     },
+    # Cloudflare Workers AI — base_url привязан к аккаунту: {account} подставляется
+    # из CLOUDFLARE_ACCOUNT_ID. Bearer = CLOUDFLARE_API_TOKEN. /models нет на /ai/v1 →
+    # авторизацию проверяем через chat/completions.
+    "cloudflare": {
+        "env_key":  "CLOUDFLARE_API_TOKEN",
+        "base_url": "https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1",
+        "free_check": False,
+        "auth_check_url": "https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1/chat/completions",
+        "auth_check_body": {
+            "model": "@cf/meta/llama-3.1-8b-instruct-fp8",
+            "messages": [{"role": "user", "content": "x"}],
+            "max_tokens": 1,
+        },
+        "models": [
+            {"id": "@cf/meta/llama-3.1-8b-instruct-fp8",        "tier": "cloud_fast",  "max_tokens": 4096, "cost": 0.0},
+            {"id": "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", "tier": "cloud_heavy", "max_tokens": 4096, "cost": 0.0},
+        ],
+    },
 }
+
+
+def _sub_account(url: str) -> str:
+    """Подставляет {account} из CLOUDFLARE_ACCOUNT_ID (для Cloudflare; для прочих — no-op)."""
+    if url and "{account}" in url:
+        return url.replace("{account}", os.environ.get("CLOUDFLARE_ACCOUNT_ID", ""))
+    return url
 
 _GEMINI_MODELS = [
     {"id": "gemini-2.0-flash",        "tier": "cloud_fast",  "max_tokens": 8192, "cost": 0.0},
@@ -395,7 +420,7 @@ async def _discover_openai_compat(provider_key: str) -> list[dict]:
         import httpx
         async with httpx.AsyncClient(timeout=8.0) as client:
             # Если у провайдера /models публичный (напр. Novita) — проверяем авторизацию отдельно
-            auth_check_url  = cfg.get("auth_check_url")
+            auth_check_url  = _sub_account(cfg.get("auth_check_url"))
             auth_check_body = cfg.get("auth_check_body")
             if auth_check_url and auth_check_body:
                 try:
@@ -414,7 +439,7 @@ async def _discover_openai_compat(provider_key: str) -> list[dict]:
             else:
                 # Стандартная проверка через /models
                 r = await client.get(
-                    f"{cfg['base_url']}/models",
+                    f"{_sub_account(cfg['base_url'])}/models",
                     headers={"Authorization": f"Bearer {api_key}"},
                 )
                 if r.status_code == 401:
