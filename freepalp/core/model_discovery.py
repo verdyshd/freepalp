@@ -350,6 +350,27 @@ _OPENAI_COMPAT_PROVIDERS = {
             {"id": "glm-4.5-flash", "tier": "cloud_fast", "max_tokens": 4096, "cost": 0.0, "context_window": 131072},
         ],
     },
+    # NVIDIA NIM — 100+ open-моделей, OpenAI-совместимый, бесплатно без карты. /models есть.
+    "nvidia": {
+        "env_key":  "NVIDIA_API_KEY",
+        "base_url": "https://integrate.api.nvidia.com/v1",
+        "free_check": True,
+        "models": [
+            {"id": "meta/llama-3.3-70b-instruct",            "tier": "cloud_heavy", "max_tokens": 4096, "cost": 0.0},
+            {"id": "meta/llama-3.1-8b-instruct",             "tier": "cloud_fast",  "max_tokens": 4096, "cost": 0.0},
+            {"id": "nvidia/llama-3.1-nemotron-70b-instruct", "tier": "cloud_heavy", "max_tokens": 4096, "cost": 0.0},
+        ],
+    },
+    # Cohere — OpenAI-совместимый эндпоинт /compatibility/v1, free trial-tier. /models есть.
+    "cohere": {
+        "env_key":  "COHERE_API_KEY",
+        "base_url": "https://api.cohere.ai/compatibility/v1",
+        "free_check": True,
+        "models": [
+            {"id": "command-r-08-2024",      "tier": "cloud_fast",  "max_tokens": 4096, "cost": 0.0},
+            {"id": "command-r-plus-08-2024", "tier": "cloud_heavy", "max_tokens": 4096, "cost": 0.0},
+        ],
+    },
 }
 
 _GEMINI_MODELS = [
