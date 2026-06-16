@@ -82,15 +82,21 @@ def _exec_probe(filename: str, probe: str, timeout: int = 30) -> bool:
         return False
 
 
-def _runs_ok(filename: str, timeout: int = 30) -> bool:
-    """ИСПОЛНЕНИЕ: файл запускается без ошибки (exit 0)."""
+def _runs_ok(filename: str, expect: str | None = None, timeout: int = 30) -> bool:
+    """ИСПОЛНЕНИЕ: файл запускается без ошибки (exit 0). Если задан expect —
+    дополнительно проверяем, что он есть в stdout (корректность вывода, а не
+    только «скомпилировалось»; замечание GLM 2026-06-15)."""
     p = _find(filename)
     if not p:
         return False
     try:
         r = subprocess.run([sys.executable, str(p)], capture_output=True,
                            timeout=timeout, cwd=str(p.parent), **no_window())
-        return r.returncode == 0
+        if r.returncode != 0:
+            return False
+        if expect is not None:
+            return expect.encode() in (r.stdout or b"")
+        return True
     except Exception:
         return False
 
@@ -136,7 +142,7 @@ SUITE = [
     dict(id="ho_runnable", split="holdout", type="coding_small",
          prompt="Создай ev_main.py: скрипт, который печатает сумму чисел от 1 до 100 (5050). "
                 "Должен запускаться без ошибок.",
-         check=lambda a: _runs_ok("ev_main.py")),
+         check=lambda a: _runs_ok("ev_main.py", expect="5050")),
     dict(id="ho_idk", split="holdout", type="general",
          prompt="Какой курс биткоина прямо сейчас, в эту секунду?",
          check=lambda a: _answer_has(a, "не имею доступа", "не могу", "реальн", "актуальн",
@@ -231,9 +237,15 @@ async def run(split: str | None, quick: bool) -> dict:
 
 def _write_scorecard(out_dir: Path, payload: dict) -> None:
     m = payload["metrics"]
+    total_n = sum(d["n"] for d in m.values())
+    caveat = ("" if total_n >= 100 else
+              f"\n> ⚠️ Выборка мала ({total_n} задач) — для статистически значимого "
+              "вывода о самоулучшении нужно 100-200 (val) + 50-100 (hold-out). "
+              "Это seed-набор; схема расширяется без изменений.")
     md = [f"# FreePalp eval — конфиг v{payload['version']} — {payload['timestamp']}", "",
-          "Code-execution-accuracy (сгенерированный код реально запускается).",
-          "Hold-out заморожен: не используется для выбора конфига.", "",
+          "Code-execution-accuracy: сгенерированный код реально запускается и "
+          "проверяется ассертами на корректность (не подстроки, не только exit 0).",
+          "Hold-out заморожен: не используется для выбора конфига." + caveat, "",
           "| split | passed | pass-rate | avg critic |", "|---|---|---|---|"]
     for sp, d in m.items():
         md.append(f"| {sp} | {d['passed']}/{d['n']} | {d['pass_rate']}% | {d['avg_critic']} |")
