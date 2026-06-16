@@ -147,6 +147,42 @@ SUITE = [
          prompt="Какой курс биткоина прямо сейчас, в эту секунду?",
          check=lambda a: _answer_has(a, "не имею доступа", "не могу", "реальн", "актуальн",
                                      "в реальном времени", "live", "real-time")),
+
+    # ---- СЛОЖНЕЕ: краевые случаи / класс / многофайловость (запас показать Δ) ----
+    dict(id="val_binsearch", split="val", type="coding_small",
+         prompt="Напиши Python-функцию binary_search(arr, target), возвращающую индекс "
+                "target в ОТСОРТИРОВАННОМ списке arr или -1, если нет. Сохрани в ev_binsearch.py",
+         check=lambda a: _exec_probe("ev_binsearch.py",
+                                     "assert m.binary_search([1,3,5,7,9],7)==3 and "
+                                     "m.binary_search([1,3,5,7,9],4)==-1 and "
+                                     "m.binary_search([],1)==-1 and m.binary_search([5],5)==0")),
+    dict(id="val_intervals", split="val", type="coding_large",
+         prompt="Напиши Python-функцию merge_intervals(intervals: list[list[int]]) -> list[list[int]], "
+                "сливающую пересекающиеся интервалы (вход не обязательно отсортирован). "
+                "Сохрани в ev_intervals.py",
+         check=lambda a: _exec_probe("ev_intervals.py",
+                                     "assert m.merge_intervals([[1,3],[2,6],[8,10],[15,18]])==[[1,6],[8,10],[15,18]] "
+                                     "and m.merge_intervals([[1,4],[4,5]])==[[1,5]] "
+                                     "and m.merge_intervals([])==[]")),
+    dict(id="ho_lru", split="holdout", type="coding_large",
+         prompt="Реализуй класс LRUCache(capacity) с методами get(key)->value|-1 и put(key,value), "
+                "вытесняющий наименее недавно использованный при переполнении. Сохрани в ev_lru.py",
+         check=lambda a: _exec_probe("ev_lru.py",
+                                     "c=m.LRUCache(2); c.put(1,1); c.put(2,2); assert c.get(1)==1; "
+                                     "c.put(3,3); assert c.get(2)==-1; c.put(4,4); "
+                                     "assert c.get(1)==-1 and c.get(3)==3 and c.get(4)==4")),
+    dict(id="ho_roman", split="holdout", type="coding_small",
+         prompt="Напиши Python-функцию roman_to_int(s: str) -> int (включая вычитающие пары IV, IX, XL...). "
+                "Сохрани в ev_roman.py",
+         check=lambda a: _exec_probe("ev_roman.py",
+                                     "assert m.roman_to_int('III')==3 and m.roman_to_int('IV')==4 and "
+                                     "m.roman_to_int('IX')==9 and m.roman_to_int('LVIII')==58 and "
+                                     "m.roman_to_int('MCMXCIV')==1994")),
+    dict(id="ho_multifile", split="holdout", type="coding_large",
+         prompt="Создай ДВА файла: ev_calc.py с функциями add(a,b) и sub(a,b); и ev_calctest.py, "
+                "который импортирует их, проверяет add(2,3)==5 и sub(5,2)==3, и печатает 'OK' если верно. "
+                "ev_calctest.py должен запускаться без ошибок.",
+         check=lambda a: _runs_ok("ev_calctest.py", expect="OK")),
 ]
 
 
