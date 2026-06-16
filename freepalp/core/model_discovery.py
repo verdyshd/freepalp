@@ -334,6 +334,22 @@ _OPENAI_COMPAT_PROVIDERS = {
             {"id": "codestral-latest",       "tier": "cloud_fast",  "max_tokens": 4096, "cost": 0.0, "context_window": 262144},
         ],
     },
+    # z.ai (Zhipu GLM) — glm-4.5-flash БЕСПЛАТНА. Эндпоинт paas/v4 (НЕ openai/v1 — там 404),
+    # /models недоступен → авторизацию проверяем через chat/completions (как Novita).
+    "zai": {
+        "env_key":  "ZAI_API_KEY",
+        "base_url": "https://api.z.ai/api/paas/v4",
+        "free_check": False,
+        "auth_check_url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "auth_check_body": {
+            "model": "glm-4.5-flash",
+            "messages": [{"role": "user", "content": "x"}],
+            "max_tokens": 1,
+        },
+        "models": [
+            {"id": "glm-4.5-flash", "tier": "cloud_fast", "max_tokens": 4096, "cost": 0.0, "context_window": 131072},
+        ],
+    },
 }
 
 _GEMINI_MODELS = [
