@@ -1379,6 +1379,10 @@
         <div class="rp-title" data-i18n="set.behavior">⚙️ Поведение</div>
         <div style="font-size:12px;color:var(--text-2);display:flex;flex-direction:column;gap:10px;margin-top:8px">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="set-sound" onchange="setSound(this.checked)">
+            <span data-i18n="set.sound">🔔 Звук при завершении ответа</span> <span style="color:var(--text-3)" data-i18n="set.soundHint">(по умолчанию выкл)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
             <input type="checkbox" id="set-si-startup" onchange="saveSetting('si_on_startup', this.checked)">
             <span data-i18n="set.siStartup">Самоулучшение при старте сервера</span> <span style="color:var(--text-3)" data-i18n="set.siStartupHint">(жжёт квоту провайдеров)</span>
           </label>
@@ -1807,9 +1811,17 @@ const STAGE_ICON = {
   tool:     '🔧', error:   '❌',
 };
 
-// 🫧 Звук пузырей по завершении ответа — синтез WebAudio, без внешних файлов
+// 🫧 Звук пузырей по завершении ответа — синтез WebAudio, без внешних файлов.
+// ВЫКЛ по умолчанию (звук без спроса раздражает) — включается тумблером в Настройках.
 let _audioCtx = null;
+function _soundOn() {
+  try { return localStorage.getItem('freepalp-sound') === '1'; } catch (e) { return false; }
+}
+function setSound(on) {
+  try { localStorage.setItem('freepalp-sound', on ? '1' : '0'); } catch (e) {}
+}
 function playBubbles() {
+  if (!_soundOn()) return;   // по умолчанию тихо
   try {
     _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     const ctx = _audioCtx;
@@ -3395,6 +3407,8 @@ async function loadBehaviorSettings() {
     document.getElementById('set-si-startup').checked = !!s.si_on_startup;
     document.getElementById('set-idle').value  = s.idle_shutdown_minutes ?? 30;
     document.getElementById('set-retry').value = s.retry_threshold ?? 0.7;
+    const snd = document.getElementById('set-sound');   // звук — клиентский (localStorage)
+    if (snd) snd.checked = _soundOn();
   } catch(e) {}
 }
 
@@ -3923,6 +3937,8 @@ const I18N = {
   'set.sysinfo':    {ru:'Информация о системе', en:'System info', zh:'系统信息'},
   'set.rollback':   {ru:'↩ Откат промптов', en:'↩ Roll back prompts', zh:'↩ 回滚提示词'},
   'set.behavior':   {ru:'⚙️ Поведение', en:'⚙️ Behavior', zh:'⚙️ 行为'},
+  'set.sound':      {ru:'🔔 Звук при завершении ответа', en:'🔔 Sound when the answer is ready', zh:'🔔 回答完成时提示音'},
+  'set.soundHint':  {ru:'(по умолчанию выкл)', en:'(off by default)', zh:'（默认关闭）'},
   'set.improve':    {ru:'🧬 Самоулучшение', en:'🧬 Self-improvement', zh:'🧬 自我改进'},
   'set.clearmem':   {ru:'🧹 Очистить память', en:'🧹 Clear memory', zh:'🧹 清除记忆'},
   'set.selfTraining':{ru:'🧬 Самообучение', en:'🧬 Self-training', zh:'🧬 自我训练'},
