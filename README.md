@@ -10,7 +10,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/providers-10%2B-green.svg" alt="10+ providers">
+  <img src="https://img.shields.io/badge/providers-14%2B-green.svg" alt="14+ providers">
   <a href="https://github.com/verdyshd/freepalp/actions/workflows/ci.yml"><img src="https://github.com/verdyshd/freepalp/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="README.ru.md"><img src="https://img.shields.io/badge/lang-Русский-red.svg" alt="Russian"></a>
   <a href="README.zh.md"><img src="https://img.shields.io/badge/lang-中文-red.svg" alt="Chinese"></a>
@@ -57,7 +57,7 @@ User input
     ↓
 Task Parser   → classifies the task (coding / research / chat / ...)
     ↓
-Router        → live discovery across 10+ providers, picks best available model
+Router        → live discovery across 14+ providers, picks best available model
     ↓
 [Architect]   → plans complex tasks (DAG)
     ↓
@@ -90,8 +90,10 @@ adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
 
 ## Features
 
-- **10+ providers, 40+ models** with automatic routing by task type and live
-  quota/cooldown awareness.
+- **14+ providers, 40+ models** with automatic routing by task type and live
+  quota/cooldown awareness. Free cloud providers include Groq, Cerebras,
+  OpenRouter, Gemini, SambaNova, Mistral, **z.ai (GLM)**, **NVIDIA NIM**,
+  **Cohere** and **Cloudflare Workers AI** — plus local Ollama.
 - **Local-first** via Ollama — unlimited fallback, fully offline-capable, and
   auto-started on launch if you used it before.
 - **DAG decomposition + parallel subagents** — complex multi-file tasks are

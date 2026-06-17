@@ -30,7 +30,7 @@ User Input
     ↓
 Task Parser  →  определяет тип задачи (coding / research / text / ...)
     ↓
-Router       →  live discovery: 40+ моделей, 10+ провайдеров
+Router       →  live discovery: 40+ моделей, 14+ провайдеров
     ↓
 [Architect]  →  планирование сложных задач (DAG)
     ↓
@@ -144,7 +144,7 @@ Worker думает → вызывает github_list_issues() → получае
 
 ```
 /help              — справка
-/models            — 40+ моделей (live discovery)
+/models            — 40+ моделей, 14+ провайдеров (live discovery)
 /providers         — все провайдеры: статус, лимиты, ссылки
 /cron list         — периодические задачи
 /cron add "1д" ... — добавить задачу
@@ -171,7 +171,7 @@ freepalp/
 ├── core/
 │   ├── orchestrator.py     # Главный контроллер
 │   ├── router.py           # Routing + live model discovery
-│   ├── model_discovery.py  # 10+ провайдеров, 40+ моделей
+│   ├── model_discovery.py  # 14+ провайдеров, 40+ моделей
 │   ├── task_parser.py      # Определение типа задачи
 │   ├── cron_manager.py     # Периодические задачи
 │   ├── mcp_discovery.py    # MCP-серверы
@@ -233,6 +233,10 @@ freepalp/
 | **Cerebras** | llama-3.1-70b (быстро) | 60 req/min |
 | **Gemini** | gemini-1.5-flash, gemini-2.0-flash | 15 req/min |
 | **SambaNova** | llama-3.1-405b | 10 req/min |
+| **z.ai (GLM)** | glm-4.5-flash | бесплатная флэш-модель |
+| **NVIDIA NIM** | llama-3.3-70b, Nemotron, 100+ моделей | бесплатно без карты |
+| **Cohere** | command-r, command-r-plus | free trial-tier |
+| **Cloudflare Workers AI** | llama-3.1-8b, deepseek-r1-distill | free tier (нужен account_id) |
 | **Together / Mistral / Novita** | через models.dev-каталог | по ключу |
 | **Ollama** | любые локальные | без лимитов |
 

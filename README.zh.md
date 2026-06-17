@@ -33,7 +33,8 @@
 ## 这是什么
 
 FreePalp 是一个多智能体编排器，使用**免费和本地大语言模型**完成真实工作。
-路由器在 10+ 个提供商（Groq、OpenRouter、Cerebras、Gemini、Mistral、Together、
+路由器在 14+ 个提供商（Groq、OpenRouter、Cerebras、Gemini、Mistral、SambaNova、
+**z.ai (GLM)**、**NVIDIA NIM**、**Cohere**、**Cloudflare Workers AI**、Together、
 [models.dev](https://models.dev) 目录以及本地 **Ollama**）中为每个任务挑选最佳
 可用模型；工作智能体通过 ReAct 工具循环执行；双层评审先做廉价的确定性检查，
 仅在必要时才调用 LLM 评审。
@@ -61,7 +62,7 @@ cp .env.example .env
 
 ## 功能
 
-- **10+ 提供商、40+ 模型**，按任务类型自动路由，实时感知配额/冷却。
+- **14+ 提供商、40+ 模型**，按任务类型自动路由，实时感知配额/冷却。
 - **本地优先**（Ollama）——无限回退，可完全离线；用过则启动时自动拉起。
 - **DAG 分解 + 并行子智能体**——复杂的多文件任务由架构师拆成依赖图，独立步骤
   并行执行，每个都是看得到前序产物的专注工作者。
