@@ -45,5 +45,8 @@ dist/
 # Локальные (приватные) инструменты — не в публичный репо
 freepalp/tools/reddit_tools.py
 
-# Эвал-прогоны (runtime); публикуемый eval/scorecard.md добавлять явно (git add -f)
+# Эвал-прогоны (runtime); публикуемые eval/scorecard.md и eval/hard_tasks.json добавлять явно (git add -f)
 eval/*.json
+
+# QA-артефакты сессий (скрипты проверок, скриншоты, дампы) — не публикуются
+_qa/

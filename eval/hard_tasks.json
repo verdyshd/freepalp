@@ -1,0 +1,266 @@
+[
+  {
+    "id": "hard_house_robber_circ",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию rob_circular в файле ev_house_robber_circ.py. Дан список неотрицательных целых чисел, расположенных по кругу; верни максимальную сумму выбранных элементов так, чтобы никакие два выбранных не были соседними (первый и последний элементы тоже считаются соседними).",
+    "file": "ev_house_robber_circ.py",
+    "probe": "assert m.rob_circular([2, 3, 2]) == 3\nassert m.rob_circular([1, 2, 3, 1]) == 4\nassert m.rob_circular([1, 2, 3]) == 3\nassert m.rob_circular([5]) == 5"
+  },
+  {
+    "id": "hard_topo_sort",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию smallest_topo в файле ev_topo_sort.py. Даны число вершин n (нумерация 0..n-1) и список рёбер [u, v] со смыслом «u раньше v»; верни лексикографически наименьший корректный топологический порядок в виде списка, а если есть цикл — пустой список.",
+    "file": "ev_topo_sort.py",
+    "probe": "assert m.smallest_topo(4, [[0, 1], [0, 2], [1, 3], [2, 3]]) == [0, 1, 2, 3]\nassert m.smallest_topo(2, [[0, 1], [1, 0]]) == []\nassert m.smallest_topo(3, []) == [0, 1, 2]\nassert m.smallest_topo(5, [[4, 2], [2, 0], [4, 1], [1, 0]]) == [3, 4, 1, 2, 0]"
+  },
+  {
+    "id": "hard_decode_string",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию decode_string в файле ev_decode_string.py. Декодируй сжатую строку вида «k[подстрока]» с возможными вложенными группами, где k — натуральное число повторений; верни развёрнутую строку.",
+    "file": "ev_decode_string.py",
+    "probe": "assert m.decode_string(\"3[a]2[bc]\") == \"aaabcbc\"\nassert m.decode_string(\"3[a2[c]]\") == \"accaccacc\"\nassert m.decode_string(\"2[abc]3[cd]ef\") == \"abcabccdcdcdef\"\nassert m.decode_string(\"10[a]\") == \"aaaaaaaaaa\""
+  },
+  {
+    "id": "hard_longest_palindrome",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию longest_palindrome в файле ev_longest_palindrome.py. Дана строка s; верни её самый длинный палиндромный-подотрезок (подстроку-палиндром). Используй алгоритм Манакера.",
+    "file": "ev_longest_palindrome.py",
+    "probe": "assert m.longest_palindrome(\"xyzracecarxyz\") == \"racecar\"\nassert m.longest_palindrome(\"cbbd\") == \"bb\"\nassert m.longest_palindrome(\"a\") == \"a\"\nassert m.longest_palindrome(\"abb\") == \"bb\""
+  },
+  {
+    "id": "hard_next_greater",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию next_greater в файле ev_next_greater.py. Для каждого элемента массива nums найди ближайший справа элемент, строго больший его; верни список этих значений, а там, где такого нет — число -1. Реши за O(n) через монотонный стек.",
+    "file": "ev_next_greater.py",
+    "probe": "assert m.next_greater([2, 1, 2, 4, 3]) == [4, 2, 4, -1, -1]\nassert m.next_greater([1, 2, 3]) == [2, 3, -1]\nassert m.next_greater([5, 4, 3, 2, 1]) == [-1, -1, -1, -1, -1]\nassert m.next_greater([1]) == [-1]"
+  },
+  {
+    "id": "hard_coin_change_count",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию coin_change_count в файле ev_coin_change_count.py. Даны целая сумма amount и список номиналов монет coins; верни количество комбинаций, которыми можно набрать ровно эту сумму (порядок монет не важен, каждая комбинация учитывается один раз). Реши динамикой.",
+    "file": "ev_coin_change_count.py",
+    "probe": "assert m.coin_change_count(5, [1, 2, 5]) == 4\nassert m.coin_change_count(3, [2]) == 0\nassert m.coin_change_count(0, [1, 2]) == 1\nassert m.coin_change_count(10, [1, 2, 5]) == 10"
+  },
+  {
+    "id": "hard_trap_water",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию trap в файле ev_trap_water.py. Дан список height — высоты столбцов гистограммы; верни суммарный объём воды (в клетках), который удержится между ними после дождя. Реши за O(n) двумя указателями.",
+    "file": "ev_trap_water.py",
+    "probe": "assert m.trap([0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]) == 6\nassert m.trap([4, 2, 0, 3, 2, 5]) == 9\nassert m.trap([]) == 0\nassert m.trap([3, 3, 3]) == 0"
+  },
+  {
+    "id": "hard_max_points_line",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию max_points_on_line в файле ev_max_points_line.py. Дан список точек (кортежей (x, y)); верни максимальное число точек, лежащих на одной прямой. Учти совпадающие точки.",
+    "file": "ev_max_points_line.py",
+    "probe": "assert m.max_points_on_line([(1, 1), (2, 2), (3, 3)]) == 3\nassert m.max_points_on_line([(1, 1), (3, 2), (5, 3), (4, 1), (2, 3), (1, 4)]) == 4\nassert m.max_points_on_line([(0, 0), (1, 1), (2, 2), (3, 3), (1, 0)]) == 4\nassert m.max_points_on_line([(0, 0), (-1, -1), (2, 2)]) == 3"
+  },
+  {
+    "id": "hard_fraction_to_decimal",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию fraction_to_decimal в файле ev_fraction_to_decimal.py. Даны числитель и знаменатель (целые); верни строковое представление десятичной дроби, заключая периодически повторяющуюся часть в круглые скобки, знак минус — только при отрицательном результате.",
+    "file": "ev_fraction_to_decimal.py",
+    "probe": "assert m.fraction_to_decimal(1, 2) == \"0.5\"\nassert m.fraction_to_decimal(2, 1) == \"2\"\nassert m.fraction_to_decimal(1, 3) == \"0.(3)\"\nassert m.fraction_to_decimal(4, 333) == \"0.(012)\""
+  },
+  {
+    "id": "hard_game_of_life",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию game_of_life в файле ev_game_of_life.py. Дана доска — список списков из 0 и 1; верни следующее состояние по правилам Conway's Game of Life (соседи — все 8 окружающих клеток, края не закольцованы), не изменяя исходную доску.",
+    "file": "ev_game_of_life.py",
+    "probe": "assert m.game_of_life([[0, 0, 0], [1, 1, 1], [0, 0, 0]]) == [[0, 1, 0], [0, 1, 0], [0, 1, 0]]\nassert m.game_of_life([[1]]) == [[0]]\nassert m.game_of_life([[0, 0, 0], [0, 0, 0]]) == [[0, 0, 0], [0, 0, 0]]\nassert m.game_of_life([[1, 1], [1, 0]]) == [[1, 1], [1, 1]]"
+  },
+  {
+    "id": "hard_shortest_path_matrix",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию shortest_path_binary_matrix в файле ev_shortest_path_matrix.py. Дана матрица n×n из 0/1; верни длину кратчайшего пути из клетки (0,0) в (n-1,n-1) по нулевым клеткам (ходить можно по 8 направлениям), либо -1, если пути нет. Длина пути — число посещённых клеток.",
+    "file": "ev_shortest_path_matrix.py",
+    "probe": "assert m.shortest_path_binary_matrix([[0, 1], [1, 0]]) == 2\nassert m.shortest_path_binary_matrix([[0, 0, 0], [1, 1, 0], [1, 1, 0]]) == 4\nassert m.shortest_path_binary_matrix([[1, 0], [0, 0]]) == -1\nassert m.shortest_path_binary_matrix([[0]]) == 1"
+  },
+  {
+    "id": "hard_merge_intervals",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию merge_intervals в файле ev_merge_intervals.py. Дан список интервалов, каждый — список [start, end]; верни список объединённых непересекающихся интервалов (пересекающиеся и касающиеся интервалы сливаются), отсортированных по началу.",
+    "file": "ev_merge_intervals.py",
+    "probe": "assert m.merge_intervals([[1, 3], [2, 6], [8, 10], [15, 18]]) == [[1, 6], [8, 10], [15, 18]]\nassert m.merge_intervals([[1, 4], [4, 5]]) == [[1, 5]]\nassert m.merge_intervals([[1, 4], [2, 3]]) == [[1, 4]]\nassert m.merge_intervals([]) == []"
+  },
+  {
+    "id": "hard_dijkstra_dist",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию dijkstra в файле ev_dijkstra_dist.py. Даны число вершин n (нумерация 0..n-1), список рёбер [u, v, w] с положительными весами и стартовая вершина start; верни список кратчайших расстояний от start до всех вершин, а для недостижимых — float('inf').",
+    "file": "ev_dijkstra_dist.py",
+    "probe": "assert m.dijkstra(5, [[0,1,10],[0,2,3],[1,3,2],[2,1,4],[2,3,8],[2,4,2],[3,4,5]], 0) == [0, 7, 3, 9, 5]\nassert m.dijkstra(3, [[0,1,5],[1,2,2]], 0) == [0, 5, 7]\nassert m.dijkstra(3, [[0,1,1],[1,2,1],[0,2,10]], 0) == [0, 1, 2]\nassert m.dijkstra(4, [[0,1,2],[2,3,1]], 0) == [0, 2, float('inf'), float('inf')]"
+  },
+  {
+    "id": "hard_count_components",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию count_components в файле ev_count_components.py. Даны число вершин n (нумерация 0..n-1) и список неориентированных рёбер; верни количество компонент связности графа. Используй union-find с рангом и сжатием путей.",
+    "file": "ev_count_components.py",
+    "probe": "assert m.count_components(5, [[0,1],[1,2],[3,4]]) == 2\nassert m.count_components(4, [[0,1],[1,2],[2,3]]) == 1\nassert m.count_components(3, []) == 3\nassert m.count_components(5, [[0,1],[2,3],[1,2]]) == 2"
+  },
+  {
+    "id": "hard_length_of_lis",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию length_of_lis в файле ev_length_of_lis.py. Дан список чисел nums; верни длину самой длинной строго возрастающей подпоследовательности. Реши за O(n log n) через массив «хвостов» и бинарный поиск.",
+    "file": "ev_length_of_lis.py",
+    "probe": "assert m.length_of_lis([10, 9, 2, 5, 3, 7, 101, 18]) == 4\nassert m.length_of_lis([0, 1, 0, 3, 2, 3]) == 4\nassert m.length_of_lis([7, 7, 7, 7]) == 1\nassert m.length_of_lis([]) == 0"
+  },
+  {
+    "id": "hard_edit_distance",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию edit_distance в файле ev_edit_distance.py. Даны две строки a и b; верни минимальное число односимвольных операций (вставка, удаление, замена), превращающих a в b (расстояние Левенштейна). Реши динамикой за O(len(a)*len(b)).",
+    "file": "ev_edit_distance.py",
+    "probe": "assert m.edit_distance(\"horse\", \"ros\") == 3\nassert m.edit_distance(\"intention\", \"execution\") == 5\nassert m.edit_distance(\"abc\", \"abc\") == 0\nassert m.edit_distance(\"\", \"abc\") == 3"
+  },
+  {
+    "id": "hard_knapsack_01",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию knapsack в файле ev_knapsack_01.py. Даны вместимость рюкзака capacity и два списка одинаковой длины — weights (веса) и values (ценности); верни максимальную суммарную ценность предметов, которые можно уложить в рюкзак (каждый предмет берётся не более одного раза). Реши 0/1-динамикой.",
+    "file": "ev_knapsack_01.py",
+    "probe": "assert m.knapsack(50, [10, 20, 30], [60, 100, 120]) == 220\nassert m.knapsack(0, [1, 2], [1, 2]) == 0\nassert m.knapsack(5, [1, 2, 3], [6, 10, 12]) == 22\nassert m.knapsack(10, [5, 4, 6, 3], [10, 40, 30, 50]) == 90"
+  },
+  {
+    "id": "hard_sliding_window_max",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию sliding_window_max в файле ev_sliding_window_max.py. Даны список nums и размер окна k; верни список максимумов для каждого положения окна длины k при его движении слева направо. Реши за O(n) через дек.",
+    "file": "ev_sliding_window_max.py",
+    "probe": "assert m.sliding_window_max([1, 3, -1, -3, 5, 3, 6, 7], 3) == [3, 3, 5, 5, 6, 7]\nassert m.sliding_window_max([1], 1) == [1]\nassert m.sliding_window_max([7, 2, 4], 2) == [7, 4]\nassert m.sliding_window_max([1, 2, 3, 4, 5], 3) == [3, 4, 5]"
+  },
+  {
+    "id": "hard_eval_rpn",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию eval_rpn в файле ev_eval_rpn.py. Дан список токенов арифметического выражения в обратной польской записи (числа и операции \"+\",\"-\",\"*\",\"/\"); верни результат целочисленного вычисления, деление — целочисленное с округлением к нулю без остатка. Деление на ноль не происходит.",
+    "file": "ev_eval_rpn.py",
+    "probe": "assert m.eval_rpn([\"2\", \"1\", \"+\", \"3\", \"*\"]) == 9\nassert m.eval_rpn([\"4\", \"13\", \"5\", \"/\", \"+\"]) == 6\nassert m.eval_rpn([\"10\", \"6\", \"9\", \"3\", \"+\", \"-11\", \"*\", \"/\", \"*\", \"17\", \"+\", \"5\", \"+\"]) == 22\nassert m.eval_rpn([\"3\", \"4\", \"-\"]) == -1"
+  },
+  {
+    "id": "hard_convert_base",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию convert_base в файле ev_convert_base.py. Дано строковое представление целого числа num в системе счисления from_base (основания 2..36); верни строковое представление того же числа в системе счисления to_base. Большие цифры обозначай заглавными буквами A..Z, отрицательные числа — со знаком минус.",
+    "file": "ev_convert_base.py",
+    "probe": "assert m.convert_base(\"255\", 10, 16) == \"FF\"\nassert m.convert_base(\"FF\", 16, 10) == \"255\"\nassert m.convert_base(\"1010\", 2, 10) == \"10\"\nassert m.convert_base(\"10\", 10, 2) == \"1010\""
+  },
+  {
+    "id": "hard_rotate_matrix",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию rotate_matrix в файле ev_rotate_matrix.py. Дана квадратная матрица (список списков); верни новую матрицу, полученную поворотом исходной на 90 градусов по часовой стрелке. Исходную матрицу не изменяй.",
+    "file": "ev_rotate_matrix.py",
+    "probe": "assert m.rotate_matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) == [[7, 4, 1], [8, 5, 2], [9, 6, 3]]\nassert m.rotate_matrix([[1]]) == [[1]]\nassert m.rotate_matrix([[1, 2], [3, 4]]) == [[3, 1], [4, 2]]\nassert m.rotate_matrix([]) == []"
+  },
+  {
+    "id": "hard_spiral_order",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию spiral_order в файле ev_spiral_order.py. Дана матрица m×n; верни список всех её элементов, обойдённых по спирали по часовой стрелке начиная с левого верхнего угла. Матрица может быть прямоугольной.",
+    "file": "ev_spiral_order.py",
+    "probe": "assert m.spiral_order([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) == [1, 2, 3, 6, 9, 8, 7, 4, 5]\nassert m.spiral_order([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]) == [1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]\nassert m.spiral_order([[1]]) == [1]\nassert m.spiral_order([[1], [2], [3]]) == [1, 2, 3]"
+  },
+  {
+    "id": "hard_num_islands",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию num_islands в файле ev_num_islands.py. Дана бинарная матрица (0 — вода, 1 — земля), где островом считается группа единиц, соединённых по горизонтали/вертикали; верни количество островов. Реши обходом в глубину итеративно, не изменяя исходную матрицу.",
+    "file": "ev_num_islands.py",
+    "probe": "assert m.num_islands([[1, 1, 0, 0, 0], [1, 1, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 1, 1]]) == 3\nassert m.num_islands([[1]]) == 1\nassert m.num_islands([[0, 0], [0, 0]]) == 0\nassert m.num_islands([[1, 1, 1], [0, 0, 1], [1, 1, 1]]) == 1"
+  },
+  {
+    "id": "hard_longest_common_subseq",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию longest_common_subsequence в файле ev_longest_common_subseq.py. Даны две строки a и b; верни длину их самой длинной общей подпоследовательности (порядок символов сохраняется, подряд идти не обязаны). Реши динамикой за O(len(a)*len(b)).",
+    "file": "ev_longest_common_subseq.py",
+    "probe": "assert m.longest_common_subsequence(\"abcde\", \"ace\") == 3\nassert m.longest_common_subsequence(\"abc\", \"abc\") == 3\nassert m.longest_common_subsequence(\"abc\", \"def\") == 0\nassert m.longest_common_subsequence(\"\", \"abc\") == 0"
+  },
+  {
+    "id": "hard_max_subarray_sum",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию max_subarray_sum в файле ev_max_subarray_sum.py. Дан список целых чисел nums; верни максимальную сумму непрерывного подмассива (алгоритм Кадане). Если массив пуст — верни 0.",
+    "file": "ev_max_subarray_sum.py",
+    "probe": "assert m.max_subarray_sum([-2, 1, -3, 4, -1, 2, 1, -5, 4]) == 6\nassert m.max_subarray_sum([1]) == 1\nassert m.max_subarray_sum([5, 4, -1, 7, 8]) == 23\nassert m.max_subarray_sum([]) == 0"
+  },
+  {
+    "id": "hard_sieve_primes",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию sieve_primes в файле ev_sieve_primes.py. Дано целое n (n >= 2); верни список всех простых чисел от 2 до n включительно, используя решето Эратосфена.",
+    "file": "ev_sieve_primes.py",
+    "probe": "assert m.sieve_primes(10) == [2, 3, 5, 7]\nassert m.sieve_primes(2) == [2]\nassert m.sieve_primes(30) == [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]\nassert m.sieve_primes(1) == []"
+  },
+  {
+    "id": "hard_search_rotated",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию search_rotated в файле ev_search_rotated.py. Дан отсортированный по возрастанию массив без дубликатов, повёрнутый в неизвестной точке, и целевое значение target; верни индекс target в массиве или -1, если его нет. Реши за O(log n) модифицированным бинарным поиском.",
+    "file": "ev_search_rotated.py",
+    "probe": "assert m.search_rotated([4, 5, 6, 7, 0, 1, 2], 0) == 4\nassert m.search_rotated([4, 5, 6, 7, 0, 1, 2], 3) == -1\nassert m.search_rotated([1], 0) == -1\nassert m.search_rotated([6, 7, 1, 2, 3, 4, 5], 6) == 0"
+  },
+  {
+    "id": "hard_kth_largest",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию kth_largest в файле ev_kth_largest.py. Дан список чисел nums и целое k; верни k-й по величине элемент массива (при k=1 — максимум). Используй min-heap размера k для решения за O(n log k).",
+    "file": "ev_kth_largest.py",
+    "probe": "assert m.kth_largest([3, 2, 1, 5, 6, 4], 2) == 5\nassert m.kth_largest([3, 2, 3, 1, 2, 4, 5, 5, 6], 4) == 4\nassert m.kth_largest([1], 1) == 1\nassert m.kth_largest([10, 20, 30, 40], 1) == 40"
+  },
+  {
+    "id": "hard_unique_paths",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию unique_paths в файле ev_unique_paths.py. Даны m и n — размеры сетки m×n; верни количество различных путей из левого верхнего угла в правый нижний, двигаясь только вправо или вниз. Реши динамикой или комбинаторно.",
+    "file": "ev_unique_paths.py",
+    "probe": "assert m.unique_paths(3, 7) == 28\nassert m.unique_paths(3, 2) == 3\nassert m.unique_paths(1, 1) == 1\nassert m.unique_paths(7, 3) == 28"
+  },
+  {
+    "id": "hard_group_anagrams",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "",
+    "file": "",
+    "probe": "assert m.group_anagrams([\"eat\", \"tea\", \"tan\", \"ate\", \"nat\", \"bat\"]) == [[\"ate\", \"eat\", \"tea\"], [\"bat\"], [\"nat\", \"tan\"]]\nassert m.group_anagrams([\"\"]) == [[\"\"]]\nassert m.group_anagrams([\"a\"]) == [[\"a\"]]\nassert m.group_anagrams([\"abc\", \"cba\", \"bcd\", \"dcb\"]) == [[\"abc\", \"cba\"], [\"bcd\", \"dcb\"]]"
+  },
+  {
+    "id": "hard_kmp_search",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию kmp_search в файле ev_kmp_search.py. Даны текст text и шаблон pattern; верни индекс первого вхождения pattern в text или -1, если вхождения нет. Реши за O(n+m) алгоритмом КМП (префикс-функция).",
+    "file": "ev_kmp_search.py",
+    "probe": "assert m.kmp_search(\"hello world\", \"world\") == 6\nassert m.kmp_search(\"aaaaa\", \"bba\") == -1\nassert m.kmp_search(\"ababcabcabababd\", \"ababd\") == 10\nassert m.kmp_search(\"abc\", \"abc\") == 0"
+  },
+  {
+    "id": "hard_is_valid_sudoku",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию is_valid_sudoku в файле ev_is_valid_sudoku.py. Дана сетка судоку 9×9 (список списков из цифр 1-9 или 0 для пустых); верни True, если в каждой строке, столбце и блоке 3×3 нет повторяющихся цифр (пустые 0 игнорируй), иначе False.",
+    "file": "ev_is_valid_sudoku.py",
+    "probe": "assert m.is_valid_sudoku([[5,3,0,0,7,0,0,0,0],[6,0,0,1,9,5,0,0,0],[0,9,8,0,0,0,0,6,0],[8,0,0,0,6,0,0,0,3],[4,0,0,8,0,3,0,0,1],[7,0,0,0,2,0,0,0,6],[0,6,0,0,0,0,2,8,0],[0,0,0,4,1,9,0,0,5],[0,0,0,0,8,0,0,7,9]]) == True\nassert m.is_valid_sudoku([[5,3,5,0,7,0,0,0,0],[6,0,0,1,9,5,0,0,0],[0,9,8,0,0,0,0,6,0],[8,0,0,0,6,0,0,0,3],[4,0,0,8,0,3,0,0,1],[7,0,0,0,2,0,0,0,6],[0,6,0,0,0,0,2,8,0],[0,0,0,4,1,9,0,0,5],[0,0,0,0,8,0,0,7,9]]) == False\nassert m.is_valid_sudoku([[0]*9 for _ in range(9)]) == True\nassert m.is_valid_sudoku([[1,2,3,4,5,6,7,8,9],[0]*9,[0]*9,[0]*9,[0]*9,[0]*9,[0]*9,[0]*9,[0]*9]) == True"
+  },
+  {
+    "id": "hard_count_bits",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию count_bits в файле ev_count_bits.py. Дано целое n >= 0; верни список длины n+1, где элемент с индексом i равен количеству единичных битов в двоичной записи числа i (0 <= i <= n). Реши за O(n) динамикой.",
+    "file": "ev_count_bits.py",
+    "probe": "assert m.count_bits(2) == [0, 1, 1]\nassert m.count_bits(5) == [0, 1, 1, 2, 1, 2]\nassert m.count_bits(0) == [0]\nassert m.count_bits(8) == [0, 1, 1, 2, 1, 2, 2, 3, 1]"
+  }
+]

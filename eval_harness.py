@@ -186,6 +186,16 @@ SUITE = [
          check=lambda a: _runs_ok("ev_calctest.py", expect="OK")),
 ]
 
+# ── Сложные задачи, сгенерированные ZCode/GLM-5.2 и проверенные запуском ──────
+# (см. eval/hard_tasks.json; конвейер: _qa/verify_zbatch.py + _qa/integrate_hard.py)
+_HARD_TASKS = ROOT / "eval" / "hard_tasks.json"
+if _HARD_TASKS.exists():
+    for _t in json.loads(_HARD_TASKS.read_text(encoding="utf-8")):
+        SUITE.append(dict(
+            id=_t["id"], split=_t["split"], type=_t["type"], prompt=_t["prompt"],
+            check=(lambda a, f=_t["file"], p=_t["probe"]: _exec_probe(f, p)),
+        ))
+
 
 def _active_version() -> str:
     try:
