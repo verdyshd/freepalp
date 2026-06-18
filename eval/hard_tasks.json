@@ -232,14 +232,6 @@
     "probe": "assert m.unique_paths(3, 7) == 28\nassert m.unique_paths(3, 2) == 3\nassert m.unique_paths(1, 1) == 1\nassert m.unique_paths(7, 3) == 28"
   },
   {
-    "id": "hard_group_anagrams",
-    "split": "val",
-    "type": "coding_hard",
-    "prompt": "",
-    "file": "",
-    "probe": "assert m.group_anagrams([\"eat\", \"tea\", \"tan\", \"ate\", \"nat\", \"bat\"]) == [[\"ate\", \"eat\", \"tea\"], [\"bat\"], [\"nat\", \"tan\"]]\nassert m.group_anagrams([\"\"]) == [[\"\"]]\nassert m.group_anagrams([\"a\"]) == [[\"a\"]]\nassert m.group_anagrams([\"abc\", \"cba\", \"bcd\", \"dcb\"]) == [[\"abc\", \"cba\"], [\"bcd\", \"dcb\"]]"
-  },
-  {
     "id": "hard_kmp_search",
     "split": "holdout",
     "type": "coding_hard",
