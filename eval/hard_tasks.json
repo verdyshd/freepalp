@@ -254,5 +254,149 @@
     "prompt": "Реализуй функцию count_bits в файле ev_count_bits.py. Дано целое n >= 0; верни список длины n+1, где элемент с индексом i равен количеству единичных битов в двоичной записи числа i (0 <= i <= n). Реши за O(n) динамикой.",
     "file": "ev_count_bits.py",
     "probe": "assert m.count_bits(2) == [0, 1, 1]\nassert m.count_bits(5) == [0, 1, 1, 2, 1, 2]\nassert m.count_bits(0) == [0]\nassert m.count_bits(8) == [0, 1, 1, 2, 1, 2, 2, 3, 1]"
+  },
+  {
+    "id": "hard_two_sum",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию two_sum(nums, target) в файле ev_two_sum.py — верни отсортированную пару индексов (i, j), i<j, таких что nums[i]+nums[j]==target. Гарантируется единственное решение.",
+    "file": "ev_two_sum.py",
+    "probe": "assert m.two_sum([2, 7, 11, 15], 9) == (0, 1)\nassert m.two_sum([3, 2, 4], 6) == (1, 2)\nassert m.two_sum([3, 3], 6) == (0, 1)"
+  },
+  {
+    "id": "hard_product_except_self",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию product_except_self(nums) в файле ev_product_except_self.py — верни список, где i-й элемент равен произведению всех чисел кроме nums[i]. Без деления.",
+    "file": "ev_product_except_self.py",
+    "probe": "assert m.product_except_self([1, 2, 3, 4]) == [24, 12, 8, 6]\nassert m.product_except_self([2, 3]) == [3, 2]\nassert m.product_except_self([0, 4, 5]) == [20, 0, 0]"
+  },
+  {
+    "id": "hard_majority_element",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию majority_element(nums) в файле ev_majority_element.py — верни элемент, встречающийся более чем в половине массива (алгоритм Бойера-Мура). Гарантируется, что он есть.",
+    "file": "ev_majority_element.py",
+    "probe": "assert m.majority_element([3, 2, 3]) == 3\nassert m.majority_element([2, 2, 1, 1, 1, 2, 2]) == 2\nassert m.majority_element([5]) == 5"
+  },
+  {
+    "id": "hard_container_water",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию max_area(heights) в файле ev_container_water.py — даны высоты вертикальных линий; верни максимальную площадь воды между двумя линиями (два указателя, O(n)).",
+    "file": "ev_container_water.py",
+    "probe": "assert m.max_area([1, 8, 6, 2, 5, 4, 8, 3, 7]) == 49\nassert m.max_area([1, 1]) == 1\nassert m.max_area([4, 3, 2, 1, 4]) == 16"
+  },
+  {
+    "id": "hard_min_coins",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию min_coins(amount, coins) в файле ev_min_coins.py — минимальное число монет, чтобы набрать ровно amount, или -1 если нельзя. Динамика.",
+    "file": "ev_min_coins.py",
+    "probe": "assert m.min_coins(11, [1, 2, 5]) == 3\nassert m.min_coins(3, [2]) == -1\nassert m.min_coins(0, [1]) == 0\nassert m.min_coins(6, [1, 3, 4]) == 2"
+  },
+  {
+    "id": "hard_word_break",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию word_break(s, words) в файле ev_word_break.py — верни True, если строку s можно разбить на последовательность слов из списка words (каждое можно использовать многократно). Динамика.",
+    "file": "ev_word_break.py",
+    "probe": "assert m.word_break(\"leetcode\", [\"leet\", \"code\"]) == True\nassert m.word_break(\"applepenapple\", [\"apple\", \"pen\"]) == True\nassert m.word_break(\"catsandog\", [\"cats\", \"dog\", \"sand\", \"and\", \"cat\"]) == False"
+  },
+  {
+    "id": "hard_subarray_sum_k",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию subarray_sum_k(nums, k) в файле ev_subarray_sum_k.py — верни количество непрерывных подмассивов с суммой ровно k (префиксные суммы + хеш-таблица).",
+    "file": "ev_subarray_sum_k.py",
+    "probe": "assert m.subarray_sum_k([1, 1, 1], 2) == 2\nassert m.subarray_sum_k([1, 2, 3], 3) == 2\nassert m.subarray_sum_k([1, -1, 0], 0) == 3"
+  },
+  {
+    "id": "hard_max_product_subarray",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию max_product(nums) в файле ev_max_product_subarray.py — максимальное произведение непрерывного подмассива (учитывай отрицательные числа).",
+    "file": "ev_max_product_subarray.py",
+    "probe": "assert m.max_product([2, 3, -2, 4]) == 6\nassert m.max_product([-2, 0, -1]) == 0\nassert m.max_product([-2, 3, -4]) == 24"
+  },
+  {
+    "id": "hard_rotate_array",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию rotate_array(nums, k) в файле ev_rotate_array.py — верни новый список, циклически сдвинутый вправо на k позиций (k может быть больше длины).",
+    "file": "ev_rotate_array.py",
+    "probe": "assert m.rotate_array([1, 2, 3, 4, 5], 2) == [4, 5, 1, 2, 3]\nassert m.rotate_array([1, 2, 3], 0) == [1, 2, 3]\nassert m.rotate_array([1, 2], 3) == [2, 1]"
+  },
+  {
+    "id": "hard_single_number",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию single_number(nums) в файле ev_single_number.py — каждый элемент встречается дважды, кроме одного; верни этот один (XOR, O(n), O(1) памяти).",
+    "file": "ev_single_number.py",
+    "probe": "assert m.single_number([2, 2, 1]) == 1\nassert m.single_number([4, 1, 2, 1, 2]) == 4\nassert m.single_number([7]) == 7"
+  },
+  {
+    "id": "hard_move_zeroes",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию move_zeroes(nums) в файле ev_move_zeroes.py — верни список, где все нули перемещены в конец, а порядок ненулевых сохранён.",
+    "file": "ev_move_zeroes.py",
+    "probe": "assert m.move_zeroes([0, 1, 0, 3, 12]) == [1, 3, 12, 0, 0]\nassert m.move_zeroes([0, 0, 1]) == [1, 0, 0]\nassert m.move_zeroes([1, 2, 3]) == [1, 2, 3]"
+  },
+  {
+    "id": "hard_generate_parens",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию generate_parens(n) в файле ev_generate_parens.py — верни ОТСОРТИРОВАННЫЙ список всех корректных комбинаций из n пар скобок.",
+    "file": "ev_generate_parens.py",
+    "probe": "assert m.generate_parens(1) == [\"()\"]\nassert m.generate_parens(2) == [\"(())\", \"()()\"]\nassert m.generate_parens(3) == [\"((()))\", \"(()())\", \"(())()\", \"()(())\", \"()()()\"]"
+  },
+  {
+    "id": "hard_roman_to_int",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию roman_to_int(s) в файле ev_roman_to_int.py — преобразуй римское число (строку) в целое.",
+    "file": "ev_roman_to_int.py",
+    "probe": "assert m.roman_to_int(\"III\") == 3\nassert m.roman_to_int(\"IV\") == 4\nassert m.roman_to_int(\"MCMXCIV\") == 1994\nassert m.roman_to_int(\"LVIII\") == 58"
+  },
+  {
+    "id": "hard_dutch_flag",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию sort_colors(nums) в файле ev_dutch_flag.py — отсортируй массив из 0/1/2 за один проход (голландский флаг) и верни его.",
+    "file": "ev_dutch_flag.py",
+    "probe": "assert m.sort_colors([2, 0, 2, 1, 1, 0]) == [0, 0, 1, 1, 2, 2]\nassert m.sort_colors([2, 0, 1]) == [0, 1, 2]\nassert m.sort_colors([0]) == [0]"
+  },
+  {
+    "id": "hard_min_path_sum",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию min_path_sum(grid) в файле ev_min_path_sum.py — минимальная сумма пути из верхнего-левого в нижний-правый угол сетки, двигаясь только вправо и вниз. Динамика.",
+    "file": "ev_min_path_sum.py",
+    "probe": "assert m.min_path_sum([[1, 3, 1], [1, 5, 1], [4, 2, 1]]) == 7\nassert m.min_path_sum([[1, 2, 3], [4, 5, 6]]) == 12\nassert m.min_path_sum([[5]]) == 5"
+  },
+  {
+    "id": "hard_three_sum",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию three_sum(nums) в файле ev_three_sum.py — верни ОТСОРТИРОВАННЫЙ список уникальных троек [a,b,c] (a<=b<=c) с суммой 0.",
+    "file": "ev_three_sum.py",
+    "probe": "assert m.three_sum([-1, 0, 1, 2, -1, -4]) == [[-1, -1, 2], [-1, 0, 1]]\nassert m.three_sum([0, 0, 0]) == [[0, 0, 0]]\nassert m.three_sum([1, 2, 3]) == []"
+  },
+  {
+    "id": "hard_longest_consecutive",
+    "split": "val",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию longest_consecutive(nums) в файле ev_longest_consecutive.py — длина самой длинной последовательности подряд идущих целых (в любом порядке во входе), за O(n) через множество.",
+    "file": "ev_longest_consecutive.py",
+    "probe": "assert m.longest_consecutive([100, 4, 200, 1, 3, 2]) == 4\nassert m.longest_consecutive([0, 3, 7, 2, 5, 8, 4, 6, 0, 1]) == 9\nassert m.longest_consecutive([]) == 0"
+  },
+  {
+    "id": "hard_valid_brackets",
+    "split": "holdout",
+    "type": "coding_hard",
+    "prompt": "Реализуй функцию valid_brackets(s) в файле ev_valid_brackets.py — верни True, если скобки трёх видов ()[]{} корректно сбалансированы и вложены.",
+    "file": "ev_valid_brackets.py",
+    "probe": "assert m.valid_brackets(\"()[]{}\") == True\nassert m.valid_brackets(\"([)]\") == False\nassert m.valid_brackets(\"{[]}\") == True\nassert m.valid_brackets(\"(\") == False"
   }
 ]
