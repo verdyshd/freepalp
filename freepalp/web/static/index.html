@@ -4106,7 +4106,9 @@ window.addEventListener('beforeunload', () => {
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   try { localStorage.setItem('freepalp-theme', t); } catch(e) {}
-  document.querySelectorAll('.theme-btn').forEach(b =>
+  // ТОЛЬКО кнопки темы ([data-t]) — у языковых тоже класс theme-btn, иначе у них
+  // слетала бы активность при смене темы.
+  document.querySelectorAll('.theme-btn[data-t]').forEach(b =>
     b.classList.toggle('active', b.dataset.t === t));
 }
 function initTheme() {
@@ -4117,6 +4119,9 @@ function initTheme() {
   setTheme(t);
 }
 initTheme();
+// Предзагрузка анимированного осьминога (APNG ~1МБ) в кэш — иначе он «долго проявляется»
+// при старте генерации (грузится только в момент вставки). Греем кэш заранее.
+(function preloadOctopus() { try { const im = new Image(); im.src = '/static/octopus-anim.png'; } catch(e) {} })();
 
 // ════════════════════════════════════════════════
 // i18n — RU / EN / ZH. Автоопределение по языку ПК при первом входе,
