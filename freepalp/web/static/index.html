@@ -78,15 +78,16 @@
     }
 
     .theme-btn {
-      flex: 1; font-size: 12px; padding: 8px 10px;
-      background: var(--bg-glass); border: 1px solid var(--border);
-      color: var(--text-2); border-radius: var(--radius-sm); cursor: pointer;
-      transition: var(--transition);
+      flex: 1; font-size: 12.5px; padding: 9px 10px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-3); border-radius: var(--radius-sm); cursor: pointer;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
     }
     .theme-btn:hover { background: var(--bg-glass-h); color: var(--text); }
     .theme-btn.active {
-      border-color: var(--accent); color: var(--accent);
-      background: var(--bg-glass-h); box-shadow: var(--glow-sm);
+      border-color: var(--accent); color: var(--accent); font-weight: 500;
+      background: color-mix(in srgb, var(--accent) 14%, transparent);
+      box-shadow: var(--glow-sm);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
