@@ -751,6 +751,19 @@
       border-radius:50%; background:var(--accent); opacity:.55; }
     .hot-kv { font-size:12px; line-height:1.5; color:var(--text-2); }
     .hot-kv b { color:var(--text); font-weight:500; }
+    /* Навыки как пазл-кусочки (переиспользуемые приёмы) */
+    .skill-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; }
+    .skill-piece { position:relative; transition:transform .16s ease, filter .16s ease; }
+    .skill-piece:hover { transform:translateY(-3px) scale(1.02);
+      filter:drop-shadow(0 6px 14px rgba(0,0,0,.35)); z-index:2; }
+    .skill-piece svg { width:100%; height:auto; display:block; }
+    .skill-pc { position:absolute; left:14px; right:28px; top:22px; bottom:26px;
+      display:flex; flex-direction:column; gap:5px; overflow:hidden; }
+    .skill-pc .nm { font-size:12px; color:var(--text); font-weight:600; line-height:1.25;
+      word-break:break-word; }
+    .skill-pc .meta { font-size:9.5px; color:var(--text-3); margin-top:auto; line-height:1.4; }
+    .skill-pc .uses { position:absolute; top:0; right:0; font-size:9px; color:var(--accent-3);
+      background:rgba(72,187,120,.16); border-radius:8px; padding:1px 6px; }
 
     .memory-stats-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
@@ -2683,20 +2696,27 @@ async function loadSkills() {
         попытки — рабочая процедура сохранится автоматически.</div>`;
       return;
     }
-    el.innerHTML = d.skills.map(s => `
-      <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <span style="font-size:13px;color:var(--text);font-weight:600">🧩 ${escHtml(s.name)}</span>
-          <span style="font-size:10px;color:var(--accent-3);background:rgba(72,187,120,.12);padding:2px 7px;border-radius:10px" title="сколько раз приём подходил под задачу">×${s.uses}</span>
+    const skillColor = t => ({
+      general:'#9f7aea', coding_small:'#63b3ed', coding_large:'#4299e1', coding_hard:'#3182ce',
+      coding:'#63b3ed', shell:'#48bb78', research:'#ed8936', architecture:'#ecc94b', web:'#38b2ac'
+    }[t] || '#9f7aea');
+    // SVG-кусочек пазла: выемка сверху+слева, таб справа+снизу → кусочки «стыкуются»
+    const piece = (fill, stroke) =>
+      `<svg viewBox="0 0 174 132" preserveAspectRatio="none"><path d="M1,1 H72 A15 15 0 0 1 102 1 H173 V51 A15 15 0 0 0 173 81 V131 H102 A15 15 0 0 0 72 131 H1 V81 A15 15 0 0 1 1 51 Z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
+    el.style.cssText = '';
+    el.className = 'skill-grid';
+    el.innerHTML = d.skills.map(s => {
+      const c = skillColor(s.task_type);
+      const tip = `${s.name}\n${s.description}\n\nИнструменты: ${s.tools || '—'} · Модель: ${s.source_model} · ${s.created}`;
+      return `<div class="skill-piece" title="${escHtml(tip)}">
+        ${piece(c + '22', c + '99')}
+        <div class="skill-pc">
+          <span class="uses" title="сколько раз приём подходил под задачу">×${s.uses}</span>
+          <span class="nm">🧩 ${escHtml(s.name)}</span>
+          <span class="meta">🏷 ${escHtml(s.task_type)}<br>🔧 ${escHtml(s.tools || '—')}</span>
         </div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:5px">${escHtml(s.description)}</div>
-        <div style="font-size:10px;color:var(--text-3);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
-          <span>🏷 ${escHtml(s.task_type)}</span>
-          <span>🔧 ${escHtml(s.tools || '—')}</span>
-          <span>🎓 ${escHtml(s.source_model)}</span>
-          <span>📅 ${escHtml(s.created)}</span>
-        </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) { el.innerHTML = `<div style="color:var(--accent-err)">${e.message}</div>`; }
 }
 
