@@ -808,6 +808,39 @@
     .set-row input[type=number] { width:62px; background:rgba(255,255,255,0.06);
       border:1px solid var(--border); border-radius:6px; color:var(--text); padding:3px 7px; font-size:12px; }
     .set-row input[type=checkbox] { margin-left:auto; width:16px; height:16px; cursor:pointer; flex-shrink:0; }
+    /* Выпадающее меню шестерёнки */
+    .gear-menu { position:fixed; left:54px; bottom:14px; z-index:300; min-width:228px;
+      background:var(--bg-2); border:1px solid var(--border); border-radius:12px;
+      box-shadow:0 12px 40px rgba(0,0,0,.42); padding:6px; display:none;
+      animation:gmIn .14s ease; }
+    .gear-menu.open { display:block; }
+    @keyframes gmIn { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+    .gm-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px;
+      font-size:13px; color:var(--text-2); cursor:pointer; user-select:none; }
+    .gm-item:hover { background:var(--bg-glass-h); color:var(--text); }
+    .gm-item .ic { width:18px; text-align:center; flex-shrink:0; }
+    .gm-sep { height:1px; background:var(--border); margin:5px 8px; }
+    .gm-cap { font-size:10px; color:var(--text-3); text-transform:uppercase;
+      letter-spacing:.04em; padding:6px 10px 3px; }
+    .gm-lang { display:flex; gap:5px; padding:2px 10px 8px; }
+    .gm-lang button { flex:1; font-size:11px; padding:5px 0; background:transparent;
+      border:1px solid var(--border); border-radius:7px; color:var(--text-3); cursor:pointer; }
+    .gm-lang button.active { border-color:var(--accent); color:var(--accent);
+      background:color-mix(in srgb, var(--accent) 14%, transparent); }
+    /* Универсальная модалка */
+    .modal-back { position:fixed; inset:0; z-index:400; background:rgba(0,0,0,.5);
+      display:none; align-items:center; justify-content:center; padding:24px; }
+    .modal-back.open { display:flex; animation:gmIn .15s ease; }
+    .modal-box { background:var(--bg-2); border:1px solid var(--border); border-radius:14px;
+      max-width:560px; width:100%; max-height:80vh; overflow-y:auto; padding:22px 24px; }
+    .modal-box h3 { font-size:17px; color:var(--text); margin-bottom:12px;
+      display:flex; align-items:center; gap:8px; }
+    .modal-box .mb-body { font-size:13px; color:var(--text-2); line-height:1.6; }
+    .modal-box .mb-body a { color:var(--accent); }
+    .modal-box .mb-close { float:right; cursor:pointer; color:var(--text-3); font-size:18px;
+      line-height:1; background:none; border:none; }
+    .kbd { display:inline-block; background:var(--bg-3); border:1px solid var(--border);
+      border-radius:5px; padding:1px 7px; font-family:var(--font-mono); font-size:11px; color:var(--text); }
 
     .memory-stats-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
@@ -1134,12 +1167,41 @@
   </button>
 
   <div class="sidebar-bottom">
-    <button class="nav-btn" onclick="switchPanel('settings')" id="nav-settings">
+    <button class="nav-btn" onclick="toggleGearMenu(event)" id="nav-settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       <span class="tooltip" data-i18n="nav.settings">Настройки</span>
     </button>
   </div>
 </nav>
+
+<!-- Выпадающее меню шестерёнки -->
+<div class="gear-menu" id="gear-menu">
+  <div class="gm-item" onclick="gearGo('settings')"><span class="ic">⚙️</span><span data-i18n="gm.settings">Настройки</span></div>
+  <div class="gm-cap" data-i18n="gm.lang">Язык</div>
+  <div class="gm-lang">
+    <button data-l="en" onclick="setLang('en');markGearLang()">EN</button>
+    <button data-l="ru" onclick="setLang('ru');markGearLang()">RU</button>
+    <button data-l="zh" onclick="setLang('zh');markGearLang()">中文</button>
+  </div>
+  <div class="gm-sep"></div>
+  <div class="gm-item" onclick="gearGo('help')"><span class="ic">❓</span><span data-i18n="gm.help">Помощь</span></div>
+  <div class="gm-item" onclick="gearGo('changelog')"><span class="ic">📋</span><span data-i18n="gm.changelog">История изменений</span></div>
+  <div class="gm-item" onclick="gearGo('shortcuts')"><span class="ic">⌨️</span><span data-i18n="gm.shortcuts">Горячие клавиши</span></div>
+  <div class="gm-sep"></div>
+  <div class="gm-cap" data-i18n="gm.more">Подробнее</div>
+  <div class="gm-item" onclick="gearGo('about')"><span class="ic">🐙</span><span data-i18n="gm.about">О создателе</span></div>
+  <div class="gm-item" onclick="gearGo('terms')"><span class="ic">📜</span><span data-i18n="gm.terms">Условия использования</span></div>
+  <div class="gm-item" onclick="gearGo('privacy')"><span class="ic">🔒</span><span data-i18n="gm.privacy">Конфиденциальность</span></div>
+</div>
+
+<!-- Универсальная модалка -->
+<div class="modal-back" id="modal-back" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <button class="mb-close" onclick="closeModal()" aria-label="Закрыть">✕</button>
+    <h3 id="modal-title"></h3>
+    <div class="mb-body" id="modal-body"></div>
+  </div>
+</div>
 
 <!-- ═══════════ MAIN ═══════════ -->
 <main class="main">
@@ -4123,6 +4185,75 @@ initTheme();
 // при старте генерации (грузится только в момент вставки). Греем кэш заранее.
 (function preloadOctopus() { try { const im = new Image(); im.src = '/static/octopus-anim.png'; } catch(e) {} })();
 
+// ── Выпадающее меню шестерёнки + универсальная модалка ──────────────────────
+function toggleGearMenu(ev) { ev.stopPropagation(); document.getElementById('gear-menu').classList.toggle('open'); markGearLang(); }
+function closeGearMenu() { document.getElementById('gear-menu').classList.remove('open'); }
+function markGearLang() {
+  document.querySelectorAll('#gear-menu .gm-lang button').forEach(b => b.classList.toggle('active', b.dataset.l === window._lang));
+}
+document.addEventListener('click', e => {
+  const m = document.getElementById('gear-menu');
+  if (m && m.classList.contains('open') && !m.contains(e.target) && !e.target.closest('#nav-settings')) closeGearMenu();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeGearMenu(); } });
+function openModal(title, html) {
+  document.getElementById('modal-title').innerHTML = title;
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-back').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-back').classList.remove('open'); }
+
+async function gearGo(what) {
+  closeGearMenu();
+  if (what === 'settings') { switchPanel('settings'); return; }
+  if (what === 'changelog') {
+    openModal('📋 ' + t('gm.changelog'), '<div style="color:var(--text-3)">Загрузка…</div>');
+    try {
+      const d = await (await fetch('/api/system/versions')).json();
+      const rows = (d.history || []).map(h =>
+        `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
+           <code style="color:var(--accent);flex-shrink:0">${escHtml(h.label || '')}</code>
+           <span>${escHtml(h.text || '')}</span>
+           <span style="margin-left:auto;color:var(--text-3);font-size:11px;flex-shrink:0;white-space:nowrap">${escHtml((h.date || '').slice(0,10))}</span>
+         </div>`).join('');
+      openModal('📋 ' + t('gm.changelog') + ' · v' + (d.version || '') + (d.commit ? ' · ' + d.commit : ''), rows || 'нет истории');
+    } catch (e) { openModal('📋 ' + t('gm.changelog'), 'Ошибка: ' + escHtml(e.message)); }
+    return;
+  }
+  const repo = 'https://github.com/verdyshd/freepalp';
+  const CONTENT = {
+    help: ['❓ ' + t('gm.help'),
+      `<p><b>FreePalp</b> — мульти-агентный AI-оркестратор на <b>бесплатных и локальных</b> LLM.</p>
+       <p style="margin-top:10px">• Слева — <b>чат</b>: задай вопрос или задачу.<br>
+       • Навигация слева: Чат · Провайдеры (ключи) · Память (HOT / граф / навыки / поиск) · Инструменты · Метрики.<br>
+       • Эта шестерёнка — настройки, язык, справка.</p>
+       <p style="margin-top:10px">Без единого ключа работает на локальном Ollama. Добавь бесплатные ключи провайдеров в разделе «Провайдеры».</p>
+       <p style="margin-top:10px">Исходники и документация: <a href="${repo}" target="_blank">${repo}</a></p>`],
+    shortcuts: ['⌨️ ' + t('gm.shortcuts'),
+      `<div style="display:flex;flex-direction:column;gap:8px">
+         <div><span class="kbd">Enter</span> — отправить сообщение</div>
+         <div><span class="kbd">Shift</span> + <span class="kbd">Enter</span> — новая строка</div>
+         <div><span class="kbd">Esc</span> — закрыть это окно / меню</div>
+       </div>
+       <p style="margin-top:12px;color:var(--text-3);font-size:12px">Список будет пополняться.</p>`],
+    about: ['🐙 ' + t('gm.about'),
+      `<p>FreePalp создан <b>Дмитрием</b> (<a href="https://github.com/verdyshd" target="_blank">verdyshd</a>), Молдова.</p>
+       <p style="margin-top:10px">Открытый код под лицензией <b>MIT</b>. Цель — показать, что мульти-агентная система может делать реальную работу на бесплатных моделях, прозрачно улучшая себя.</p>
+       <p style="margin-top:10px">Репозиторий: <a href="${repo}" target="_blank">${repo}</a><br>
+       Поддержать: GitHub Sponsors / USDT (ссылки в репозитории).</p>`],
+    terms: ['📜 ' + t('gm.terms'),
+      `<p>FreePalp распространяется по лицензии <b>MIT</b>, «как есть» (as is), без каких-либо гарантий. Вы используете его на свой риск.</p>
+       <p style="margin-top:10px">Вы сами отвечаете за ключи сторонних LLM-провайдеров и за соблюдение <b>их</b> условий использования и лимитов.</p>
+       <p style="margin-top:10px">Не используйте инструмент для незаконных действий. Полный текст лицензии — в файле LICENSE репозитория.</p>`],
+    privacy: ['🔒 ' + t('gm.privacy'),
+      `<p>FreePalp работает <b>локально</b> на вашем компьютере.</p>
+       <p style="margin-top:10px">Память, история диалогов и настройки хранятся <b>только у вас на диске</b> и не отправляются проекту — мы их не видим и не собираем.</p>
+       <p style="margin-top:10px">Ваши запросы уходят <b>лишь тем</b> LLM-провайдерам, чьи API-ключи вы сами добавили, и обрабатываются согласно <b>их</b> политикам конфиденциальности.</p>`],
+  };
+  const c = CONTENT[what];
+  if (c) openModal(c[0], c[1]);
+}
+
 // ════════════════════════════════════════════════
 // i18n — RU / EN / ZH. Автоопределение по языку ПК при первом входе,
 // переключатель в Настройках, выбор сохраняется в localStorage.
@@ -4134,6 +4265,15 @@ const I18N = {
   'nav.tools':      {ru:'Инструменты', en:'Tools', zh:'工具'},
   'nav.metrics':    {ru:'Метрики', en:'Metrics', zh:'指标'},
   'nav.settings':   {ru:'Настройки', en:'Settings', zh:'设置'},
+  'gm.settings':    {ru:'Настройки', en:'Settings', zh:'设置'},
+  'gm.lang':        {ru:'Язык', en:'Language', zh:'语言'},
+  'gm.help':        {ru:'Помощь', en:'Help', zh:'帮助'},
+  'gm.changelog':   {ru:'История изменений', en:'Changelog', zh:'更新日志'},
+  'gm.shortcuts':   {ru:'Горячие клавиши', en:'Keyboard shortcuts', zh:'快捷键'},
+  'gm.more':        {ru:'Подробнее', en:'Learn more', zh:'了解更多'},
+  'gm.about':       {ru:'О создателе', en:'About', zh:'关于'},
+  'gm.terms':       {ru:'Условия использования', en:'Terms of use', zh:'使用条款'},
+  'gm.privacy':     {ru:'Конфиденциальность', en:'Privacy', zh:'隐私政策'},
   'chat.sub':       {ru:'AI Orchestrator · ReAct Loop · Self-Correction', en:'AI Orchestrator · ReAct Loop · Self-Correction', zh:'AI 编排器 · ReAct 循环 · 自我纠正'},
   'chat.welcome':   {ru:'Привет! Я <strong>FreePalp</strong> — мультиагентный AI оркестратор.<br><br>Я могу самостоятельно использовать <strong>47 инструментов</strong>: браузер, GitHub, Slack, Notion, email, память и многое другое.<br><br>Задай любой вопрос или задачу.',
                      en:'Hi! I\'m <strong>FreePalp</strong> — a multi-agent AI orchestrator.<br><br>I can autonomously use <strong>47 tools</strong>: browser, GitHub, Slack, Notion, email, memory and more.<br><br>Ask any question or give me a task.',
