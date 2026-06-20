@@ -787,6 +787,14 @@
     .sr-bar > i { display:block; height:100%; border-radius:2px; }
     .sr-score { font-size:10px; color:var(--text-3); min-width:36px; text-align:right; }
     .sr-snip { font-size:12px; color:var(--text-2); line-height:1.5; }
+    /* Настройки: системная инфа компактными чипами */
+    .sys-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; }
+    .sys-chip { background:var(--bg-glass); border:1px solid var(--border); border-radius:var(--radius);
+      padding:11px 13px; display:flex; flex-direction:column; gap:3px; transition:border-color .15s ease; }
+    .sys-chip:hover { border-color:var(--border-glow, var(--border)); }
+    .sys-chip .v { font-size:18px; font-weight:700; color:var(--text); line-height:1.15; word-break:break-word; }
+    .sys-chip .v.accent { color:var(--accent); }
+    .sys-chip .k { font-size:10.5px; color:var(--text-3); }
 
     .memory-stats-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
@@ -3655,13 +3663,16 @@ async function loadSettings() {
       const sv = await (await fetch('/api/system/versions')).json();
       if (sv.ok) fpVer = 'v' + sv.version;
     } catch(e) {}
-    document.getElementById('settings-info').innerHTML = `
-      <b>${t('sys.version')}</b> ${fpVer}<br>
-      <b>${t('sys.model')}</b> ${d.current_model || '—'}<br>
-      <b>${t('sys.provActive')}</b> ${d.active_providers || 0}<br>
-      <b>${t('sys.toolsCount')}</b> ${d.total_tools || 0}<br>
-      <b>${t('sys.tasksSession')}</b> ${state.tasks}
-    `;
+    const _k = key => t(key).replace(/:\s*$/, '');
+    const chip = (icon, val, key, accent = '') =>
+      `<div class="sys-chip"><div class="v ${accent}">${icon} ${val}</div><div class="k">${_k(key)}</div></div>`;
+    document.getElementById('settings-info').innerHTML = `<div class="sys-grid">`
+      + chip('🐙', fpVer, 'sys.version', 'accent')
+      + chip('🧠', d.current_model || '—', 'sys.model')
+      + chip('🔌', d.active_providers || 0, 'sys.provActive')
+      + chip('🔧', d.total_tools || 0, 'sys.toolsCount')
+      + chip('📋', state.tasks, 'sys.tasksSession')
+      + `</div>`;
   } catch(e) {}
   loadUnifiedVersions();
   loadBehaviorSettings();
