@@ -796,6 +796,18 @@
     .sys-chip .v { font-size:18px; font-weight:700; color:var(--text); line-height:1.15; word-break:break-word; }
     .sys-chip .v.accent { color:var(--accent); }
     .sys-chip .k { font-size:10.5px; color:var(--text-3); }
+    /* Настройки → Поведение: аккуратные строки (label+подсказка слева, контрол справа) */
+    .set-row { display:flex; align-items:center; gap:12px; padding:9px 0;
+      border-bottom:1px solid var(--border); }
+    .set-row:last-child { border-bottom:none; }
+    .set-row.toggle { cursor:pointer; }
+    .set-row .label { font-size:12.5px; color:var(--text-2); line-height:1.35; }
+    .set-row .label .hint { display:block; font-size:10.5px; color:var(--text-3); margin-top:1px; }
+    .set-row .control { margin-left:auto; display:flex; align-items:center; gap:6px;
+      flex-shrink:0; font-size:11px; color:var(--text-3); }
+    .set-row input[type=number] { width:62px; background:rgba(255,255,255,0.06);
+      border:1px solid var(--border); border-radius:6px; color:var(--text); padding:3px 7px; font-size:12px; }
+    .set-row input[type=checkbox] { margin-left:auto; width:16px; height:16px; cursor:pointer; flex-shrink:0; }
 
     .memory-stats-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
@@ -1506,27 +1518,28 @@
       <!-- Поведение системы (настоящие настройки) -->
       <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
         <div class="rp-title" data-i18n="set.behavior">⚙️ Поведение</div>
-        <div style="font-size:12px;color:var(--text-2);display:flex;flex-direction:column;gap:10px;margin-top:8px">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <div style="margin-top:6px">
+          <label class="set-row toggle">
+            <span class="label"><span data-i18n="set.sound">🔔 Звук при завершении ответа</span><span class="hint" data-i18n="set.soundHint">по умолчанию выкл</span></span>
             <input type="checkbox" id="set-sound" onchange="setSound(this.checked)">
-            <span data-i18n="set.sound">🔔 Звук при завершении ответа</span> <span style="color:var(--text-3)" data-i18n="set.soundHint">(по умолчанию выкл)</span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <label class="set-row toggle">
+            <span class="label"><span data-i18n="set.siStartup">Самоулучшение при старте сервера</span><span class="hint" data-i18n="set.siStartupHint">жжёт квоту провайдеров</span></span>
             <input type="checkbox" id="set-si-startup" onchange="saveSetting('si_on_startup', this.checked)">
-            <span data-i18n="set.siStartup">Самоулучшение при старте сервера</span> <span style="color:var(--text-3)" data-i18n="set.siStartupHint">(жжёт квоту провайдеров)</span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px">
-            <span data-i18n="set.idleBefore">Авто-выключение через</span>
-            <input type="number" id="set-idle" min="0" max="1440" style="width:60px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--text-1);padding:2px 6px"
-                   onchange="saveSetting('idle_shutdown_minutes', parseInt(this.value)||0)">
-            <span data-i18n="set.idleMin">мин</span> <span style="color:var(--text-3)" data-i18n="set.idleHint">(0 = никогда; нужен перезапуск)</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:8px">
-            <span data-i18n="set.retryLabel">Порог критика для ретрая</span>
-            <input type="number" id="set-retry" min="0" max="1" step="0.05" style="width:60px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--text-1);padding:2px 6px"
-                   onchange="saveSetting('retry_threshold', parseFloat(this.value)||0.7)">
-            <span style="color:var(--text-3)" data-i18n="set.retryHint">(score ниже — повтор; 0.7 по умолчанию)</span>
-          </label>
+          <div class="set-row">
+            <span class="label"><span data-i18n="set.idleBefore">Авто-выключение через</span><span class="hint" data-i18n="set.idleHint">0 = никогда; нужен перезапуск</span></span>
+            <span class="control">
+              <input type="number" id="set-idle" min="0" max="1440" onchange="saveSetting('idle_shutdown_minutes', parseInt(this.value)||0)">
+              <span data-i18n="set.idleMin">мин</span>
+            </span>
+          </div>
+          <div class="set-row">
+            <span class="label"><span data-i18n="set.retryLabel">Порог критика для ретрая</span><span class="hint" data-i18n="set.retryHint">score ниже — повтор; 0.7 по умолчанию</span></span>
+            <span class="control">
+              <input type="number" id="set-retry" min="0" max="1" step="0.05" onchange="saveSetting('retry_threshold', parseFloat(this.value)||0.7)">
+            </span>
+          </div>
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
