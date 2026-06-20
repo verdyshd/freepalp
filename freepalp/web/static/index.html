@@ -765,6 +765,16 @@
     .skill-pc .meta { font-size:9.5px; color:var(--text-3); margin-top:auto; line-height:1.4; }
     .skill-pc .uses { position:absolute; top:0; right:0; font-size:9px; color:var(--accent-3);
       background:rgba(72,187,120,.16); border-radius:8px; padding:1px 6px; }
+    /* Навыки-пазлы на мозге: кусочки раскладываются по отделам (по task_type) */
+    .skill-brain { position:relative; width:100%; max-width:560px; margin:6px auto; aspect-ratio:286/244; }
+    .skill-brain .sb-bg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+    .skill-piece.placed { position:absolute; width:98px; z-index:1;
+      transition:transform .15s ease, filter .15s ease; }
+    .skill-piece.placed:hover { z-index:6; transform:scale(1.09);
+      filter:drop-shadow(0 6px 16px rgba(0,0,0,.42)); }
+    .skill-piece.placed .skill-pc { left:11px; right:19px; top:14px; bottom:17px; gap:3px; }
+    .skill-piece.placed .nm { font-size:10px; }
+    .skill-piece.placed .uses { font-size:8.5px; padding:0 5px; }
     /* Поиск: «раскопки» в памяти + результаты с барами схожести */
     .dig-strata { position:relative; height:58px; border-radius:8px; overflow:hidden;
       border:1px solid var(--border); background:linear-gradient(180deg,
@@ -2824,20 +2834,51 @@ async function loadSkills() {
     // SVG-кусочек пазла: выемка сверху+слева, таб справа+снизу → кусочки «стыкуются»
     const piece = (fill, stroke) =>
       `<svg viewBox="0 0 174 132" preserveAspectRatio="none"><path d="M1,1 H72 A15 15 0 0 1 102 1 H173 V51 A15 15 0 0 0 173 81 V131 H102 A15 15 0 0 0 72 131 H1 V81 A15 15 0 0 1 1 51 Z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
-    el.style.cssText = '';
-    el.className = 'skill-grid';
-    el.innerHTML = d.skills.map(s => {
+    // Каждый task_type → отдел мозга (позиция в % контейнера-мозга)
+    const REGION = {
+      architecture: {x:50, y:15, zone:'префронтальная'},
+      general:      {x:50, y:31, zone:'лобная доля'},
+      research:     {x:70, y:27, zone:'затылочная'},
+      coding_small: {x:32, y:42, zone:'теменная (код)'},
+      coding:       {x:32, y:42, zone:'теменная (код)'},
+      coding_large: {x:32, y:42, zone:'теменная (код)'},
+      coding_hard:  {x:32, y:42, zone:'теменная (код)'},
+      search:       {x:67, y:47, zone:'височная'},
+      web:          {x:30, y:60, zone:'затылочная (web)'},
+      shell:        {x:50, y:62, zone:'мозжечок'},
+    };
+    const DEF = {x:50, y:45, zone:'кора'};
+    const short = s => (s || '').length > 15 ? s.slice(0, 14) + '…' : s;
+    const used = {};
+    const brainBg = `<svg class="sb-bg" viewBox="78 46 286 244" preserveAspectRatio="xMidYMid meet">
+        <path d="M 96,162 C 88,108 142,62 212,58 C 286,53 350,92 354,150 C 357,188 336,220 298,231 C 293,253 266,269 239,261 C 228,279 196,281 183,266 C 152,274 124,257 121,235 C 96,224 80,193 96,162 Z"
+              fill="rgba(255,255,255,0.02)" stroke="rgba(160,174,192,0.30)" stroke-width="1.5"/>
+        <path d="M 296,233 C 322,230 344,242 342,258 C 340,274 316,283 296,277 C 280,272 276,254 282,244 Z"
+              fill="rgba(255,255,255,0.02)" stroke="rgba(160,174,192,0.28)" stroke-width="1.4"/>
+        <g fill="none" stroke="rgba(160,174,192,0.13)" stroke-width="1.2">
+          <path d="M 130,120 C 160,100 180,130 210,108 C 235,92 260,115 285,100"/>
+          <path d="M 115,180 C 150,165 165,195 200,178 C 235,162 255,190 295,172"/>
+          <path d="M 140,230 C 170,212 195,238 225,222 C 250,209 270,228 300,212"/>
+        </g></svg>`;
+    const pieces = d.skills.map(s => {
       const c = skillColor(s.task_type);
-      const tip = `${s.name}\n${s.description}\n\nИнструменты: ${s.tools || '—'} · Модель: ${s.source_model} · ${s.created}`;
-      return `<div class="skill-piece" title="${escHtml(tip)}">
-        ${piece(c + '22', c + '99')}
+      const reg = REGION[s.task_type] || DEF;
+      const i = (used[reg.zone] = (used[reg.zone] || 0) + 1) - 1;
+      const dx = (i % 2 ? 1 : -1) * Math.min((i + 1) >> 1, 2) * 36;
+      const dy = (i >> 1) * 30 - (i ? 8 : 0);
+      const tip = `${s.name}\n${s.description}\n\n🏷 ${s.task_type} → отдел: ${reg.zone}\n🔧 ${s.tools || '—'} · ${s.source_model} · ${s.created}`;
+      return `<div class="skill-piece placed" title="${escHtml(tip)}" style="left:calc(${reg.x}% - 49px + ${dx}px);top:calc(${reg.y}% - 37px + ${dy}px)">
+        ${piece(c + '33', c + 'aa')}
         <div class="skill-pc">
-          <span class="uses" title="сколько раз приём подходил под задачу">×${s.uses}</span>
-          <span class="nm">🧩 ${escHtml(s.name)}</span>
-          <span class="meta">🏷 ${escHtml(s.task_type)}<br>🔧 ${escHtml(s.tools || '—')}</span>
+          <span class="uses" title="раз подошёл">×${s.uses}</span>
+          <span class="nm">🧩 ${escHtml(short(s.name))}</span>
         </div>
       </div>`;
     }).join('');
+    el.style.cssText = '';
+    el.className = '';
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-2);margin-bottom:2px">🧩 Навыки складываются в отделы мозга по типу задачи — переиспользуемые приёмы, собранные в один пазл</div>
+      <div class="skill-brain">${brainBg}${pieces}</div>`;
   } catch(e) { el.innerHTML = `<div style="color:var(--accent-err)">${e.message}</div>`; }
 }
 
