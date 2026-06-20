@@ -1310,7 +1310,8 @@
         </div>
         <div style="display:flex;gap:14px;font-size:11px;color:var(--text-3);margin-bottom:8px" id="mem-graph-legend"></div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:11px;color:var(--text-3);white-space:nowrap">⏮ развитие памяти</span>
+          <button class="btn" id="graph-play-btn" onclick="playGraph(this)" title="Проиграть развитие памяти" style="min-width:34px;white-space:nowrap">▶</button>
+          <span style="font-size:11px;color:var(--text-3);white-space:nowrap">развитие памяти</span>
           <input type="range" id="mem-graph-time" min="5" max="100" value="100" style="flex:1"
                  oninput="onGraphTimeScrub(this.value)">
           <span style="font-size:11px;color:var(--text-2);min-width:90px;text-align:right" id="mem-graph-time-label">сейчас</span>
@@ -2717,6 +2718,23 @@ function onGraphTimeScrub(val) {
   _graphScrubTimer = setTimeout(() => loadMemGraph(val >= 100 ? 0 : upto), 250);
 }
 
+// Проигрывание «развития памяти»: плавно гонит слайдер 5→100, узлы появляются по мере роста
+let _graphPlaying = false;
+function playGraph(btn) {
+  const slider = document.getElementById('mem-graph-time');
+  if (_graphPlaying) { _graphPlaying = false; if (btn) btn.textContent = '▶'; return; }
+  _graphPlaying = true; if (btn) btn.textContent = '⏸';
+  let v = 5;
+  const step = () => {
+    if (!_graphPlaying) return;
+    slider.value = v; onGraphTimeScrub(v);
+    if (v >= 100) { _graphPlaying = false; if (btn) btn.textContent = '▶'; return; }
+    v = Math.min(100, v + 9);
+    setTimeout(step, 700);
+  };
+  step();
+}
+
 async function loadMemGraph(upto = 0) {
   const canvas = document.getElementById('mem-graph-canvas');
   const ctx = canvas.getContext('2d');
@@ -2759,8 +2777,8 @@ async function loadMemGraph(upto = 0) {
       const a = nodes[i], b = nodes[j];
       let dx = a.x-b.x, dy = a.y-b.y;
       let dist2 = dx*dx + dy*dy + 0.01;
-      if (dist2 > 8000) continue;            // отталкиваются только соседи
-      const rep = 220 / dist2 * k;
+      if (dist2 > 30000) continue;           // больший радиус отталкивания → шире разлёт
+      const rep = 420 / dist2 * k;
       a.vx += dx*rep; a.vy += dy*rep; b.vx -= dx*rep; b.vy -= dy*rep;
     }
     for (const e of d.edges) {
@@ -2770,16 +2788,21 @@ async function loadMemGraph(upto = 0) {
       a.vx += dx*att; a.vy += dy*att; b.vx -= dx*att; b.vy -= dy*att;
     }
     for (const n of nodes) {
-      n.vx += (W/2 - n.x) * 0.006 * k;       // гравитация к центру
-      n.vy += (H/2 - n.y) * 0.006 * k;
-      n.x = Math.max(14, Math.min(W-14, n.x + n.vx));
-      n.y = Math.max(14, Math.min(H-14, n.y + n.vy));
+      n.vx += (W/2 - n.x) * 0.0035 * k;      // слабее гравитация → не липнут к центру
+      n.vy += (H/2 - n.y) * 0.0035 * k;
+      n.x += n.vx; n.y += n.vy;              // без жёсткого клампа — auto-fit впишет
       n.vx *= 0.5; n.vy *= 0.5;
     }
   }
 
-  // Вид: зум колесом (к курсору) + панорамирование перетаскиванием
-  const view = { scale: 1, ox: 0, oy: 0 };
+  // Auto-fit: вписываем bbox узлов в canvas (иначе граф жмётся в малую область,
+  // хотя поле в разы больше). Дальше — зум колесом + панорамирование.
+  let minX=1e9, minY=1e9, maxX=-1e9, maxY=-1e9;
+  for (const n of nodes) { if(n.x<minX)minX=n.x; if(n.x>maxX)maxX=n.x; if(n.y<minY)minY=n.y; if(n.y>maxY)maxY=n.y; }
+  const bw = Math.max(1, maxX-minX), bh = Math.max(1, maxY-minY);
+  const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+  const fit = Math.min((W-56)/bw, (H-56)/bh, 2.6);
+  const view = { scale: fit, ox: W/2 - cx*fit, oy: H/2 - cy*fit };
 
   function draw(highlight) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
