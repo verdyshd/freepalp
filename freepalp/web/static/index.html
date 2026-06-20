@@ -197,10 +197,17 @@
 
     /* ═══════════════════ CHAT PANEL ═══════════════════ */
     .chat-layout {
-      display: flex; flex: 1; overflow: hidden; gap: 0;
+      display: flex; flex: 1; overflow: hidden; gap: 0; position: relative;
     }
-    /* Сворачивание боковых панелей (Chats / Current session) + закрепление состояния */
-    .chat-list-col.collapsed, .right-panel.collapsed { display: none; }
+    /* Боковые панели: плавный слайд-оверлей при сворачивании + hover-peek + закрепление */
+    .chat-list-col, .right-panel { transition: transform .26s cubic-bezier(.4, 0, .2, 1); }
+    .chat-list-col.collapsed, .right-panel.collapsed {
+      position: absolute; top: 0; bottom: 0; z-index: 40;
+    }
+    .chat-list-col.collapsed { left: 0;  transform: translateX(-101%); }
+    .right-panel.collapsed   { right: 0; transform: translateX(101%); }
+    .chat-list-col.collapsed.peek { transform: translateX(0); box-shadow: 6px 0 28px rgba(0,0,0,.30); }
+    .right-panel.collapsed.peek   { transform: translateX(0); box-shadow: -6px 0 28px rgba(0,0,0,.30); }
     .panel-collapse-btn {
       background: none; border: none; cursor: pointer; color: var(--text-3);
       font-size: 14px; line-height: 1; padding: 2px 6px; border-radius: 4px;
@@ -4115,10 +4122,28 @@ function _panelEl(which) {
 function setPanel(which, collapsed) {
   const el = _panelEl(which);
   const reopen = document.getElementById(which === 'chats' ? 'reopen-chats' : 'reopen-session');
-  if (el) el.classList.toggle('collapsed', collapsed);
+  if (el) {
+    el.classList.toggle('collapsed', collapsed);
+    if (!collapsed) el.classList.remove('peek');   // закрепили → снять hover-peek
+  }
   if (reopen) reopen.style.display = collapsed ? 'flex' : 'none';
   try { localStorage.setItem('fp-panel-' + which, collapsed ? '1' : '0'); } catch (e) {}
 }
+// Hover-peek: наведение на язычок свёрнутой панели → выезжает оверлеем; увёл мышь → уехала.
+// Клик «/» в шапке (togglePanel) = закрепить открытой.
+function initPanelHover() {
+  for (const [tabId, sel] of [['reopen-chats', '.chat-list-col'], ['reopen-session', '.right-panel']]) {
+    const tab = document.getElementById(tabId);
+    const panel = document.querySelector(sel);
+    if (!tab || !panel) continue;
+    const peekOn  = () => { if (panel.classList.contains('collapsed')) panel.classList.add('peek'); };
+    const peekOff = () => panel.classList.remove('peek');
+    tab.addEventListener('mouseenter', peekOn);
+    panel.addEventListener('mouseenter', peekOn);
+    panel.addEventListener('mouseleave', peekOff);
+  }
+}
+initPanelHover();
 function togglePanel(which) {
   const el = _panelEl(which);
   setPanel(which, !(el && el.classList.contains('collapsed')));
