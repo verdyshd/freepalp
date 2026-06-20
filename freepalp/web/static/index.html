@@ -855,6 +855,25 @@
       line-height:1; background:none; border:none; }
     .kbd { display:inline-block; background:var(--bg-3); border:1px solid var(--border);
       border-radius:5px; padding:1px 7px; font-family:var(--font-mono); font-size:11px; color:var(--text); }
+    /* Настройки = верхняя панель-оверлей (как окно настроек в приложении Claude) */
+    #settings-backdrop { position:fixed; inset:0; z-index:430; background:rgba(0,0,0,.5);
+      opacity:0; pointer-events:none; transition:opacity .2s ease; }
+    #settings-backdrop.open { opacity:1; pointer-events:auto; }
+    #panel-settings.as-sheet { display:flex !important; flex-direction:column;
+      position:fixed; left:50%; top:0; transform:translate(-50%,-18px);
+      width:min(780px,96vw); max-height:90vh; z-index:440;
+      background:var(--bg-2); border:1px solid var(--border); border-top:none;
+      border-radius:0 0 18px 18px; box-shadow:0 24px 70px rgba(0,0,0,.55);
+      opacity:0; pointer-events:none; transition:transform .24s cubic-bezier(.2,.8,.2,1), opacity .24s ease;
+      overflow:hidden; }
+    #panel-settings.as-sheet.open { transform:translate(-50%,0); opacity:1; pointer-events:auto; }
+    #panel-settings.as-sheet .panel-header { position:relative; flex:0 0 auto; }
+    #panel-settings.as-sheet .set-body { flex:1 1 auto; min-height:0; }
+    .set-close { position:absolute; top:14px; right:16px; width:30px; height:30px;
+      border-radius:8px; border:1px solid var(--border); background:rgba(255,255,255,.04);
+      color:var(--text-2); font-size:15px; cursor:pointer; line-height:1;
+      transition:background .15s ease, color .15s ease; }
+    .set-close:hover { background:rgba(255,255,255,.1); color:var(--text); }
     /* Мозг: интерактивный разбор когнитивных слоёв */
     .brain-layers { display:flex; flex-direction:column; gap:8px; }
     .brain-layer { display:flex; align-items:flex-start; gap:9px; background:rgba(255,255,255,.03);
@@ -1564,12 +1583,14 @@
   </section>
 
   <!-- ═══════════ SETTINGS ═══════════ -->
-  <section class="panel" id="panel-settings">
+  <div id="settings-backdrop" onclick="closeSettings()"></div>
+  <section class="panel as-sheet" id="panel-settings">
     <div class="panel-header">
       <h2 data-i18n="panel.settings">⚙️ Настройки</h2>
       <p data-i18n="set.sub">Конфигурация FreePalp</p>
+      <button class="set-close" onclick="closeSettings()" title="Закрыть" aria-label="Закрыть">✕</button>
     </div>
-    <div style="padding:24px;overflow-y:auto">
+    <div class="set-body" style="padding:24px;overflow-y:auto">
       <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
         <div class="rp-title" data-i18n="set.theme">🎨 Тема</div>
         <div id="theme-switch" style="display:flex;gap:8px;margin-top:10px">
@@ -4327,7 +4348,17 @@ document.addEventListener('click', e => {
   const m = document.getElementById('gear-menu');
   if (m && m.classList.contains('open') && !m.contains(e.target) && !e.target.closest('#nav-settings')) closeGearMenu();
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeGearMenu(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeGearMenu(); closeSettings(); } });
+// Настройки = верхняя панель-оверлей (не отдельная вкладка)
+function openSettings() {
+  document.getElementById('settings-backdrop').classList.add('open');
+  document.getElementById('panel-settings').classList.add('open');
+  if (typeof loadSettings === 'function') loadSettings();
+}
+function closeSettings() {
+  document.getElementById('settings-backdrop').classList.remove('open');
+  document.getElementById('panel-settings').classList.remove('open');
+}
 function openModal(title, html) {
   document.getElementById('modal-title').innerHTML = title;
   document.getElementById('modal-body').innerHTML = html;
@@ -4337,7 +4368,7 @@ function closeModal() { document.getElementById('modal-back').classList.remove('
 
 async function gearGo(what) {
   closeGearMenu();
-  if (what === 'settings') { switchPanel('settings'); return; }
+  if (what === 'settings') { openSettings(); return; }
   if (what === 'changelog') {
     openModal('📋 ' + t('gm.changelog'), '<div style="color:var(--text-3)">Загрузка…</div>');
     try {
