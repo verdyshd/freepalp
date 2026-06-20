@@ -30,6 +30,33 @@ MIN_TASKS_FOR_ANALYSIS = 5   # минимум записей для запуск
 # Порог-кандидат: тип ниже этого считается слабым (цель 0.90, маржа 0.02).
 # Раньше было 0.82 — пропускало review/shell ~0.82-0.83 которые явно ниже цели.
 CANDIDATE_SCORE_THRESHOLD = 0.88
+FAIL_SCORE_THRESHOLD = 0.5      # запись ниже этого = провал (для failure-mode анализа)
+MIN_FAILURE_COUNT = 3           # причина должна повториться N раз, чтобы стать целью
+
+# Канонические failure-mode: критик описывает одну суть разными словами, поэтому
+# группируем по смыслу (подстроки), а не по тексту. Только промпт-чинимые режимы.
+# Общие сигнатуры, НЕ под конкретные задачи (иначе подгонка под экзамен).
+FAILURE_SIGNATURES = {
+    "code_not_saved": [
+        "write_file", "write_source", "не вызвал", "не созда", "не записа",
+        "файл на диске", "код показан только текстом", "вывел код текстом",
+        "отсутствие реализации", "отсутствует реализация", "не предоставлен код",
+        "не предоставлен рабочий", "файл не создан", "файл не обновл",
+    ],
+    "tool_misuse": [
+        "неверный формат tool", "tool_call", "__native_tool__", "сырой вызов",
+        "невалидный json", "аргументы инструмента",
+    ],
+}
+
+
+def _failure_mode(issue: str) -> Optional[str]:
+    """Канонический режим провала по тексту issue (подстроки), либо None."""
+    low = (issue or "").lower()
+    for mode, sigs in FAILURE_SIGNATURES.items():
+        if any(s in low for s in sigs):
+            return mode
+    return None
 
 
 class MetricsCollector:
@@ -174,6 +201,54 @@ class Evaluator:
                     },
                     "priority": int(retry_rate * 10),
                 })
+
+        # ── Failure-mode таргетинг ───────────────────────────────────────────
+        # Частая КОНКРЕТНАЯ причина провала важнее среднего по типу: поведенческие
+        # провалы (напр. «не вызвал write_file») тонут в высоком среднем типа и
+        # обычными кандидатами не ловятся. Здесь — ловим их прицельно.
+        failed = [
+            r for r in records
+            if r["critic_score"] < FAIL_SCORE_THRESHOLD
+            and not (r["critic_score"] == 0.0 and r.get("tokens_total", 0) == 0)
+        ]
+        # группируем провалы по КАНОНИЧЕСКОМУ режиму (одна задача = +1 к режиму)
+        mode_recs: dict[str, list[dict]] = defaultdict(list)
+        mode_evidence: dict[str, list[str]] = defaultdict(list)
+        for r in failed:
+            seen = set()
+            for issue in r.get("issues", []):
+                mode = _failure_mode(issue)
+                if mode and mode not in seen:
+                    seen.add(mode)
+                    mode_recs[mode].append(r)
+                    mode_evidence[mode].append(issue)
+        wp_by_type = {c["task_type"]: c for c in candidates if c["component"] == "worker_prompt"}
+        for mode, recs_m in sorted(mode_recs.items(), key=lambda x: -len(x[1])):
+            if len(recs_m) < MIN_FAILURE_COUNT:
+                continue
+            type_counts: dict[str, int] = defaultdict(int)
+            for r in recs_m:
+                type_counts[r["task_type"]] += 1
+            dom_type = max(type_counts, key=type_counts.get)
+            prio = min(10, 6 + len(recs_m))        # failure-mode выше типовых твиков
+            evidence = mode_evidence[mode][:3]
+            existing = wp_by_type.get(dom_type)
+            if existing:                            # не пропускаем — ПОДНИМАЕМ существующий
+                existing["priority"] = max(existing["priority"], prio)
+                existing["problem"] += f" + failure-mode «{mode}» ×{len(recs_m)}"
+                existing.setdefault("evidence", [])
+                existing["evidence"] = list(dict.fromkeys(existing["evidence"] + evidence))[:5]
+                existing.setdefault("stats", {})["failure_mode"] = f"{mode} ×{len(recs_m)}"
+            else:
+                cand = {
+                    "component": "worker_prompt", "task_type": dom_type,
+                    "problem": f"failure-mode «{mode}»: {len(recs_m)} задач провалились по одной причине",
+                    "evidence": evidence,
+                    "stats": {"n_failures": len(recs_m), "failure_mode": mode, "n_tasks": len(recs_m)},
+                    "priority": prio,
+                }
+                candidates.append(cand)
+                wp_by_type[dom_type] = cand
 
         # Глобальный анализ: проверяем critic_system
         all_scores = [r["critic_score"] for r in records]
