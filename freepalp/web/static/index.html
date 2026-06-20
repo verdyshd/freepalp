@@ -841,6 +841,20 @@
       line-height:1; background:none; border:none; }
     .kbd { display:inline-block; background:var(--bg-3); border:1px solid var(--border);
       border-radius:5px; padding:1px 7px; font-family:var(--font-mono); font-size:11px; color:var(--text); }
+    /* Мозг: интерактивный разбор когнитивных слоёв */
+    .brain-layers { display:flex; flex-direction:column; gap:8px; }
+    .brain-layer { display:flex; align-items:flex-start; gap:9px; background:rgba(255,255,255,.03);
+      border:1px solid var(--border); border-radius:10px; padding:8px 11px;
+      transition:border-color .15s ease, transform .15s ease; cursor:default; }
+    .brain-layer:hover { border-color:var(--border-glow, var(--accent)); transform:translateX(2px); }
+    .brain-layer .bl-dot { width:9px; height:9px; border-radius:50%; margin-top:4px; flex-shrink:0; }
+    .brain-layer .bl-main { flex:1; min-width:0; }
+    .brain-layer .bl-top { display:flex; justify-content:space-between; gap:8px;
+      font-size:12px; color:var(--text-2); }
+    .brain-layer .bl-bar { height:3px; border-radius:2px; background:rgba(255,255,255,.08);
+      overflow:hidden; margin:4px 0 3px; }
+    .brain-layer .bl-bar > i { display:block; height:100%; border-radius:2px; transition:width .4s ease; }
+    .brain-layer .bl-role { font-size:9.5px; color:var(--text-3); }
 
     .memory-stats-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
@@ -3159,14 +3173,47 @@ async function loadMemStats() {
       _neu += `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r}" fill="#b794f4" opacity="${o.toFixed(2)}">`
             + `<animate attributeName="opacity" values="${(o*0.35).toFixed(2)};${o.toFixed(2)};${(o*0.35).toFixed(2)}" dur="${dur}s" repeatCount="indefinite"/></circle>`;
     }
-    let _syn = '';
+    let _syn = ''; const _pairs = [];
     for (let i = 0; i < _pts.length; i++) for (let j = i + 1; j < _pts.length; j++) {
       const d = Math.hypot(_pts[i][0] - _pts[j][0], _pts[i][1] - _pts[j][1]);
-      if (d < 42 && rnd() < 0.55)
+      if (d < 42 && rnd() < 0.55) {
         _syn += `<line x1="${_pts[i][0].toFixed(0)}" y1="${_pts[i][1].toFixed(0)}" x2="${_pts[j][0].toFixed(0)}" y2="${_pts[j][1].toFixed(0)}" stroke="#9f7aea" stroke-width="0.6" opacity="0.26"/>`;
+        _pairs.push([_pts[i], _pts[j]]);
+      }
     }
-    const neural = `<g clip-path="url(#brainClip)">${_syn}${_neu}</g>`;
+    // «Выстрелы» сигналов: яркие точки бегут по синапсам туда-обратно (мозг думает)
+    let _fire = '';
+    const fireN = Math.min(7, _pairs.length);
+    for (let k = 0; k < fireN; k++) {
+      const [a, c2] = _pairs[Math.floor(rnd() * _pairs.length)];
+      const dur = (1.1 + rnd() * 1.7).toFixed(2), beg = (-rnd() * 2.5).toFixed(2);
+      const ax = a[0].toFixed(0), ay = a[1].toFixed(0), bx = c2[0].toFixed(0), by = c2[1].toFixed(0);
+      _fire += `<circle r="2.1" fill="#fff">`
+        + `<animate attributeName="cx" values="${ax};${bx};${ax}" dur="${dur}s" begin="${beg}s" repeatCount="indefinite"/>`
+        + `<animate attributeName="cy" values="${ay};${by};${ay}" dur="${dur}s" begin="${beg}s" repeatCount="indefinite"/>`
+        + `<animate attributeName="opacity" values="0;1;0.2;1;0" dur="${dur}s" begin="${beg}s" repeatCount="indefinite"/></circle>`;
+    }
+    const neural = `<g clip-path="url(#brainClip)">${_syn}${_neu}${_fire}</g>`;
     const stage = totalMem < 100 ? 'зарождается' : totalMem < 400 ? 'развивается' : totalMem < 1200 ? 'зрелый' : 'обширный';
+
+    // Интерактивный разбор 4 когнитивных слоёв памяти (как отделы мозга)
+    const LAYER_INFO = [
+      ['working', 'Рабочая', '#ecc94b', 'текущая задача'],
+      ['episodic', 'Эпизодическая', '#9f7aea', 'события и диалоги'],
+      ['semantic', 'Семантическая', '#63b3ed', 'факты и знания'],
+      ['procedural', 'Процедурная', '#48bb78', 'навыки и приёмы'],
+    ];
+    const layersLegend = `<div class="brain-layers">` + LAYER_INFO.map(([k, nm, c, role]) => {
+      const v = L[k] || 0, pct = totalMem ? Math.round(100 * v / totalMem) : 0;
+      return `<div class="brain-layer" title="${nm} — ${role}">
+        <span class="bl-dot" style="background:${c}"></span>
+        <div class="bl-main">
+          <div class="bl-top"><span>${nm}</span><b style="color:${c}">${v}</b></div>
+          <div class="bl-bar"><i style="width:${Math.max(2, pct)}%;background:${c}"></i></div>
+          <div class="bl-role">${role}</div>
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
 
     const brainSvg = `
     <svg viewBox="0 0 480 320" style="width:100%;max-width:560px" font-family="inherit">
@@ -3251,7 +3298,8 @@ async function loadMemStats() {
           <div style="flex:1;min-width:300px;display:flex;justify-content:center;align-items:center">
             ${brainSvg}
           </div>
-          <div style="display:flex;flex-direction:column;gap:12px;justify-content:center;min-width:170px">
+          <div style="display:flex;flex-direction:column;gap:12px;justify-content:center;min-width:200px">
+            ${layersLegend}
             <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
               ${gauge}
               <div>
