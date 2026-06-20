@@ -117,8 +117,12 @@ adding its key to `.env` (e.g. `DEEPSEEK_API_KEY`, `XAI_API_KEY`).
 - **Persistent memory** — HOT / WARM / COLD tiers + a vector index you can
   explore as a real graph, plus **FTS5 search over your whole session history**
   ("when did we discuss X?").
-- **Self-improvement** — proposes prompt/keyword versions, gated by the
-  deterministic test suite (`test_mvp`), auto-rollback on regression.
+- **Self-improvement** — clusters its own failures by root cause (e.g. "showed
+  code as text instead of writing the file"), rewrites the relevant prompt, and
+  ships it only if the deterministic test suite (`test_mvp`) and a held-out
+  validation show no regression. In a measured run this lifted a hard-coding
+  benchmark from 84% to 91% (val 73%→87%), held-out unchanged — see
+  [eval/SELF_IMPROVEMENT_RESULTS.md](eval/SELF_IMPROVEMENT_RESULTS.md).
 - **Reliability over LLM trust** — deterministic detectors catch hallucinated
   file writes, identity slips, blind rewrites, leaked tool calls, and stub
   content before they reach you.
