@@ -1141,7 +1141,7 @@
           <span class="chat-list-title" data-i18n="rp.dialogs">Диалоги</span>
           <div style="display:flex;gap:2px;align-items:center">
             <button class="chat-new-btn" onclick="newChat()" title="Новый диалог" data-i18n-title="tip.newChat">+</button>
-            <button class="panel-collapse-btn" onclick="togglePanel('chats')" title="Свернуть панель" data-i18n-title="panel.collapse">«</button>
+            <button class="panel-collapse-btn" onclick="togglePanel('chats')" title="Открепить / свернуть панель" data-i18n-title="panel.collapse">📌</button>
           </div>
         </div>
         <div class="chat-list-scroll" id="chat-list"></div>
@@ -1209,7 +1209,7 @@
         <div class="rp-section">
           <div class="rp-title" style="display:flex;align-items:center;justify-content:space-between">
             <span data-i18n="rp.session">Текущая сессия</span>
-            <button class="panel-collapse-btn" onclick="togglePanel('session')" title="Свернуть панель" data-i18n-title="panel.collapse">»</button>
+            <button class="panel-collapse-btn" onclick="togglePanel('session')" title="Открепить / свернуть панель" data-i18n-title="panel.collapse">📌</button>
           </div>
           <div class="metrics-grid">
             <div class="metric-card">
@@ -4313,21 +4313,8 @@ function setPanel(which, collapsed) {
   if (reopen) reopen.style.display = collapsed ? 'flex' : 'none';
   try { localStorage.setItem('fp-panel-' + which, collapsed ? '1' : '0'); } catch (e) {}
 }
-// Hover-peek: наведение на язычок свёрнутой панели → выезжает оверлеем; увёл мышь → уехала.
-// Клик «/» в шапке (togglePanel) = закрепить открытой.
-function initPanelHover() {
-  for (const [tabId, sel] of [['reopen-chats', '.chat-list-col'], ['reopen-session', '.right-panel']]) {
-    const tab = document.getElementById(tabId);
-    const panel = document.querySelector(sel);
-    if (!tab || !panel) continue;
-    const peekOn  = () => { if (panel.classList.contains('collapsed')) panel.classList.add('peek'); };
-    const peekOff = () => panel.classList.remove('peek');
-    tab.addEventListener('mouseenter', peekOn);
-    panel.addEventListener('mouseenter', peekOn);
-    panel.addEventListener('mouseleave', peekOff);
-  }
-}
-initPanelHover();
+// Панели раздвигаются/сворачиваются ПО КЛИКУ (📌 в шапке сворачивает, язычок —
+// разворачивает), со плавным слайдом. Hover-открытие убрано по просьбе пользователя.
 function togglePanel(which) {
   const el = _panelEl(which);
   setPanel(which, !(el && el.classList.contains('collapsed')));
