@@ -723,7 +723,11 @@
     }
     /* HOT-память карточками (живая, инжектируется в каждый промпт) */
     .hot-head { display:flex; align-items:center; gap:8px; margin-bottom:12px;
-      font-size:12px; color:var(--text-3); }
+      font-size:12px; color:var(--text-3); flex-wrap:wrap; }
+    .hot-filter { margin-left:auto; background:rgba(255,255,255,.06); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); padding:4px 10px; font-size:12px; width:160px;
+      transition:border-color .15s ease, width .2s ease; }
+    .hot-filter:focus { outline:none; border-color:var(--accent); width:200px; }
     .hot-pulse { width:8px; height:8px; border-radius:50%; background:var(--accent-err);
       flex-shrink:0; animation:hotPulse 2.2s infinite; }
     @keyframes hotPulse {
@@ -3016,9 +3020,10 @@ async function loadMemGraph(upto = 0) {
     for (let i = 0; i < nodes.length; i++) {
       if (!shown(i)) break;
       const n = nodes[i];
-      const r = (3 + Math.min(7, n.deg * 0.8)) / Math.sqrt(view.scale);
+      const ap = nodeA(i);                                    // прогресс появления узла
+      const r = (3 + Math.min(7, n.deg * 0.8)) / Math.sqrt(view.scale) * (0.35 + 0.65 * ap);  // «выскакивает»
       ctx.fillStyle = LAYER_COLORS[n.layer] || '#a0aec0';
-      ctx.globalAlpha = (highlight && highlight !== n ? 0.35 : 1) * nodeA(i);
+      ctx.globalAlpha = (highlight && highlight !== n ? 0.35 : 1) * ap;
       ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 2*Math.PI); ctx.fill();
       ctx.globalAlpha = 1;
       if (highlight === n) {
@@ -3147,7 +3152,8 @@ function renderHot(text) {
   flush();
   const total = sections.reduce((n, s) => n + s.items.length, 0);
   let html = `<div class="hot-head"><span class="hot-pulse"></span>`
-           + `Активная память · ${total} записей · инжектируется в каждый промпт</div>`;
+           + `<span>Активная память · ${total} записей · инжектируется в каждый промпт</span>`
+           + `<input class="hot-filter" placeholder="🔎 фильтр…" oninput="filterHot(this.value)"></div>`;
   for (const s of sections) {
     const body = s.items.map(it => {
       const kv = it.match(/^([^:]{1,42}):\s+(.+)/);
@@ -3160,6 +3166,19 @@ function renderHot(text) {
           + `<div class="hot-card-body">${body}</div></div>`;
   }
   return html;
+}
+// Живой фильтр HOT: прячет не совпавшие записи и пустые секции, авто-раскрывает
+function filterHot(q) {
+  q = (q || '').toLowerCase().trim();
+  document.querySelectorAll('#hot-memory-text .hot-card').forEach(card => {
+    let shown = 0;
+    card.querySelectorAll('.hot-item,.hot-kv').forEach(it => {
+      const m = !q || it.textContent.toLowerCase().includes(q);
+      it.style.display = m ? '' : 'none'; if (m) shown++;
+    });
+    card.style.display = shown ? '' : 'none';
+    if (q) card.classList.remove('collapsed');
+  });
 }
 async function loadMemory() {
   const el = document.getElementById('hot-memory-text');
