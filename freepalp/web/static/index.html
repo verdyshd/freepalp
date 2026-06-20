@@ -3517,7 +3517,7 @@ async function loadUnifiedVersions() {
   try {
     const d = await (await fetch('/api/system/versions')).json();
     if (!d.ok) { el.innerHTML = '⚠️ ' + (d.error || 'история недоступна'); return; }
-    if (verEl) verEl.textContent = 'v' + d.version;
+    if (verEl) verEl.textContent = 'v' + d.version + (d.commit ? ' · ' + d.commit : '');
     const KIND = {
       'веха':    {icon: '🏁', color: 'var(--accent)'},
       'код':     {icon: '🛠', color: 'var(--accent-3)'},
@@ -3886,8 +3886,10 @@ function setTheme(t) {
     b.classList.toggle('active', b.dataset.t === t));
 }
 function initTheme() {
-  let t = 'dark';
-  try { t = localStorage.getItem('freepalp-theme') || 'dark'; } catch(e) {}
+  // дефолт — СИСТЕМНАЯ тема (следует за ОС через prefers-color-scheme),
+  // а не жёстко тёмная; пользовательский выбор (если был) сохраняется
+  let t = 'system';
+  try { t = localStorage.getItem('freepalp-theme') || 'system'; } catch(e) {}
   setTheme(t);
 }
 initTheme();
@@ -4048,10 +4050,17 @@ const I18N = {
 };
 
 function detectLang() {
-  const l = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-  if (l.startsWith('ru')) return 'ru';
-  if (l.startsWith('zh')) return 'zh';
-  if (l.startsWith('en')) return 'en';
+  // сканируем ВЕСЬ список предпочитаемых языков браузера (не только основной),
+  // первое совпадение из поддерживаемых выигрывает
+  const langs = (navigator.languages && navigator.languages.length)
+    ? navigator.languages
+    : [navigator.language || navigator.userLanguage || 'en'];
+  for (const raw of langs) {
+    const l = (raw || '').toLowerCase();
+    if (l.startsWith('ru')) return 'ru';
+    if (l.startsWith('zh')) return 'zh';
+    if (l.startsWith('en')) return 'en';
+  }
   return 'en';   // незнакомый язык → английский
 }
 function t(key) {

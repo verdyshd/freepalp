@@ -1426,6 +1426,19 @@ def _read_freepalp_version() -> str:
         return "1.1.0"
 
 
+def _git_short_sha() -> str:
+    """Короткий git-хэш текущего коммита — версия «двигается» с каждым изменением кода."""
+    try:
+        import subprocess
+        from .core.winproc import no_window
+        r = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                           cwd=str(Path(__file__).parent.parent),
+                           capture_output=True, timeout=5, **no_window())
+        return (r.stdout or b"").decode("utf-8", "replace").strip()
+    except Exception:
+        return ""
+
+
 @app.get("/api/system/versions")
 async def api_system_versions():
     """Единая версия FreePalp + общая хронология: вехи, изменения кода (git)
@@ -1465,7 +1478,8 @@ async def api_system_versions():
         pass
 
     history.sort(key=lambda h: h.get("date") or "", reverse=True)
-    return {"ok": True, "version": _read_freepalp_version(), "history": history[:50]}
+    return {"ok": True, "version": _read_freepalp_version(),
+            "commit": _git_short_sha(), "history": history[:50]}
 
 
 @app.get("/api/improve/status")
