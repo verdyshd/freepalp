@@ -106,7 +106,7 @@ def ellipsoid(name, loc, scale, quat, m):
     return o
 
 # направление камеры (зеркальный «наоборот» изо-вид) — задаётся ОДИН раз, юзают осьминог+камера
-CAM_OFFSET = Vector((-9, -9, 9))
+CAM_OFFSET = Vector((9, -9, 9))
 camdir = Vector(CAM_OFFSET); camdir.normalize()
 
 # доп. поворот всей комнаты вокруг центра («ещё повернуть»). Экран/лицо компенсируем,
@@ -273,13 +273,13 @@ bpy.context.scene.camera = cam
 # ── свет ──
 sun_d = bpy.data.lights.new("Sun", "SUN"); sun_d.energy = 5.4; sun_d.angle = math.radians(10)
 sun = bpy.data.objects.new("Sun", sun_d); bpy.context.collection.objects.link(sun)
-sun.rotation_euler = (math.radians(48), math.radians(-12), math.radians(-35))   # светит со стороны новой камеры
+sun.rotation_euler = (math.radians(48), math.radians(12), math.radians(35))    # светит со стороны новой камеры
 fill_d = bpy.data.lights.new("Fill", "AREA"); fill_d.energy = 600; fill_d.size = 16
 fill = bpy.data.objects.new("Fill", fill_d); bpy.context.collection.objects.link(fill)
-fill.location = (-9, -9, 8); fill.rotation_euler = (math.radians(52), 0, math.radians(28))
+fill.location = (9, -9, 8); fill.rotation_euler = (math.radians(52), 0, math.radians(-28))
 fill2_d = bpy.data.lights.new("Fill2", "AREA"); fill2_d.energy = 320; fill2_d.size = 14
 fill2 = bpy.data.objects.new("Fill2", fill2_d); bpy.context.collection.objects.link(fill2)
-fill2.location = (10, -6, 7); fill2.rotation_euler = (math.radians(55), 0, math.radians(-70))
+fill2.location = (-10, -6, 7); fill2.rotation_euler = (math.radians(55), 0, math.radians(70))
 # мир — лёгкая фиолетовая подсветка
 world = bpy.data.worlds.new("W"); bpy.context.scene.world = world; world.use_nodes = True
 bg = world.node_tree.nodes.get("Background")
