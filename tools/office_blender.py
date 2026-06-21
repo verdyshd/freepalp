@@ -109,6 +109,18 @@ def ellipsoid(name, loc, scale, quat, m):
 CAM_OFFSET = Vector((-9, -9, 9))
 camdir = Vector(CAM_OFFSET); camdir.normalize()
 
+# доп. поворот всей комнаты вокруг центра («ещё повернуть»). Экран/лицо компенсируем,
+# чтобы после поворота они по-прежнему смотрели в камеру.
+ROOM_C = Vector((3.8, 3.0, 0.0))
+ROT_Z = math.radians(-90)
+def _rotz_about(p, ang, c=ROOM_C):
+    v = Vector(p) - c
+    ca, sa = math.cos(ang), math.sin(ang)
+    return (c.x + v.x * ca - v.y * sa, c.y + v.x * sa + v.y * ca, p[2])
+# направление к камере В ЛОКАЛЕ ДО поворота сцены (обратная компенсация)
+eyedir = Vector(_rotz_about(camdir + ROOM_C, -ROT_Z)) - ROOM_C
+eyedir.normalize()
+
 def cyl(name, x, y, z, r, h, m, rot=None):
     bpy.ops.mesh.primitive_cylinder_add(radius=r, depth=h, location=(x, y, z))
     o = bpy.context.active_object; o.name = name
@@ -205,16 +217,16 @@ for i in range(3):
 hc = Vector((3.15, 3.45, 1.74))                          # центр головы
 headM = mat_grad("octoHead", "#ef8a28", "#ffd24a")       # низ оранжевый → верх жёлтый
 ellipsoid("octoHead", hc, (0.70, 0.66, 0.64), None, headM)
-# глаза на ПОВЕРХНОСТИ головы, к камере: тёмные с белым бликом (как у маскота)
+# глаза на ПОВЕРХНОСТИ головы, к камере (eyedir = camdir с компенсацией поворота комнаты)
 eyeDark = mat("eyeDark", "#241208", rough=0.32)
 shineM = mat("eyeShine", "#ffffff", rough=0.2)
-front = hc + camdir * 0.58 + Vector((0, 0, -0.04))
-perp = Vector((camdir.y, -camdir.x, 0)); perp.normalize()   # горизонталь экрана
+front = hc + eyedir * 0.58 + Vector((0, 0, -0.04))
+perp = Vector((eyedir.y, -eyedir.x, 0)); perp.normalize()   # горизонталь экрана
 up = Vector((0, 0, 1))
 for side, nm in ((-1, "L"), (1, "R")):
     ec = front + perp * (0.17 * side)
     ellipsoid("eye" + nm, ec, (0.12, 0.12, 0.15), None, eyeDark)
-    sh = ec + camdir * 0.07 + up * 0.05 - perp * (0.035 * side)
+    sh = ec + eyedir * 0.07 + up * 0.05 - perp * (0.035 * side)
     sphere("shine" + nm, sh.x, sh.y, sh.z, 0.035, shineM)
 # щупальца — 6 пухлых розовых, с подкрученными кончиками (2 сегмента)
 armTop = mat("octoArmTop", "#ff6bb6", rough=0.36)
@@ -232,8 +244,21 @@ for i in range(6):
     s2 = tipBase + d2 * 0.16
     ellipsoid(f"arm{i}b", s2, (0.13, 0.13, 0.2), d2.to_track_quat("Z", "Y"), armTop if i % 2 == 0 else armBot)
 
+# ── повернуть всю комнату вокруг центра (камеры/света ещё нет — берём только меши) ──
+bpy.ops.object.select_all(action="DESELECT")
+bpy.ops.object.empty_add(location=ROOM_C)
+room_root = bpy.context.active_object; room_root.name = "RoomRoot"
+for o in list(bpy.context.scene.objects):
+    if o.type == "MESH":
+        o.select_set(True)
+room_root.select_set(True)
+bpy.context.view_layer.objects.active = room_root
+bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
+room_root.rotation_euler = (0, 0, ROT_Z)
+bpy.context.view_layer.update()
+
 # ── камера (истинная изометрия, зеркальный «наоборот» вид; комната больше → шире охват) ──
-target = Vector((3.6, 3.0, 0.85))
+target = Vector((3.8, 3.0, 0.85))
 bpy.ops.object.empty_add(location=target)
 empty = bpy.context.active_object
 cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 9.2
@@ -277,16 +302,18 @@ bpy.context.view_layer.update()
 def px(co):
     v = world_to_camera_view(sc, cam, Vector(co))
     return [round(v.x * RES_X, 1), round((1 - v.y) * RES_Y, 1)]
+def pxr(co):                                   # проекция точки С УЧЁТОМ поворота комнаты
+    return px(_rotz_about(co, ROT_Z))
 coords = {
     "res": [RES_X, RES_Y],
-    # 4 угла плоскости экрана (грань -y монитора, обращённая к камере)
+    # 4 угла плоскости экрана (грань -y монитора, обращённая к камере) после поворота
     "screen": {
-        "tl": px((3.62, 0.95, 1.66 + 0.99)),
-        "tr": px((3.62 + 1.36, 0.95, 1.66 + 0.99)),
-        "br": px((3.62 + 1.36, 0.95, 1.66)),
-        "bl": px((3.62, 0.95, 1.66)),
+        "tl": pxr((3.62, 0.95, 1.66 + 0.99)),
+        "tr": pxr((3.62 + 1.36, 0.95, 1.66 + 0.99)),
+        "br": pxr((3.62 + 1.36, 0.95, 1.66)),
+        "bl": pxr((3.62, 0.95, 1.66)),
     },
-    "headTop": px((hc.x, hc.y, hc.z + 0.66)),
+    "headTop": pxr((hc.x, hc.y, hc.z + 0.66)),
 }
 with open(OUT_JSON, "w", encoding="utf-8") as f:
     json.dump(coords, f, ensure_ascii=False, indent=2)
