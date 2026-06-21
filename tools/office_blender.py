@@ -27,7 +27,7 @@ sys.excepthook = _hook
 _log("START blender " + bpy.app.version_string)
 OUT_PNG = os.path.normpath(os.path.join(OUT_DIR, "office.png"))
 OUT_JSON = os.path.normpath(os.path.join(OUT_DIR, "office.coords.json"))
-RES_X, RES_Y = 1400, 1050
+RES_X, RES_Y = 1600, 1200
 
 # ── чистим сцену ──
 bpy.ops.object.select_all(action="SELECT")
@@ -68,7 +68,7 @@ def box(name, x, y, z, sx, sy, sz, m, bevel=0.0):
     return o
 
 def sphere(name, x, y, z, r, m):
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=r, location=(x, y, z), segments=24, ring_count=16)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=r, location=(x, y, z), segments=40, ring_count=24)
     o = bpy.context.active_object; o.name = name
     o.data.materials.append(m); bpy.ops.object.shade_smooth()
     return o
@@ -97,7 +97,7 @@ def mat_grad(name, hex_bot, hex_top, rough=0.42):
     return m
 
 def ellipsoid(name, loc, scale, quat, m):
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=tuple(loc), segments=22, ring_count=14)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=tuple(loc), segments=48, ring_count=28)
     o = bpy.context.active_object; o.name = name
     o.scale = scale
     if quat is not None:
@@ -266,10 +266,10 @@ room_root.rotation_euler = (0, 0, ROT_Z)
 bpy.context.view_layer.update()
 
 # ── камера (истинная изометрия, зеркальный «наоборот» вид; стол у дальней стены) ──
-target = Vector((4.0, 3.6, 0.9))
+target = Vector((4.0, 3.3, 0.7))
 bpy.ops.object.empty_add(location=target)
 empty = bpy.context.active_object
-cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 9.7
+cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 11.6
 cam = bpy.data.objects.new("Cam", cam_data)
 bpy.context.collection.objects.link(cam)
 cam.location = target + CAM_OFFSET
@@ -278,27 +278,32 @@ tc.track_axis = "TRACK_NEGATIVE_Z"; tc.up_axis = "UP_Y"
 bpy.context.scene.camera = cam
 
 # ── свет ──
-sun_d = bpy.data.lights.new("Sun", "SUN"); sun_d.energy = 5.4; sun_d.angle = math.radians(10)
+sun_d = bpy.data.lights.new("Sun", "SUN"); sun_d.energy = 4.2; sun_d.angle = math.radians(12)
 sun = bpy.data.objects.new("Sun", sun_d); bpy.context.collection.objects.link(sun)
-sun.rotation_euler = (math.radians(48), math.radians(12), math.radians(35))    # светит со стороны новой камеры
-fill_d = bpy.data.lights.new("Fill", "AREA"); fill_d.energy = 600; fill_d.size = 16
+sun.rotation_euler = (math.radians(48), math.radians(12), math.radians(35))    # светит со стороны камеры
+fill_d = bpy.data.lights.new("Fill", "AREA"); fill_d.energy = 2600; fill_d.size = 16
 fill = bpy.data.objects.new("Fill", fill_d); bpy.context.collection.objects.link(fill)
 fill.location = (9, -9, 8); fill.rotation_euler = (math.radians(52), 0, math.radians(-28))
-fill2_d = bpy.data.lights.new("Fill2", "AREA"); fill2_d.energy = 320; fill2_d.size = 14
+fill2_d = bpy.data.lights.new("Fill2", "AREA"); fill2_d.energy = 1300; fill2_d.size = 14
 fill2 = bpy.data.objects.new("Fill2", fill2_d); bpy.context.collection.objects.link(fill2)
 fill2.location = (-10, -6, 7); fill2.rotation_euler = (math.radians(55), 0, math.radians(70))
 # мир — лёгкая фиолетовая подсветка
 world = bpy.data.worlds.new("W"); bpy.context.scene.world = world; world.use_nodes = True
 bg = world.node_tree.nodes.get("Background")
-bg.inputs[0].default_value = (0.13, 0.12, 0.18, 1); bg.inputs[1].default_value = 1.7
+bg.inputs[0].default_value = (0.13, 0.12, 0.18, 1); bg.inputs[1].default_value = 1.2
 
-# ── рендер ──
+# ── рендер: Cycles + шумоподавление (мягкие тени, GI — качество выше Eevee) ──
 sc = bpy.context.scene
-sc.render.engine = "BLENDER_EEVEE"
+sc.render.engine = "CYCLES"
 try:
-    sc.eevee.taa_render_samples = 64
-except Exception:
-    pass
+    sc.cycles.device = "CPU"
+    sc.cycles.samples = 72
+    sc.cycles.use_denoising = True
+    sc.cycles.denoiser = "OPENIMAGEDENOISE"
+    sc.cycles.caustics_reflective = False
+    sc.cycles.caustics_refractive = False
+except Exception as e:
+    _log("cycles cfg warn: " + str(e))
 sc.render.film_transparent = True
 sc.render.resolution_x, sc.render.resolution_y = RES_X, RES_Y
 sc.render.image_settings.file_format = "PNG"
