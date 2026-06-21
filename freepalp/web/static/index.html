@@ -854,9 +854,9 @@
       100% { transform: rotate(0deg)   translateY(0); }
     }
     .fp-asst.swim .asst-octo { animation: asstSwim .8s cubic-bezier(.34,.1,.3,1); }
-    /* пузыри «из-за» осьминога во время движения */
-    .asst-bubble {
-      position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; z-index: -1;
+    /* пузыри «из-за» осьминога во время движения (НЕ путать с .asst-bubble — речевым окном) */
+    .asst-swimbub {
+      position: absolute; border-radius: 50%; pointer-events: none; opacity: 0; z-index: 0;
       background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.95), rgba(170,205,255,.45));
       border: 1px solid rgba(255,255,255,.55);
       animation: asstBubble 1.05s ease-out forwards;
@@ -2984,7 +2984,7 @@ function _asstSwimFx(a) {
   // пузыри сзади — несколько штук, дрейфуют назад-вниз и тают (как от плывущего осьминога)
   for (let k = 0; k < 6; k++) {
     const b = document.createElement('span');
-    b.className = 'asst-bubble';
+    b.className = 'asst-swimbub';
     const s = (5 + Math.random() * 7).toFixed(0);
     b.style.width = b.style.height = s + 'px';
     b.style.left = (8 + Math.random() * 26) + 'px';
