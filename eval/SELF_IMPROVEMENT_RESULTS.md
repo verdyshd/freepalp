@@ -43,6 +43,29 @@ Net +2 tasks. Holdout unchanged — no overfitting to the validation set.
 - The point is not "+X% guaranteed" — it is **safe, gated self-modification**: the system
   found its own failure mode, fixed it, and a regression gate guarded the change.
 
+## 50-task tuned run (2026-06-21)
+
+Re-measured v1.0.27 on the expanded 50-task set (`eval/hard_tasks.json`).
+
+| Split | v1.0.27 |
+|---|---|
+| Overall | 45/50 = **90.0%** |
+| val | 21/25 = **84.0%** |
+| holdout | 24/25 = **96.0%** |
+
+**Fails (all check-fail, not provider errors):** `hard_max_points_line`, `hard_merge_intervals`,
+`hard_eval_rpn`, `hard_sieve_primes`, `hard_rotate_array`.
+
+Provider picture: groq/cerebras/sambanova/gemini all hit 429 early, system fell back to
+`mistral-small-latest` which ran 44/50 tasks cleanly. No contamination — failures are
+wrong-code or deterministic check failures, not quota-abort.
+
+**Honest caveats:** single run on free-tier; mistral dominated (44/50), so results reflect
+that model's coding ability more than ensemble diversity. One-off prогон — don't read too
+much into val vs holdout split (84% vs 96% is large; small holdout size N=25 inflates variance).
+The headline **90.0% on 50 tasks** is consistent with the 32-task result (90.6%) — no
+degradation at larger set size.
+
 ## Reproduce
 
 ```bash
