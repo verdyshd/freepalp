@@ -105,21 +105,52 @@ def ellipsoid(name, loc, scale, quat, m):
     o.data.materials.append(m); bpy.ops.object.shade_smooth()
     return o
 
-# ── пол (воксельные плитки 7×6) + ковёр ──
+# направление камеры (зеркальный «наоборот» изо-вид) — задаётся ОДИН раз, юзают осьминог+камера
+CAM_OFFSET = Vector((-9, -9, 9))
+camdir = Vector(CAM_OFFSET); camdir.normalize()
+
+def cyl(name, x, y, z, r, h, m, rot=None):
+    bpy.ops.mesh.primitive_cylinder_add(radius=r, depth=h, location=(x, y, z))
+    o = bpy.context.active_object; o.name = name
+    if rot is not None:
+        o.rotation_euler = rot
+    o.data.materials.append(m); bpy.ops.object.shade_smooth()
+    return o
+
+# ── пол 8×7 + ковёр ──
 floorA, floorB = mat("floorA", "#3b3553"), mat("floorB", "#332f49")
 rugA, rugB = mat("rugA", "#6b5aa0"), mat("rugB", "#5a4b8a")
-for gx in range(7):
-    for gy in range(6):
+for gx in range(8):
+    for gy in range(7):
         rug = 1 <= gx <= 5 and 1 <= gy <= 4
         c = (rugA if (gx + gy) % 2 else rugB) if rug else (floorA if (gx + gy) % 2 else floorB)
         box(f"t{gx}_{gy}", gx, gy, -0.12 if rug else -0.15, 1, 1, 0.12 if rug else 0.15, c)
 
-# ── короткий бэкдроп-стенка с окном (без огромных стен — диорама на градиенте) ──
+# ── низкий бэкдроп с окном (фон, не загораживает) ──
 wall = mat("wall", "#3c3760")
-box("wallBack", 0.8, -0.18, 0, 4.6, 0.2, 2.0, wall)
-box("window", 3.5, -0.04, 0.7, 1.6, 0.08, 0.95, mat("win", "#8fc0f0", rough=0.2, emit=1.8))
-box("winBar", 4.28, -0.05, 0.7, 0.06, 0.1, 0.95, wall)
-box("winBarH", 3.5, -0.05, 1.17, 1.6, 0.1, 0.06, wall)
+box("wallBack", 0.3, -0.18, 0, 6.6, 0.2, 1.25, wall)
+box("window", 3.3, -0.04, 0.4, 1.5, 0.08, 0.68, mat("win", "#8fc0f0", rough=0.2, emit=1.8))
+box("winBarH", 3.3, -0.05, 0.72, 1.5, 0.1, 0.06, wall)
+
+bookCols = ["#e2574c", "#4a90d9", "#f6b73c", "#6ab04c", "#9b59b6", "#e67e22", "#16a085"]
+
+# ── книжный шкаф со множеством книг (свободностоящий, левый угол) ──
+shelfM = mat("shelf", "#6a4a2c")
+box("shelf", 0.3, 2.5, 0, 1.6, 0.62, 2.5, shelfM)
+for z in (0.9, 1.7):
+    box(f"shp{z}", 0.32, 2.52, z, 1.56, 0.6, 0.07, mat(f"shp{z}", "#50361c"))
+for r, z in enumerate((0.95, 1.75, 2.5)):          # 3 ряда книг (верхний — на крыше)
+    for i in range(6):
+        box(f"bk{r}_{i}", 0.42 + i * 0.21, 2.66, z, 0.17, 0.42, 0.46 + ((i + r) % 3) * 0.08,
+            mat(f"bk{r}{i}", bookCols[(i + r) % 7]))
+
+# ── гитара, прислонённая (правый угол интерьера) ──
+gBody = mat("guitarBody", "#c98a44", rough=0.35); gNeck = mat("guitarNeck", "#2f2113")
+ellipsoid("guitarBody", (6.5, 2.6, 1.0), (0.5, 0.5, 0.66), None, gBody)
+ellipsoid("guitarWaist", (6.5, 2.6, 1.55), (0.36, 0.36, 0.42), None, gBody)
+box("guitarNeck", 6.42, 2.55, 1.95, 0.16, 0.12, 1.5, gNeck)
+box("guitarHead", 6.4, 2.53, 3.4, 0.22, 0.12, 0.3, gNeck)
+cyl("guitarHole", 6.5, 2.6, 1.05, 0.13, 0.04, mat("ghole", "#3a2a18"), rot=(0, 0, 0))
 
 # ── стол ──
 deskBody, deskTop = mat("deskBody", "#7a5c44"), mat("deskTop", "#a07a57")
@@ -140,63 +171,93 @@ chair = mat("chair", "#3f4a5e")
 box("seat", 2.5, 3.3, 0, 1.1, 1.0, 0.78, chair, bevel=0.03)
 box("back", 2.5, 4.0, 0.78, 1.1, 0.22, 1.0, chair, bevel=0.03)
 
-# ── растение ──
+# ── растение №1 (на тумбе у стены) ──
 box("pot", 0.3, 4.6, 0, 0.7, 0.7, 0.7, mat("pot", "#7a5230"))
 g = mat("plant", "#48bb78")
 sphere("leaf1", 0.65, 4.95, 1.35, 0.4, g)
 sphere("leaf2", 0.5, 4.8, 1.6, 0.26, mat("plant2", "#38a169"))
 sphere("leaf3", 0.82, 5.05, 1.55, 0.24, g)
 
-# ── ОСЬМИНОГ (воксельный, сидит на стуле, лицом к камере) ──
-# ── ОСЬМИНОГ-МАСКОТ (как лого FreePalp): круглая оранжево-жёлтая голова + розовые щупальца ──
-hc = Vector((3.15, 3.45, 1.72))                          # центр головы
-headM = mat_grad("octoHead", "#ef8a28", "#ffd24a")       # низ оранжевый → верх жёлтый
-ellipsoid("octoHead", hc, (0.66, 0.62, 0.6), None, headM)
-# глаза + зрачки на ПОВЕРХНОСТИ головы, обращённой к камере (направление обзора (1,-1,1))
-camdir = Vector((1, -1, 1)); camdir.normalize()
-eyeM, pupM = mat("eyeW", "#ffffff", rough=0.28), mat("pupil", "#3a2416", rough=0.4)
-front = hc + camdir * 0.54 + Vector((0, 0, -0.06))     # точка на лбу/лице, к камере
-perp = Vector((1, 1, 0)); perp.normalize()             # перпендикуляр обзору → разводим глаза по экрану
-for side, nm in ((-1, "L"), (1, "R")):
-    ec = front + perp * (0.19 * side)
-    ellipsoid("eye" + nm, ec, (0.14, 0.14, 0.16), None, eyeM)
-    pc = ec + camdir * 0.06
-    sphere("pup" + nm, pc.x, pc.y, pc.z, 0.07, pupM)
-# щупальца — 8 розовых «лепестков» веером у основания головы
-armTop = mat("octoArmTop", "#ff5cb0", rough=0.38)
-armBot = mat("octoArmBot", "#e63a92", rough=0.44)
-baseZ = hc.z - 0.42
-for i in range(8):
-    a = math.radians(i * 45 + 22)
-    d = Vector((math.cos(a), math.sin(a), -0.85)); d.normalize()
-    q = d.to_track_quat("Z", "Y")
-    base = Vector((hc.x + 0.32 * math.cos(a), hc.y + 0.32 * math.sin(a), baseZ))
-    loc = base + d * 0.34
-    ellipsoid(f"arm{i}", loc, (0.15, 0.15, 0.42), q, armTop if i % 2 == 0 else armBot)
+# ── растение №2 (высокое, правый угол интерьера) ──
+box("pot2", 6.6, 5.4, 0, 0.66, 0.66, 0.66, mat("pot2b", "#8a5a36"))
+sphere("p2a", 6.93, 5.73, 1.2, 0.4, g)
+sphere("p2b", 6.78, 5.55, 1.55, 0.32, mat("plant3", "#3aa05f"))
+sphere("p2c", 7.05, 5.8, 1.5, 0.28, g)
 
-# ── камера (истинная изометрия) ──
-target = Vector((3.0, 2.7, 0.85))
+# ── торшер (напольная лампа, левый интерьер) ──
+lampM = mat("lampM", "#2d3748")
+cyl("lampBase", 0.6, 4.5, 0.04, 0.3, 0.08, lampM)
+cyl("lampPole", 0.6, 4.5, 1.3, 0.05, 2.5, lampM)
+ellipsoid("lampShade", (0.6, 4.5, 2.45), (0.34, 0.34, 0.3), None, mat("lampShade", "#ffd36a", emit=1.4))
+
+# ── зона отдыха: круглый коврик + два пуфика (front-left открытый пол) ──
+cyl("roundRug", 1.9, 5.1, -0.07, 1.1, 0.05, mat("roundRug", "#c2724f"))
+ellipsoid("cushion", (1.9, 5.1, 0.26), (0.66, 0.66, 0.26), None, mat("cushion", "#3aa6a0"))
+ellipsoid("cushion2", (2.7, 5.4, 0.2), (0.46, 0.46, 0.2), None, mat("cushion2", "#d96ba0"))
+
+# ── кружка на столе + стопка книг ──
+cyl("mug", 4.8, 1.55, 1.69, 0.13, 0.22, mat("mugM", "#e2574c"))
+cyl("mugIn", 4.8, 1.55, 1.74, 0.09, 0.18, mat("mugIn", "#7a2018"))
+for i in range(3):
+    box(f"deskBook{i}", 2.4, 1.0, 1.58 + i * 0.09, 0.5, 0.34, 0.09, mat(f"dbk{i}", bookCols[(i + 1) % 7]))
+
+# ── ОСЬМИНОГ-МАСКОТ (как лого FreePalp): круглая оранжево-жёлтая голова + розовые щупальца ──
+hc = Vector((3.15, 3.45, 1.74))                          # центр головы
+headM = mat_grad("octoHead", "#ef8a28", "#ffd24a")       # низ оранжевый → верх жёлтый
+ellipsoid("octoHead", hc, (0.70, 0.66, 0.64), None, headM)
+# глаза на ПОВЕРХНОСТИ головы, к камере: тёмные с белым бликом (как у маскота)
+eyeDark = mat("eyeDark", "#241208", rough=0.32)
+shineM = mat("eyeShine", "#ffffff", rough=0.2)
+front = hc + camdir * 0.58 + Vector((0, 0, -0.04))
+perp = Vector((camdir.y, -camdir.x, 0)); perp.normalize()   # горизонталь экрана
+up = Vector((0, 0, 1))
+for side, nm in ((-1, "L"), (1, "R")):
+    ec = front + perp * (0.17 * side)
+    ellipsoid("eye" + nm, ec, (0.12, 0.12, 0.15), None, eyeDark)
+    sh = ec + camdir * 0.07 + up * 0.05 - perp * (0.035 * side)
+    sphere("shine" + nm, sh.x, sh.y, sh.z, 0.035, shineM)
+# щупальца — 6 пухлых розовых, с подкрученными кончиками (2 сегмента)
+armTop = mat("octoArmTop", "#ff6bb6", rough=0.36)
+armBot = mat("octoArmBot", "#e84fa0", rough=0.42)
+baseZ = hc.z - 0.46
+for i in range(6):
+    a = math.radians(i * 60 + 28)
+    outw = Vector((math.cos(a), math.sin(a), 0))
+    base = Vector((hc.x + 0.34 * math.cos(a), hc.y + 0.34 * math.sin(a), baseZ))
+    d1 = (outw + Vector((0, 0, -1.15))); d1.normalize()      # сегмент вниз-наружу
+    s1 = base + d1 * 0.26
+    ellipsoid(f"arm{i}a", s1, (0.18, 0.18, 0.34), d1.to_track_quat("Z", "Y"), armTop if i % 2 == 0 else armBot)
+    tipBase = base + d1 * 0.46
+    d2 = (outw * 1.2 + Vector((0, 0, 0.55))); d2.normalize()  # кончик подкручен вверх
+    s2 = tipBase + d2 * 0.16
+    ellipsoid(f"arm{i}b", s2, (0.13, 0.13, 0.2), d2.to_track_quat("Z", "Y"), armTop if i % 2 == 0 else armBot)
+
+# ── камера (истинная изометрия, зеркальный «наоборот» вид; комната больше → шире охват) ──
+target = Vector((3.6, 3.0, 0.85))
 bpy.ops.object.empty_add(location=target)
 empty = bpy.context.active_object
-cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 7.4
+cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 9.2
 cam = bpy.data.objects.new("Cam", cam_data)
 bpy.context.collection.objects.link(cam)
-cam.location = target + Vector((9, -9, 9))
+cam.location = target + CAM_OFFSET
 tc = cam.constraints.new("TRACK_TO"); tc.target = empty
 tc.track_axis = "TRACK_NEGATIVE_Z"; tc.up_axis = "UP_Y"
 bpy.context.scene.camera = cam
 
 # ── свет ──
-sun_d = bpy.data.lights.new("Sun", "SUN"); sun_d.energy = 4.6; sun_d.angle = math.radians(10)
+sun_d = bpy.data.lights.new("Sun", "SUN"); sun_d.energy = 5.4; sun_d.angle = math.radians(10)
 sun = bpy.data.objects.new("Sun", sun_d); bpy.context.collection.objects.link(sun)
-sun.rotation_euler = (math.radians(50), math.radians(10), math.radians(35))
-fill_d = bpy.data.lights.new("Fill", "AREA"); fill_d.energy = 380; fill_d.size = 14
+sun.rotation_euler = (math.radians(48), math.radians(-12), math.radians(-35))   # светит со стороны новой камеры
+fill_d = bpy.data.lights.new("Fill", "AREA"); fill_d.energy = 600; fill_d.size = 16
 fill = bpy.data.objects.new("Fill", fill_d); bpy.context.collection.objects.link(fill)
-fill.location = (-3, -9, 7); fill.rotation_euler = (math.radians(55), 0, math.radians(-28))
+fill.location = (-9, -9, 8); fill.rotation_euler = (math.radians(52), 0, math.radians(28))
+fill2_d = bpy.data.lights.new("Fill2", "AREA"); fill2_d.energy = 320; fill2_d.size = 14
+fill2 = bpy.data.objects.new("Fill2", fill2_d); bpy.context.collection.objects.link(fill2)
+fill2.location = (10, -6, 7); fill2.rotation_euler = (math.radians(55), 0, math.radians(-70))
 # мир — лёгкая фиолетовая подсветка
 world = bpy.data.worlds.new("W"); bpy.context.scene.world = world; world.use_nodes = True
 bg = world.node_tree.nodes.get("Background")
-bg.inputs[0].default_value = (0.10, 0.09, 0.15, 1); bg.inputs[1].default_value = 1.2
+bg.inputs[0].default_value = (0.13, 0.12, 0.18, 1); bg.inputs[1].default_value = 1.7
 
 # ── рендер ──
 sc = bpy.context.scene
