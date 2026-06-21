@@ -540,7 +540,8 @@ class Orchestrator:
                 task_type=request.task_type.value if request.task_type else "general",
                 user_input=request.user_input, critic_score=0.9, iterations=1,
                 model=f"DAG×{len(order)}", elapsed=time.time() - start_time,
-                issues=[], suggestions=[], tokens_in=tin, tokens_out=tout, cost_usd=cost)
+                issues=[], suggestions=[], tokens_in=tin, tokens_out=tout, cost_usd=cost,
+                answer=final_answer)
             if self.hooks:
                 await self.hooks.fire("task_complete",
                                       task_type=request.task_type.value if request.task_type else "general",
@@ -1000,6 +1001,7 @@ class Orchestrator:
                 tokens_in    = tin,
                 tokens_out   = tout,
                 cost_usd     = cost,
+                answer       = result.final_answer or "",
             )
             # task_complete hook → индексация в эпизодическую память
             if self.hooks:

@@ -1384,6 +1384,7 @@ async def api_feedback_queue(n: int = 12):
                 "ts":           ts,
                 "task_type":    r.get("task_type", "general"),
                 "preview":      r.get("preview", ""),
+                "answer":       r.get("answer_preview", ""),
                 "critic_score": r.get("critic_score", 0.0),
                 "model":        r.get("model", ""),
                 "issues":       (r.get("issues") or [])[:3],

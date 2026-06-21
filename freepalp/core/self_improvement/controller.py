@@ -94,6 +94,7 @@ class SelfImprovementController:
         tokens_in: int = 0,
         tokens_out: int = 0,
         cost_usd: float = 0.0,
+        answer: str = "",
     ):
         """Записывает метрику задачи. Вызывается из Orchestrator после run()."""
         self.collector.log(
@@ -108,6 +109,7 @@ class SelfImprovementController:
             tokens_in=tokens_in,
             tokens_out=tokens_out,
             cost_usd=cost_usd,
+            answer=answer,
         )
         self._task_counter += 1
         self._state["total_tasks_ever"] = self._state.get("total_tasks_ever", 0) + 1

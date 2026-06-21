@@ -124,11 +124,13 @@ class MetricsCollector:
         tokens_in: int = 0,
         tokens_out: int = 0,
         cost_usd: float = 0.0,
+        answer: str = "",
     ):
         record = {
             "ts": datetime.now().isoformat(),
             "task_type": task_type,
             "preview": user_input[:80],
+            "answer_preview": (answer or "")[:600],   # контекст для игры «Дрессировка»
             "critic_score": round(critic_score, 3),
             "iterations": iterations,
             "model": model,

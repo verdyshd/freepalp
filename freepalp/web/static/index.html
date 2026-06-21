@@ -1409,7 +1409,10 @@
     .tr-type { font-size: 11px; font-weight: 600; color: var(--accent); background: rgba(159,122,234,.14); border-radius: 6px; padding: 2px 8px; }
     .tr-model { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
     .tr-score { margin-left: auto; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+    .tr-label { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); margin: 0 0 4px 2px; }
     .tr-prompt { font-size: 14px; color: var(--text); line-height: 1.5; background: var(--bg-3); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+    .tr-answer { font-size: 13px; color: var(--text-2); line-height: 1.55; background: var(--bg-glass); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 11px 13px; margin-bottom: 12px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+    .tr-noanswer { font-size: 12px; color: var(--text-3); font-style: italic; background: var(--bg-3); border-radius: 8px; padding: 10px 13px; margin-bottom: 12px; }
     .tr-issues { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
     .tr-issue { font-size: 11px; color: var(--text-2); padding-left: 16px; position: relative; }
     .tr-issue::before { content: '⚠'; position: absolute; left: 0; opacity: .7; }
@@ -4647,8 +4650,9 @@ const OfficeScene = (() => {
     }
   }
 
-  let _built = false;
-  function build() {
+  let _built = false, _mode = 'svg';
+  function buildSVG() {
+    _mode = 'svg';
     const stage = document.getElementById('office-stage');
     if (!stage) return;
     let s = `<svg viewBox="232 58 300 234" xmlns="http://www.w3.org/2000/svg">`;
@@ -4723,6 +4727,40 @@ const OfficeScene = (() => {
     applyState();
   }
 
+  // Изо-офис из Blender-рендера (точная модель). Живые слои (экран/глоу/мысли/конфетти)
+  // накладываются в той же системе координат рендера (office.coords.json).
+  let _screenMatrix = '', _headTop = [700, 250];
+  async function buildImage(stage) {
+    let co;
+    try { co = await (await fetch('/static/office.coords.json', { cache: 'no-cache' })).json(); }
+    catch (e) { return false; }
+    if (!co || !co.screen) return false;
+    const [W, H] = co.res || [1400, 1050];
+    const s = co.screen, ht = co.headTop || [W * 0.5, H * 0.25];
+    _headTop = ht;
+    // аффинная матрица: единичный квадрат → плоскость экрана (учитывает наклон)
+    const ax = s.tr[0] - s.tl[0], ay = s.tr[1] - s.tl[1];
+    const dx = s.bl[0] - s.tl[0], dy = s.bl[1] - s.tl[1];
+    _screenMatrix = `matrix(${ax/100},${ay/100},${dx/100},${dy/100},${s.tl[0]},${s.tl[1]})`;
+    const quad = [s.tl, s.tr, s.br, s.bl].map(p => p.join(',')).join(' ');
+    const thx = ht[0] + 70, thy = ht[1] - 40;   // пузырь мыслей над головой
+    const cfx = ht[0], cfy = ht[1] - 16;
+    stage.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <image href="/static/office.png" x="0" y="0" width="${W}" height="${H}"/>
+      <polygon id="screen-glow" points="${quad}" fill="#9f7aea" opacity=".5"/>
+      <g id="screen-content" transform="${_screenMatrix}">${screen('sleep', 50, 50)}</g>
+      <g id="octo-think">
+        <ellipse cx="${thx}" cy="${thy}" rx="46" ry="30" fill="#f7fafc"/>
+        <circle cx="${thx-40}" cy="${thy+30}" r="9" fill="#f7fafc"/><circle cx="${thx-54}" cy="${thy+48}" r="6" fill="#f7fafc"/>
+        <circle class="td td1" cx="${thx-16}" cy="${thy}" r="6" fill="#9f7aea"/><circle class="td td2" cx="${thx}" cy="${thy}" r="6" fill="#9f7aea"/><circle class="td td3" cx="${thx+16}" cy="${thy}" r="6" fill="#9f7aea"/>
+      </g>
+      ${['#68d391','#f6ad55','#63b3ed','#fc8181'].map((c,i)=>`<rect class="conf c${i+1}" x="${cfx-34+i*20}" y="${cfy}" width="11" height="11" rx="2" fill="${c}"/>`).join('')}
+    </svg>`;
+    _mode = 'img'; _built = true;
+    applyState();
+    return true;
+  }
+
   let _state = 'idle', _detail = '';
   const META = {
     idle:'sleep', thinking:'think', typing:'code', browsing:'web', searching:'search',
@@ -4740,12 +4778,15 @@ const OfficeScene = (() => {
       stage.setAttribute('data-state', _state);
       const sc = document.getElementById('screen-content');
       if (sc) {
-        // пересобрать экран: вытащить центр из текущего glow-полигона
-        const glow = document.getElementById('screen-glow');
-        const pts = glow ? glow.getAttribute('points').split(' ').map(p => p.split(',').map(Number)) : null;
-        const cx = pts ? pts.reduce((a,p)=>a+p[0],0)/pts.length : 540;
-        const cy = pts ? pts.reduce((a,p)=>a+p[1],0)/pts.length : 150;
-        sc.innerHTML = screen(META[_state] || 'sleep', cx, cy);
+        if (_mode === 'img') {
+          sc.innerHTML = screen(META[_state] || 'sleep', 50, 50);   // родитель уже несёт matrix
+        } else {
+          const glow = document.getElementById('screen-glow');
+          const pts = glow ? glow.getAttribute('points').split(' ').map(p => p.split(',').map(Number)) : null;
+          const cx = pts ? pts.reduce((a,p)=>a+p[0],0)/pts.length : 540;
+          const cy = pts ? pts.reduce((a,p)=>a+p[1],0)/pts.length : 150;
+          sc.innerHTML = screen(META[_state] || 'sleep', cx, cy);
+        }
       }
     }
     const se = document.getElementById('office-status-emoji'); if (se) se.textContent = EMOJI[_state] || '🐙';
@@ -4800,8 +4841,11 @@ const OfficeScene = (() => {
     set(ok ? 'success' : 'error', '');
     _idleTimer = setTimeout(() => set('idle', ''), 2600);
   }
-  function render() {            // вызывается при открытии вкладки
-    if (!_built) build(); else applyState();
+  async function render() {       // вызывается при открытии вкладки
+    if (!_built) {
+      const stage = document.getElementById('office-stage');
+      if (stage) { const ok = await buildImage(stage); if (!ok) buildSVG(); }
+    } else { applyState(); }
     renderLegend(); applyState();
   }
   return { render, set, onEvent, start, finish };
@@ -4837,14 +4881,20 @@ const Trainer = (() => {
     _cur = _queue[_i]; _tags = [];
     const s = _cur.critic_score || 0;
     const issues = (_cur.issues || []).map(x => `<div class="tr-issue">${escHtml(x)}</div>`).join('');
+    const ans = (_cur.answer || '').trim();
+    const ansBlock = ans
+      ? `<div class="tr-label">${t('trainer.answer')}</div><div class="tr-answer">${escHtml(ans)}${ans.length >= 590 ? ' …' : ''}</div>`
+      : `<div class="tr-noanswer">${t('trainer.noAnswer')}</div>`;
     $('tr-body').innerHTML = `<div class="tr-card">
       <div class="tr-cardtop">
         <span class="tr-type">${escHtml(_cur.task_type)}</span>
         <span class="tr-model">${escHtml(_cur.model || '')}</span>
         <span class="tr-score" style="color:${scoreColor(s)};background:${scoreColor(s)}22">${t('trainer.criticScore')} ${(s * 100).toFixed(0)}%</span>
       </div>
+      <div class="tr-label">${t('trainer.question')}</div>
       <div class="tr-prompt">${escHtml(_cur.preview || '—')}</div>
-      ${issues ? `<div class="tr-issues">${issues}</div>` : ''}
+      ${ansBlock}
+      ${issues ? `<div class="tr-label">${t('trainer.criticSays')}</div><div class="tr-issues">${issues}</div>` : ''}
       <div class="tr-q">${t('trainer.q')}</div>
       <div class="tr-verdicts">
         <button class="tr-vbtn good" onclick="Trainer.vote('good')">👍 ${t('trainer.good')}</button>
@@ -6028,6 +6078,10 @@ const I18N = {
   'trainer.footer': {ru:'Твои оценки кормят самоулучшение — оно приоритизирует слабые типы задач и чинит их промпты.', en:'Your verdicts feed self-improvement — it prioritizes weak task types and fixes their prompts.', zh:'你的评判会喂给自我改进 —— 它据此优先处理薄弱的任务类型并修复其提示词。'},
   'trainer.loading':{ru:'Осьминог тасует задачи…', en:'The octopus is shuffling tasks…', zh:'章鱼正在洗牌任务……'},
   'trainer.criticScore':{ru:'критик:', en:'critic:', zh:'评审：'},
+  'trainer.question':{ru:'Задача', en:'Task', zh:'任务'},
+  'trainer.answer': {ru:'Ответ агента', en:'Agent answer', zh:'智能体回答'},
+  'trainer.criticSays':{ru:'Что заметил критик', en:'What the critic flagged', zh:'评审指出的问题'},
+  'trainer.noAnswer':{ru:'Ответ не сохранён (старая задача) — оцени по разбору критика ниже.', en:'Answer not stored (old task) — judge by the critic notes below.', zh:'未保存回答（旧任务）—— 根据下方评审说明判断。'},
   'trainer.q':      {ru:'Это хороший ответ агента?', en:'Was this a good answer from the agent?', zh:'这是智能体的好回答吗？'},
   'trainer.good':   {ru:'Хороший', en:'Good', zh:'好'},
   'trainer.bad':    {ru:'Слабый', en:'Weak', zh:'差'},
