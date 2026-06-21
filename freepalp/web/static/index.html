@@ -3114,34 +3114,47 @@ async function loadMemGraph(upto = 0) {
   }));
   d.edges.forEach(e => { nodes[e.a].deg++; nodes[e.b].deg++; });
 
-  // Force layout: 250 итераций — отталкивание с пределом радиуса, притяжение
-  // по рёбрам ∝ весу, мягкая гравитация к центру (иначе всё липнет к краям)
-  for (let it = 0; it < 250; it++) {
-    const k = 1 - it/270;
-    for (let i = 0; i < N; i++) for (let j = i+1; j < N; j++) {
+  // ── Живая физ-симуляция (непрерывная, с перетаскиванием) ──
+  // Вместо одноразовых 250 итераций — постоянный шаг физики на rAF: узлы можно
+  // тянуть (соседи реагируют), а при проигрывании в силах участвуют ТОЛЬКО первые
+  // _active узлов → подграф реально перекладывается/растёт по мере появления записей.
+  let _active = N;          // сколько узлов «в игре» (для проигрывания развития)
+  let _alpha = 0;           // энергия симуляции (0 = покой, rAF спит)
+  let _pin = null;          // узел под курсором (держится на месте при перетаскивании)
+  let _hover = null;        // подсвеченный узел
+  let _running = false;
+
+  function simStep(k) {     // один шаг физики при энергии k, над активными узлами
+    const A = Math.min(_active | 0, N);
+    for (let i = 0; i < A; i++) for (let j = i+1; j < A; j++) {
       const a = nodes[i], b = nodes[j];
       let dx = a.x-b.x, dy = a.y-b.y;
       let dist2 = dx*dx + dy*dy + 0.01;
-      if (dist2 > 30000) continue;           // больший радиус отталкивания → шире разлёт
+      if (dist2 > 30000) continue;
       const rep = 420 / dist2 * k;
       a.vx += dx*rep; a.vy += dy*rep; b.vx -= dx*rep; b.vy -= dy*rep;
     }
     for (const e of d.edges) {
+      if (e.a >= A || e.b >= A) continue;
       const a = nodes[e.a], b = nodes[e.b];
       const dx = b.x-a.x, dy = b.y-a.y;
       const att = 0.02 * e.w * k;
       a.vx += dx*att; a.vy += dy*att; b.vx -= dx*att; b.vy -= dy*att;
     }
-    for (const n of nodes) {
-      n.vx += (W/2 - n.x) * 0.0035 * k;      // слабее гравитация → не липнут к центру
+    for (let i = 0; i < A; i++) {
+      const n = nodes[i];
+      if (n === _pin) { n.vx = 0; n.vy = 0; continue; }   // зажатый стоит под курсором
+      n.vx += (W/2 - n.x) * 0.0035 * k;
       n.vy += (H/2 - n.y) * 0.0035 * k;
-      n.x += n.vx; n.y += n.vy;              // без жёсткого клампа — auto-fit впишет
-      n.vx *= 0.5; n.vy *= 0.5;
+      n.x += n.vx; n.y += n.vy;
+      n.vx *= 0.6; n.vy *= 0.6;
     }
   }
 
-  // Auto-fit: вписываем bbox узлов в canvas (иначе граф жмётся в малую область,
-  // хотя поле в разы больше). Дальше — зум колесом + панорамирование.
+  // Прогрев: даём раскладке устояться (как раньше), потом auto-fit
+  for (let it = 0; it < 170; it++) simStep(1 - it/190);
+
+  // Auto-fit: вписываем bbox активных узлов в canvas. Дальше — зум/пан/перетаскивание.
   let minX=1e9, minY=1e9, maxX=-1e9, maxY=-1e9;
   for (const n of nodes) { if(n.x<minX)minX=n.x; if(n.x>maxX)maxX=n.x; if(n.y<minY)minY=n.y; if(n.y>maxY)maxY=n.y; }
   const bw = Math.max(1, maxX-minX), bh = Math.max(1, maxY-minY);
@@ -3149,14 +3162,13 @@ async function loadMemGraph(upto = 0) {
   const fit = Math.min((W-56)/bw, (H-56)/bh, 2.6);
   const view = { scale: fit, ox: W/2 - cx*fit, oy: H/2 - cy*fit };
 
-  let _reveal = N;   // сколько узлов показывать (для плавного проигрывания развития)
   function draw(highlight) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
     ctx.setTransform(dpr * view.scale, 0, 0, dpr * view.scale,
                      dpr * view.ox, dpr * view.oy);
-    const shown = i => i < _reveal;
-    const nodeA = i => (i > _reveal - 1) ? Math.max(0, _reveal - i) : 1;  // плавное появление крайнего
+    const shown = i => i < _active;
+    const nodeA = i => (i > _active - 1) ? Math.max(0, _active - i) : 1;  // плавное появление крайнего
     for (const e of d.edges) {
       if (!shown(e.a) || !shown(e.b)) continue;
       const a = nodes[e.a], b = nodes[e.b];
@@ -3168,17 +3180,16 @@ async function loadMemGraph(upto = 0) {
     for (let i = 0; i < nodes.length; i++) {
       if (!shown(i)) break;
       const n = nodes[i];
-      const ap = nodeA(i);                                    // прогресс появления узла
-      const r = (3 + Math.min(7, n.deg * 0.8)) / Math.sqrt(view.scale) * (0.35 + 0.65 * ap);  // «выскакивает»
+      const ap = nodeA(i);
+      const r = (3 + Math.min(7, n.deg * 0.8)) / Math.sqrt(view.scale) * (0.35 + 0.65 * ap);
       ctx.fillStyle = LAYER_COLORS[n.layer] || '#a0aec0';
       ctx.globalAlpha = (highlight && highlight !== n ? 0.35 : 1) * ap;
       ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 2*Math.PI); ctx.fill();
       ctx.globalAlpha = 1;
-      if (highlight === n) {
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5 / view.scale;
-        ctx.beginPath(); ctx.arc(n.x, n.y, r+2/view.scale, 0, 2*Math.PI); ctx.stroke();
+      if (n === _pin || highlight === n) {
+        ctx.strokeStyle = n === _pin ? '#ecc94b' : '#fff'; ctx.lineWidth = 1.6 / view.scale;
+        ctx.beginPath(); ctx.arc(n.x, n.y, r+2.5/view.scale, 0, 2*Math.PI); ctx.stroke();
       }
-      // При сильном зуме подписываем узлы прямо на холсте
       if (view.scale >= 2.2) {
         ctx.fillStyle = 'rgba(226,232,240,0.85)';
         ctx.font = `${10/view.scale}px sans-serif`;
@@ -3186,15 +3197,36 @@ async function loadMemGraph(upto = 0) {
       }
     }
   }
+
+  // rAF-цикл: пока есть энергия или тянем узел — шагаем физику и перерисовываем
+  function tick() {
+    if (_alpha > 0.012 || _pin) {
+      simStep(_pin ? Math.max(_alpha, 0.35) : _alpha);   // при перетаскивании держим энергию
+      if (!_pin) _alpha *= 0.985;
+      draw(_hover);
+      requestAnimationFrame(tick);
+    } else { _alpha = 0; _running = false; draw(_hover); }
+  }
+  function ensureRunning() { if (!_running) { _running = true; requestAnimationFrame(tick); } }
+  const reheat = (a = 0.6) => { _alpha = Math.max(_alpha, a); ensureRunning(); };
+
   draw(null);
   _graphState = { nodes, draw, total: N,
-    setReveal: v => { _reveal = Math.max(1, Math.min(N, v)); draw(null); } };
+    // Проигрывание развития: меняем число активных узлов → живая раскладка
+    // перестраивает подграф (видно, как структура росла и пересобиралась).
+    setReveal: v => { _active = Math.max(1, Math.min(N, v)); reheat(0.5); } };
 
-  // Экранные координаты → мировые (с учётом зума/пана)
-  const toWorld = (mx, my) => ({
-    x: (mx - view.ox) / view.scale,
-    y: (my - view.oy) / view.scale,
-  });
+  const toWorld = (mx, my) => ({ x: (mx - view.ox) / view.scale, y: (my - view.oy) / view.scale });
+  const pickNode = (mx, my) => {
+    const w = toWorld(mx, my);
+    const hitR2 = 220 / (view.scale * view.scale);
+    let best = hitR2, hit = null;
+    for (let i = 0; i < _active; i++) {
+      const n = nodes[i], d2 = (n.x-w.x)**2 + (n.y-w.y)**2;
+      if (d2 < best) { best = d2; hit = n; }
+    }
+    return hit;
+  };
 
   // Колесо: зум к точке под курсором, 0.5×–8×
   canvas.onwheel = (ev) => {
@@ -3203,54 +3235,59 @@ async function loadMemGraph(upto = 0) {
     const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
     const factor = ev.deltaY < 0 ? 1.18 : 1/1.18;
     const ns = Math.max(0.5, Math.min(8, view.scale * factor));
-    // Точка под курсором остаётся на месте
     view.ox = mx - (mx - view.ox) * (ns / view.scale);
     view.oy = my - (my - view.oy) * (ns / view.scale);
     view.scale = ns;
-    draw(null);
+    draw(_hover);
   };
 
-  // Перетаскивание: панорама
-  let _drag = null;
+  // Нажатие: если попали в узел — хватаем его (физика реагирует); иначе — панорама
+  let _pan = null;
+  const tip = document.getElementById('mem-graph-tip');
   canvas.onmousedown = (ev) => {
     const rect = canvas.getBoundingClientRect();
-    _drag = { x: ev.clientX - rect.left, y: ev.clientY - rect.top, moved: false };
-    canvas.style.cursor = 'grabbing';
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    const hit = pickNode(mx, my);
+    if (hit) { _pin = hit; reheat(0.5); canvas.style.cursor = 'grabbing'; }
+    else { _pan = { x: mx, y: my }; canvas.style.cursor = 'grabbing'; }
   };
-  canvas.onmouseup = () => { _drag = null; canvas.style.cursor = 'grab'; };
+  canvas.onmouseup = () => {
+    if (_pin) { _pin = null; reheat(0.45); }     // отпустили — узел доезжает на место
+    _pan = null; canvas.style.cursor = 'grab';
+  };
   canvas.style.cursor = 'grab';
 
-  // Hover: показать полный текст реальной записи (+ пан при зажатой кнопке)
-  const tip = document.getElementById('mem-graph-tip');
   canvas.onmousemove = (ev) => {
     const rect = canvas.getBoundingClientRect();
     const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
-    if (_drag) {
-      view.ox += mx - _drag.x; view.oy += my - _drag.y;
-      _drag.x = mx; _drag.y = my; _drag.moved = true;
-      tip.style.display = 'none';
-      draw(null);
+    if (_pin) {                                   // тянем узел — держим под курсором
+      const w = toWorld(mx, my);
+      _pin.x = w.x; _pin.y = w.y; _pin.vx = 0; _pin.vy = 0;
+      reheat(0.5); tip.style.display = 'none';
       return;
     }
-    const w = toWorld(mx, my);
-    const hitR2 = 130 / (view.scale * view.scale);
-    let hit = null;
-    for (const n of nodes) {
-      if ((n.x-w.x)**2 + (n.y-w.y)**2 < hitR2) { hit = n; break; }
+    if (_pan) {                                   // панорама поля
+      view.ox += mx - _pan.x; view.oy += my - _pan.y;
+      _pan.x = mx; _pan.y = my; tip.style.display = 'none';
+      draw(_hover); return;
     }
+    const hit = pickNode(mx, my);
+    _hover = hit;
+    canvas.style.cursor = hit ? 'grab' : 'grab';
     if (hit) {
       tip.style.display = 'block';
       tip.style.left = (ev.clientX + 14) + 'px';
       tip.style.top  = (ev.clientY + 14) + 'px';
       tip.innerHTML = `<span style="color:${LAYER_COLORS[hit.layer]}">[${hit.layer}]</span> ${escHtml(hit.text)}`;
-    } else {
-      tip.style.display = 'none';
-    }
-    draw(hit);
+    } else { tip.style.display = 'none'; }
+    if (!_running) draw(hit);
   };
-  canvas.onmouseleave = () => { tip.style.display = 'none'; _drag = null; canvas.style.cursor = 'grab'; draw(null); };
-  // Двойной клик — сброс вида
-  canvas.ondblclick = () => { view.scale = 1; view.ox = 0; view.oy = 0; draw(null); };
+  canvas.onmouseleave = () => { tip.style.display = 'none'; _pin = null; _pan = null; _hover = null; canvas.style.cursor = 'grab'; if (!_running) draw(null); };
+  // Двойной клик — сброс вида + лёгкая встряска раскладки (оживить)
+  canvas.ondblclick = () => {
+    view.scale = fit; view.ox = W/2 - cx*fit; view.oy = H/2 - cy*fit;
+    reheat(0.9);
+  };
 }
 
 // ════════════════════════════════════════════════
