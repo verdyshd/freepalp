@@ -55,7 +55,7 @@ except ImportError:
 
 from typing import Optional
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -1485,6 +1485,48 @@ async def api_system_versions():
     history.sort(key=lambda h: h.get("date") or "", reverse=True)
     return {"ok": True, "version": _read_freepalp_version(),
             "commit": _git_short_sha(), "history": history[:50]}
+
+
+# ── Локальный нейро-TTS (Piper) — «осьминожий» голос, офлайн, 3 языка ──
+# Модели в freepalp/voices/ (gitignored). length_scale>1 — чуть медленнее на синтезе,
+# фронт играет с playbackRate>1 → выше тон при норм. скорости = осьминожий характер.
+_PIPER_VOICES = {"ru": "ru_RU-irina-medium", "en": "en_US-amy-medium", "zh": "zh_CN-huayan-medium"}
+_PIPER_DIR = Path(__file__).parent / "voices"
+_piper_cache: dict = {}
+
+
+def _get_piper(lang: str):
+    name = _PIPER_VOICES.get(lang, _PIPER_VOICES["ru"])
+    if name not in _piper_cache:
+        from piper import PiperVoice
+        _piper_cache[name] = PiperVoice.load(str(_PIPER_DIR / f"{name}.onnx"))
+    return _piper_cache[name]
+
+
+@app.get("/api/tts")
+async def api_tts(text: str = "", lang: str = "ru"):
+    """Синтез речи локальным Piper → audio/wav. Фронт фолбэчит на браузерный TTS при ошибке."""
+    text = (text or "").strip()[:600]
+    if not text:
+        return Response(status_code=204)
+    lg = lang if lang in _PIPER_VOICES else "ru"
+
+    def _synth() -> bytes:
+        import io, wave
+        from piper import SynthesisConfig
+        v = _get_piper(lg)
+        sc = SynthesisConfig(length_scale=1.15, volume=1.0, normalize_audio=True)
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as wf:
+            v.synthesize_wav(text, wf, syn_config=sc)
+        return buf.getvalue()
+
+    try:
+        data = await asyncio.to_thread(_synth)
+        return Response(content=data, media_type="audio/wav",
+                        headers={"Cache-Control": "no-store"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"{type(e).__name__}: {e}"}, status_code=500)
 
 
 @app.get("/api/improve/status")

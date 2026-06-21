@@ -2339,7 +2339,7 @@ const _VOICE_LANG = { ru: 'ru-RU', en: 'en-US', zh: 'zh-CN' };
 function _voiceOn() { try { return localStorage.getItem('freepalp-voice') === '1'; } catch (e) { return false; } }
 function setVoice(on) {
   try { localStorage.setItem('freepalp-voice', on ? '1' : '0'); } catch (e) {}
-  if (!on && window.speechSynthesis) speechSynthesis.cancel();
+  if (!on && typeof _stopTTS === 'function') _stopTTS();
 }
 function _pickVoice(lc) {
   if (!window.speechSynthesis) return null;
@@ -2353,24 +2353,52 @@ function _pickVoice(lc) {
   return pool.slice().sort((a, b) => rank(b) - rank(a))[0];
 }
 if ('speechSynthesis' in window) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch (e) {} }
-// Озвучка текста. force=true — игнорировать тумблер (явное действие пользователя).
+// Очистка текста под озвучку (без markdown/код/ссылок)
+function _cleanForTTS(text) {
+  return String(text || '')
+    .replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ')
+    .replace(/[#*_>|~]/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 600);
+}
+let _ttsAudio = null, _ttsBlubTimer = null;
+function _stopTTS() {
+  try { if (_ttsAudio) { _ttsAudio.pause(); _ttsAudio = null; } } catch (e) {}
+  if (_ttsBlubTimer) { clearInterval(_ttsBlubTimer); _ttsBlubTimer = null; }
+  if (window.speechSynthesis) { try { speechSynthesis.cancel(); } catch (e) {} }
+}
+// Озвучка: локальный нейро-TTS Piper (осьминожий голос) → фолбэк на браузерный.
+// force=true — игнорировать тумблер (явное действие пользователя).
 function speak(text, opts) {
   opts = opts || {};
-  if (!('speechSynthesis' in window)) return;
   if (!opts.force && !_voiceOn()) return;
+  const clean = _cleanForTTS(text);
+  if (!clean) return;
+  _stopTTS();
+  const lang = window._lang || 'ru';
+  fetch('/api/tts?lang=' + encodeURIComponent(lang) + '&text=' + encodeURIComponent(clean))
+    .then(r => (r && r.ok && r.status === 200) ? r.blob() : Promise.reject('no-piper'))
+    .then(blob => {
+      const a = new Audio(URL.createObjectURL(blob));
+      a.preservesPitch = false; a.mozPreservesPitch = false; a.webkitPreservesPitch = false;
+      a.playbackRate = opts.rate != null ? opts.rate : 1.18;   // выше тон = осьминожий
+      _ttsAudio = a;
+      a.onplay = () => { octoBlub(0.05); _ttsBlubTimer = setInterval(() => octoBlub(0.016), 640); };
+      a.onended = () => { _stopTTS(); octoBlub(0.026); };
+      a.onerror = () => _speakBrowser(clean, opts);
+      a.play().catch(() => _speakBrowser(clean, opts));
+    })
+    .catch(() => _speakBrowser(clean, opts));   // Piper недоступен (не установлен/ошибка)
+}
+// Браузерный TTS (фолбэк) — «звуковые моменты» через onboundary
+function _speakBrowser(clean, opts) {
+  if (!('speechSynthesis' in window)) return;
   try {
-    const clean = String(text || '')
-      .replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ')
-      .replace(/[#*_>|~]/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-      .replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 600);
-    if (!clean) return;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(clean);
     const lc = _VOICE_LANG[window._lang] || 'ru-RU';
     u.lang = lc; const v = _pickVoice(lc); if (v) u.voice = v;
-    u.pitch = opts.pitch != null ? opts.pitch : 1.35;   // повыше — «осьминожий», игривый
+    u.pitch = opts.pitch != null ? opts.pitch : 1.35;
     u.rate  = opts.rate  != null ? opts.rate  : 1.03;
-    // «Звуковые моменты»: осьминог булькает по ходу речи (на границах слов) + старт/финиш
     let _lb = 0;
     u.onstart = () => octoBlub(0.05);
     u.onboundary = ev => { const now = performance.now();

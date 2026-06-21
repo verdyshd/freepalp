@@ -50,3 +50,7 @@ eval/*.json
 
 # QA-артефакты сессий (скрипты проверок, скриншоты, дампы) — не публикуются
 _qa/
+
+# Piper TTS voice models (large, downloaded locally)
+freepalp/voices/
+*.onnx
