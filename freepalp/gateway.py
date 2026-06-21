@@ -1380,6 +1380,9 @@ async def api_feedback_queue(n: int = 12):
             # пропускаем чистые API-ошибки (нечего оценивать человеку)
             if r.get("critic_score", 0.0) == 0.0 and r.get("tokens_total", 0) == 0:
                 continue
+            # только задачи с сохранённым ОТВЕТОМ — иначе судить нечего (просьба Дмитрия)
+            if not (r.get("answer_preview") or "").strip():
+                continue
             items.append({
                 "ts":           ts,
                 "task_type":    r.get("task_type", "general"),

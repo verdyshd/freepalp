@@ -73,6 +73,38 @@ def sphere(name, x, y, z, r, m):
     o.data.materials.append(m); bpy.ops.object.shade_smooth()
     return o
 
+def hex2lin(hexc):
+    n = int(hexc[1:], 16)
+    f = lambda c: (c / 255) ** 2.2
+    return (f((n >> 16) & 255), f((n >> 8) & 255), f(n & 255), 1)
+
+def mat_grad(name, hex_bot, hex_top, rough=0.42):
+    """Материал с вертикальным градиентом (низ→верх) — оранжево-жёлтая голова маскота."""
+    if name in _mats:
+        return _mats[name]
+    m = bpy.data.materials.new(name); m.use_nodes = True
+    nt = m.node_tree; bsdf = nt.nodes.get("Principled BSDF")
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    nt.links.new(tc.outputs["Generated"], sep.inputs[0])
+    nt.links.new(sep.outputs["Z"], ramp.inputs["Fac"])
+    ramp.color_ramp.elements[0].position = 0.18; ramp.color_ramp.elements[0].color = hex2lin(hex_bot)
+    ramp.color_ramp.elements[1].position = 0.82; ramp.color_ramp.elements[1].color = hex2lin(hex_top)
+    nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    bsdf.inputs["Roughness"].default_value = rough
+    _mats[name] = m
+    return m
+
+def ellipsoid(name, loc, scale, quat, m):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=tuple(loc), segments=22, ring_count=14)
+    o = bpy.context.active_object; o.name = name
+    o.scale = scale
+    if quat is not None:
+        o.rotation_mode = "QUATERNION"; o.rotation_quaternion = quat
+    o.data.materials.append(m); bpy.ops.object.shade_smooth()
+    return o
+
 # ── пол (воксельные плитки 7×6) + ковёр ──
 floorA, floorB = mat("floorA", "#3b3553"), mat("floorB", "#332f49")
 rugA, rugB = mat("rugA", "#6b5aa0"), mat("rugB", "#5a4b8a")
@@ -116,30 +148,31 @@ sphere("leaf2", 0.5, 4.8, 1.6, 0.26, mat("plant2", "#38a169"))
 sphere("leaf3", 0.82, 5.05, 1.55, 0.24, g)
 
 # ── ОСЬМИНОГ (воксельный, сидит на стуле, лицом к камере) ──
-bodyM, headM, armM = mat("octoBody", "#7c4fd6"), mat("octoHead", "#9f7aea"), mat("octoArm", "#b794f4")
-bx, by = 2.62, 3.05
-box("octoBody", bx, by, 0.78, 0.95, 0.8, 0.85, bodyM, bevel=0.12)
-head = box("octoHead", bx - 0.05, by - 0.03, 1.6, 1.05, 0.86, 0.92, headM, bevel=0.16)
-# глаза + зрачки на передней грани (-y, к камере)
-eyeY = by - 0.06
-sphere("eyeL", bx + 0.28, eyeY, 2.05, 0.17, mat("eyeW", "#ffffff"))
-sphere("eyeR", bx + 0.72, eyeY, 2.05, 0.17, mat("eyeW2", "#ffffff"))
-sphere("pupL", bx + 0.28, eyeY - 0.12, 2.05, 0.08, mat("pupil", "#241a40"))
-sphere("pupR", bx + 0.72, eyeY - 0.12, 2.05, 0.08, mat("pupil2", "#241a40"))
-# щупальца — стопки наклонных кубиков (воксельный изгиб) вперёд/вниз
-def tentacle(name, sx, sy, dirx):
-    px, py, pz = sx, sy, 0.78
-    w = 0.26
-    for i in range(4):
-        box(f"{name}{i}", px, py, pz - 0.18, w, 0.26, 0.22, armM, bevel=0.06)
-        px += dirx * 0.12
-        py += 0.12
-        pz -= 0.16
-        w = max(0.14, w - 0.03)
-tentacle("armL1", bx + 0.05, by + 0.7, -1)
-tentacle("armL2", bx + 0.2, by + 0.78, -1)
-tentacle("armR1", bx + 0.64, by + 0.7, 1)
-tentacle("armR2", bx + 0.5, by + 0.78, 1)
+# ── ОСЬМИНОГ-МАСКОТ (как лого FreePalp): круглая оранжево-жёлтая голова + розовые щупальца ──
+hc = Vector((3.15, 3.45, 1.72))                          # центр головы
+headM = mat_grad("octoHead", "#ef8a28", "#ffd24a")       # низ оранжевый → верх жёлтый
+ellipsoid("octoHead", hc, (0.66, 0.62, 0.6), None, headM)
+# глаза + зрачки на ПОВЕРХНОСТИ головы, обращённой к камере (направление обзора (1,-1,1))
+camdir = Vector((1, -1, 1)); camdir.normalize()
+eyeM, pupM = mat("eyeW", "#ffffff", rough=0.28), mat("pupil", "#3a2416", rough=0.4)
+front = hc + camdir * 0.54 + Vector((0, 0, -0.06))     # точка на лбу/лице, к камере
+perp = Vector((1, 1, 0)); perp.normalize()             # перпендикуляр обзору → разводим глаза по экрану
+for side, nm in ((-1, "L"), (1, "R")):
+    ec = front + perp * (0.19 * side)
+    ellipsoid("eye" + nm, ec, (0.14, 0.14, 0.16), None, eyeM)
+    pc = ec + camdir * 0.06
+    sphere("pup" + nm, pc.x, pc.y, pc.z, 0.07, pupM)
+# щупальца — 8 розовых «лепестков» веером у основания головы
+armTop = mat("octoArmTop", "#ff5cb0", rough=0.38)
+armBot = mat("octoArmBot", "#e63a92", rough=0.44)
+baseZ = hc.z - 0.42
+for i in range(8):
+    a = math.radians(i * 45 + 22)
+    d = Vector((math.cos(a), math.sin(a), -0.85)); d.normalize()
+    q = d.to_track_quat("Z", "Y")
+    base = Vector((hc.x + 0.32 * math.cos(a), hc.y + 0.32 * math.sin(a), baseZ))
+    loc = base + d * 0.34
+    ellipsoid(f"arm{i}", loc, (0.15, 0.15, 0.42), q, armTop if i % 2 == 0 else armBot)
 
 # ── камера (истинная изометрия) ──
 target = Vector((3.0, 2.7, 0.85))
@@ -192,7 +225,7 @@ coords = {
         "br": px((3.62 + 1.36, 0.95, 1.66)),
         "bl": px((3.62, 0.95, 1.66)),
     },
-    "headTop": px((bx + 0.5, by - 0.06, 2.55)),
+    "headTop": px((hc.x, hc.y, hc.z + 0.66)),
 }
 with open(OUT_JSON, "w", encoding="utf-8") as f:
     json.dump(coords, f, ensure_ascii=False, indent=2)
