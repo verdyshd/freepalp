@@ -1392,6 +1392,39 @@
     .office-stage[data-state="success"] .conf { animation: confPop .8s ease-out forwards; }
     .conf.c2 { animation-delay: .08s; } .conf.c3 { animation-delay: .16s; } .conf.c4 { animation-delay: .24s; }
     @keyframes confPop { 0% { opacity: 0; transform: translateY(0) scale(.4); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px) scale(1) rotate(40deg); } }
+
+    /* ═══════════ TRAINER — мини-игра ═══════════ */
+    #trainer-modal { display: none; position: fixed; inset: 0; z-index: 700; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+    #trainer-modal.open { display: flex; }
+    .tr-box { background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px; width: min(94vw, 560px); max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 24px 70px rgba(0,0,0,.55); overflow: hidden; }
+    .tr-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    .tr-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .tr-meta { display: flex; align-items: center; gap: 8px; }
+    .tr-pill { font-size: 12px; color: var(--text-2); background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; }
+    .tr-body { padding: 18px; overflow-y: auto; }
+    .tr-foot { padding: 10px 18px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-3); line-height: 1.5; }
+    .tr-card { animation: trIn .25s ease; }
+    @keyframes trIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .tr-cardtop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tr-type { font-size: 11px; font-weight: 600; color: var(--accent); background: rgba(159,122,234,.14); border-radius: 6px; padding: 2px 8px; }
+    .tr-model { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+    .tr-score { margin-left: auto; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+    .tr-prompt { font-size: 14px; color: var(--text); line-height: 1.5; background: var(--bg-3); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+    .tr-issues { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .tr-issue { font-size: 11px; color: var(--text-2); padding-left: 16px; position: relative; }
+    .tr-issue::before { content: '⚠'; position: absolute; left: 0; opacity: .7; }
+    .tr-q { font-size: 13px; color: var(--text-2); margin-bottom: 10px; text-align: center; }
+    .tr-verdicts { display: flex; gap: 10px; }
+    .tr-vbtn { flex: 1; padding: 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg-glass); cursor: pointer; font-size: 15px; font-weight: 600; color: var(--text); transition: all .15s; }
+    .tr-vbtn.good:hover { border-color: #48bb78; background: rgba(72,187,120,.12); }
+    .tr-vbtn.bad:hover  { border-color: #fc8181; background: rgba(252,129,129,.12); }
+    .tr-tags { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0; justify-content: center; }
+    .tr-tag { font-size: 12px; color: var(--text-2); background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; cursor: pointer; transition: all .15s; }
+    .tr-tag.on { color: #fff; border-color: #fc8181; background: rgba(252,129,129,.18); }
+    .tr-empty { text-align: center; padding: 24px 10px; color: var(--text-2); }
+    .tr-empty .e-octo { font-size: 46px; display: block; margin-bottom: 10px; }
+    .tr-thanks { text-align: center; font-size: 26px; padding: 30px; animation: trPop .5s ease; }
+    @keyframes trPop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1949,7 +1982,10 @@
             </div>
             <div id="versions-list" style="font-size:11px;color:var(--text-2);max-height:300px;overflow-y:auto"></div>
           </div>
-          <button class="btn primary" onclick="triggerImprove()" data-i18n="set.improve">🧬 Запустить самоулучшение</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn primary" onclick="triggerImprove()" data-i18n="set.improve">🧬 Запустить самоулучшение</button>
+            <button class="btn" onclick="Trainer.open()" data-i18n="set.trainGame">🎮 Дрессировка (обучить вручную)</button>
+          </div>
         </section>
 
         <!-- ───────── ПАМЯТЬ ───────── -->
@@ -1981,7 +2017,16 @@
               <div style="margin:8px 0;padding:8px 10px;background:var(--bg-3);border-radius:8px;font-family:var(--font-mono);font-size:12px">base_url: <span style="color:var(--accent)">http://localhost:28800/v1</span></div>
               Эндпоинты <code>/v1/chat/completions</code> и <code>/v1/models</code> — под капотом весь роутинг, критик и память.
             </div>
-            <button class="btn" style="margin-top:4px" onclick="window.open('/docs','_blank')">📖 API Docs</button>
+            <div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px">
+              <code id="ide-base-url" style="flex:1;background:var(--bg-3);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">http://localhost:28800/v1</code>
+              <button class="btn" onclick="copyBaseUrl(this)" data-i18n="sp.conn.copyUrl">📋 base_url</button>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:8px"><span data-i18n="sp.conn.modelHint">Имя модели в плагине — любое (роутер сам выберет), напр.</span> <code>freepalp</code> · <span data-i18n="sp.conn.keyHint">ключ не нужен</span></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" onclick="copyIdeConfig('continue',this)" data-i18n="sp.conn.cfgContinue">📋 Конфиг Continue.dev</button>
+              <button class="btn" onclick="copyIdeConfig('cursor',this)" data-i18n="sp.conn.cfgCursor">📋 Настройки Cursor</button>
+              <button class="btn" onclick="window.open('/docs','_blank')">📖 API Docs</button>
+            </div>
           </div>
         </section>
 
@@ -2016,6 +2061,22 @@
   </section>
 
 </main>
+
+<!-- ═══════════ TRAINER — мини-игра «Дрессировка осьминога» ═══════════ -->
+<div id="trainer-modal" onclick="if(event.target===this)closeTrainer()">
+  <div class="tr-box">
+    <div class="tr-head">
+      <div class="tr-title">🎮 <span data-i18n="trainer.title">Дрессировка осьминога</span></div>
+      <div class="tr-meta">
+        <span class="tr-pill" id="tr-streak">🔥 <b id="tr-streak-n">0</b></span>
+        <span class="tr-pill" id="tr-count">🎯 <b id="tr-count-n">0</b></span>
+        <button class="set-close" onclick="closeTrainer()" aria-label="Закрыть">✕</button>
+      </div>
+    </div>
+    <div class="tr-body" id="tr-body"></div>
+    <div class="tr-foot" data-i18n="trainer.footer">Твои оценки кормят самоулучшение — оно приоритизирует слабые типы задач и чинит их промпты.</div>
+  </div>
+</div>
 
 <!-- Модал превью артефактов -->
 <div id="artifact-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center">
@@ -2899,11 +2960,8 @@ function renderAssistantImprove() {
 }
 function assistantRunImprove() { closeAssistant(); if (typeof triggerImprove === 'function') triggerImprove(); }
 function assistantPlay() {
-  _asstSay(_impL().soon);
-  const L = _impL();
-  document.getElementById('asst-actions').innerHTML =
-    `<button class="asst-btn" onclick="assistantRunImprove()">${escHtml(L.run)}</button>
-     <button class="asst-chip" onclick="closeAssistant()">${escHtml(L.later)}</button>`;
+  closeAssistant();
+  try { Trainer.open(); } catch (e) {}
 }
 function openAssistantImprove(reason) {
   _asstReason = reason || ''; const a = _asstEl();
@@ -3112,6 +3170,39 @@ function copyCode(btn) {
       sel.removeAllRanges();
     });
   } catch (e) {}
+}
+
+// ── Коннекторы/IDE: удобное подключение ──
+function _ideBase() { return location.origin + '/v1'; }   // живой origin (работает и для гостя через туннель)
+function copyText(text, btn, okLabel) {
+  const done = () => {
+    if (btn) { const o = btn.textContent; btn.textContent = '✓ ' + (okLabel || t('common.copied')); setTimeout(() => { btn.textContent = o; }, 1400); }
+    else showToast('✓ ' + (okLabel || t('common.copied')));
+  };
+  try {
+    navigator.clipboard.writeText(text).then(done).catch(() => {
+      const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand('copy'); done(); } catch (e) {} ta.remove();
+    });
+  } catch (e) {}
+}
+function hydrateIdeBaseUrl() {
+  const el = document.getElementById('ide-base-url');
+  if (el) el.textContent = _ideBase();
+}
+function copyBaseUrl(btn) { copyText(_ideBase(), btn); }
+function copyIdeConfig(kind, btn) {
+  const base = _ideBase();
+  let cfg;
+  if (kind === 'continue') {
+    cfg = JSON.stringify({ models: [{ title: 'FreePalp', provider: 'openai', model: 'freepalp', apiBase: base, apiKey: 'none' }] }, null, 2);
+    showToast('📋 ' + t('sp.conn.toastContinue'));
+  } else {
+    // Cursor: переопределение OpenAI Base URL в настройках
+    cfg = `OpenAI Base URL: ${base}\nModel: freepalp\nAPI Key: none`;
+    showToast('📋 ' + t('sp.conn.toastCursor'));
+  }
+  copyText(cfg, btn);
 }
 
 // Подсветка код-блоков в сообщении (если hljs загрузился; иначе тихо пропускаем)
@@ -4717,6 +4808,85 @@ const OfficeScene = (() => {
 })();
 
 // ════════════════════════════════════════════════
+// TRAINER — мини-игра «Дрессировка»: человек судит реальные задачи,
+// вердикты кормят самоулучшение (см. /api/feedback*)
+// ════════════════════════════════════════════════
+const Trainer = (() => {
+  const TAGS = ['long', 'inaccurate', 'offtopic', 'madeup', 'notdone'];
+  let _queue = [], _i = 0, _streak = 0, _count = 0, _cur = null, _tags = [];
+  const $ = id => document.getElementById(id);
+  const scoreColor = s => s >= 0.85 ? '#48bb78' : s >= 0.7 ? '#63b3ed' : '#fc8181';
+
+  async function open() {
+    $('trainer-modal').classList.add('open');
+    try { const st = await (await fetch('/api/feedback/stats')).json(); _count = st.count || 0; } catch (e) {}
+    $('tr-count-n').textContent = _count;
+    $('tr-streak-n').textContent = _streak;
+    await loadQueue();
+  }
+  function close() { $('trainer-modal').classList.remove('open'); }
+
+  async function loadQueue() {
+    $('tr-body').innerHTML = `<div class="tr-empty">${t('trainer.loading')}</div>`;
+    try { const d = await (await fetch('/api/feedback/queue?n=15')).json(); _queue = d.items || []; }
+    catch (e) { _queue = []; }
+    _i = 0; renderCard();
+  }
+  function renderCard() {
+    if (_i >= _queue.length) { renderEmpty(); return; }
+    _cur = _queue[_i]; _tags = [];
+    const s = _cur.critic_score || 0;
+    const issues = (_cur.issues || []).map(x => `<div class="tr-issue">${escHtml(x)}</div>`).join('');
+    $('tr-body').innerHTML = `<div class="tr-card">
+      <div class="tr-cardtop">
+        <span class="tr-type">${escHtml(_cur.task_type)}</span>
+        <span class="tr-model">${escHtml(_cur.model || '')}</span>
+        <span class="tr-score" style="color:${scoreColor(s)};background:${scoreColor(s)}22">${t('trainer.criticScore')} ${(s * 100).toFixed(0)}%</span>
+      </div>
+      <div class="tr-prompt">${escHtml(_cur.preview || '—')}</div>
+      ${issues ? `<div class="tr-issues">${issues}</div>` : ''}
+      <div class="tr-q">${t('trainer.q')}</div>
+      <div class="tr-verdicts">
+        <button class="tr-vbtn good" onclick="Trainer.vote('good')">👍 ${t('trainer.good')}</button>
+        <button class="tr-vbtn bad" onclick="Trainer.showTags()">👎 ${t('trainer.bad')}</button>
+      </div>
+    </div>`;
+  }
+  function showTags() {
+    const chips = TAGS.map(k => `<span class="tr-tag" data-k="${k}" onclick="Trainer.toggleTag('${k}',this)">${t('trainer.tag.' + k)}</span>`).join('');
+    const v = document.querySelector('#tr-body .tr-verdicts');
+    if (v) v.outerHTML = `<div class="tr-q">${t('trainer.whyBad')}</div>
+      <div class="tr-tags">${chips}</div>
+      <div class="tr-verdicts"><button class="tr-vbtn bad" onclick="Trainer.vote('bad')">${t('trainer.submit')} 👎</button></div>`;
+  }
+  function toggleTag(k, el) { el.classList.toggle('on'); const i = _tags.indexOf(k); if (i >= 0) _tags.splice(i, 1); else _tags.push(k); }
+  async function vote(verdict) {
+    if (!_cur) return;
+    const tagsTxt = _tags.map(k => t('trainer.tag.' + k));
+    try {
+      const r = await (await fetch('/api/feedback', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ts: _cur.ts, task_type: _cur.task_type, verdict, tags: tagsTxt }),
+      })).json();
+      if (r.ok) _count = r.count;
+    } catch (e) {}
+    _streak++;
+    $('tr-count-n').textContent = _count;
+    $('tr-streak-n').textContent = _streak;
+    try { if (typeof sfxFound === 'function') sfxFound(1); } catch (e) {}
+    _i++; _cur = null; renderCard();
+  }
+  function renderEmpty() {
+    const judged = _streak > 0;
+    $('tr-body').innerHTML = `<div class="tr-empty"><span class="e-octo">🐙</span>
+      <div style="font-weight:600;color:var(--text);margin-bottom:6px">${t(judged ? 'trainer.allDone' : 'trainer.empty')}</div>
+      <div style="font-size:12px">${t('trainer.emptyHint')}</div></div>`;
+  }
+  return { open, close, vote, showTags, toggleTag };
+})();
+function closeTrainer() { Trainer.close(); }
+
+// ════════════════════════════════════════════════
 // TOOLS
 // ════════════════════════════════════════════════
 const TOOL_CATEGORIES = {
@@ -5164,6 +5334,7 @@ async function loadSettings() {
   } catch(e) {}
   loadUnifiedVersions();
   loadBehaviorSettings();
+  hydrateIdeBaseUrl();   // 🧩 живой base_url для коннекторов/IDE
 }
 
 async function loadBehaviorSettings() {
@@ -5852,6 +6023,24 @@ const I18N = {
   'notify.bodyOk':  {ru:'Ответ готов — загляни к осьминогу 🐙', en:'Your answer is ready — check on the octopus 🐙', zh:'回答已就绪 —— 回到章鱼这儿看看 🐙'},
   'notify.bodyErr': {ru:'Задача завершилась с ошибкой', en:'The task finished with an error', zh:'任务以错误结束'},
   'set.improve':    {ru:'🧬 Самоулучшение', en:'🧬 Self-improvement', zh:'🧬 自我改进'},
+  'set.trainGame':  {ru:'🎮 Дрессировка (обучить вручную)', en:'🎮 Train (teach manually)', zh:'🎮 训练（手动教学）'},
+  'trainer.title':  {ru:'Дрессировка осьминога', en:'Train the octopus', zh:'训练章鱼'},
+  'trainer.footer': {ru:'Твои оценки кормят самоулучшение — оно приоритизирует слабые типы задач и чинит их промпты.', en:'Your verdicts feed self-improvement — it prioritizes weak task types and fixes their prompts.', zh:'你的评判会喂给自我改进 —— 它据此优先处理薄弱的任务类型并修复其提示词。'},
+  'trainer.loading':{ru:'Осьминог тасует задачи…', en:'The octopus is shuffling tasks…', zh:'章鱼正在洗牌任务……'},
+  'trainer.criticScore':{ru:'критик:', en:'critic:', zh:'评审：'},
+  'trainer.q':      {ru:'Это хороший ответ агента?', en:'Was this a good answer from the agent?', zh:'这是智能体的好回答吗？'},
+  'trainer.good':   {ru:'Хороший', en:'Good', zh:'好'},
+  'trainer.bad':    {ru:'Слабый', en:'Weak', zh:'差'},
+  'trainer.whyBad': {ru:'Что не так? (можно несколько)', en:'What was wrong? (multiple ok)', zh:'哪里不对？（可多选）'},
+  'trainer.submit': {ru:'Отправить', en:'Submit', zh:'提交'},
+  'trainer.tag.long':      {ru:'слишком длинно', en:'too long', zh:'太长'},
+  'trainer.tag.inaccurate':{ru:'неточно', en:'inaccurate', zh:'不准确'},
+  'trainer.tag.offtopic':  {ru:'не по делу', en:'off-topic', zh:'离题'},
+  'trainer.tag.madeup':    {ru:'выдумал', en:'made up', zh:'编造'},
+  'trainer.tag.notdone':   {ru:'не довёл до конца', en:'did not finish', zh:'没做完'},
+  'trainer.empty':  {ru:'Очередь пуста', en:'Queue is empty', zh:'队列为空'},
+  'trainer.allDone':{ru:'Всё разобрано — спасибо!', en:'All judged — thank you!', zh:'全部评完 —— 谢谢！'},
+  'trainer.emptyHint':{ru:'Возвращайся после новых задач — появятся новые ответы для оценки.', en:'Come back after new tasks — fresh answers will appear to judge.', zh:'完成新任务后再来 —— 会有新的回答待评判。'},
   'set.clearmem':   {ru:'🧹 Очистить память', en:'🧹 Clear memory', zh:'🧹 清除记忆'},
   'set.selfTraining':{ru:'🧬 Самообучение', en:'🧬 Self-training', zh:'🧬 自我训练'},
   'set.versionsDesc':{ru:'Хронология: вехи проекта, изменения кода (git) и версии промптов (самоулучшение)', en:'Timeline: project milestones, code changes (git) and prompt versions (self-improvement)', zh:'时间线：项目里程碑、代码变更（git）与提示词版本（自我改进）'},
@@ -5905,6 +6094,14 @@ const I18N = {
   'sp.mem.cons.t':  {ru:'Консолидация исправлений', en:'Fix consolidation', zh:'修正整合'},
   'sp.mem.cons.d':  {ru:'на 50 накопленных уроков — авто-сведение в постоянную память', en:'every 50 accumulated lessons — auto-merged into permanent memory', zh:'每累积 50 条教训 —— 自动并入长期记忆'},
   'sp.conn.sub':    {ru:'Подключение внешних инструментов и доступ к оркестратору из редактора.', en:'Connecting external tools and reaching the orchestrator from your editor.', zh:'接入外部工具，并从编辑器访问编排器。'},
+  'sp.conn.copyUrl':{ru:'📋 base_url', en:'📋 base_url', zh:'📋 base_url'},
+  'sp.conn.modelHint':{ru:'Имя модели в плагине — любое (роутер сам выберет), напр.', en:'Model name in the plugin — anything (the router picks), e.g.', zh:'插件中的模型名任意（由路由器选择），例如'},
+  'sp.conn.keyHint':{ru:'ключ не нужен', en:'no API key needed', zh:'无需密钥'},
+  'sp.conn.cfgContinue':{ru:'📋 Конфиг Continue.dev', en:'📋 Continue.dev config', zh:'📋 Continue.dev 配置'},
+  'sp.conn.cfgCursor':{ru:'📋 Настройки Cursor', en:'📋 Cursor settings', zh:'📋 Cursor 设置'},
+  'sp.conn.toastContinue':{ru:'Конфиг Continue.dev скопирован — вставь в ~/.continue/config.json', en:'Continue.dev config copied — paste into ~/.continue/config.json', zh:'Continue.dev 配置已复制 —— 粘贴到 ~/.continue/config.json'},
+  'sp.conn.toastCursor':{ru:'Скопировано — Cursor → Settings → Models → OpenAI Base URL', en:'Copied — Cursor → Settings → Models → OpenAI Base URL', zh:'已复制 —— Cursor → 设置 → Models → OpenAI Base URL'},
+  'common.copied':  {ru:'Скопировано', en:'Copied', zh:'已复制'},
   'sp.conn.mcp.t':  {ru:'🔌 MCP-серверы', en:'🔌 MCP servers', zh:'🔌 MCP 服务器'},
   'sp.conn.mcp.d':  {ru:'Подключают внешние инструменты по протоколу MCP (stdio JSON-RPC). Конфиг — <code>config/mcp_servers.json</code> (пусто = выкл). Статус и список — на главной панели <b>MCP</b>.', en:'They connect external tools via the MCP protocol (stdio JSON-RPC). Config — <code>config/mcp_servers.json</code> (empty = off). Status and list on the main <b>MCP</b> panel.', zh:'它们通过 MCP 协议（stdio JSON-RPC）接入外部工具。配置见 <code>config/mcp_servers.json</code>（空 = 关闭）。状态与列表见主 <b>MCP</b> 面板。'},
   'sp.conn.ide.t':  {ru:'⌨️ FreePalp в IDE <span style="font-size:10px;color:var(--text-3);font-weight:400">(наш аналог «Claude Code»)</span>', en:'⌨️ FreePalp in the IDE <span style="font-size:10px;color:var(--text-3);font-weight:400">(our take on “Claude Code”)</span>', zh:'⌨️ IDE 中的 FreePalp <span style="font-size:10px;color:var(--text-3);font-weight:400">（我们的「Claude Code」）</span>'},

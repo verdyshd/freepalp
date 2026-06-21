@@ -26,6 +26,9 @@ from typing import Optional
 from collections import defaultdict
 
 METRICS_FILE = Path(__file__).parent.parent.parent / "memory" / "metrics.jsonl"
+# Человеческая обратная связь из мини-игры «Дрессировка» — отдельный файл, чтобы НЕ
+# засорять дашборд (метрики), но при этом влиять на выбор кандидатов самоулучшения.
+FEEDBACK_FILE = Path(__file__).parent.parent.parent / "memory" / "feedback.jsonl"
 MIN_TASKS_FOR_ANALYSIS = 5   # минимум записей для запуска анализа
 # Порог-кандидат: тип ниже этого считается слабым (цель 0.90, маржа 0.02).
 # Раньше было 0.82 — пропускало review/shell ~0.82-0.83 которые явно ниже цели.
@@ -48,6 +51,52 @@ FAILURE_SIGNATURES = {
         "невалидный json", "аргументы инструмента",
     ],
 }
+
+
+def load_feedback() -> list[dict]:
+    """Все человеческие вердикты из мини-игры «Дрессировка» (feedback.jsonl)."""
+    if not FEEDBACK_FILE.exists():
+        return []
+    out = []
+    try:
+        with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        out.append(json.loads(line))
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+    return out
+
+
+def append_feedback(record: dict) -> int:
+    """Дописывает вердикт; возвращает суммарное число собранных сигналов."""
+    try:
+        FEEDBACK_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(FEEDBACK_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+    return len(load_feedback())
+
+
+def _feedback_by_type() -> dict:
+    """{task_type: {'good': n, 'bad': m, 'notes': [...]}} — агрегат человеческих оценок."""
+    agg: dict = defaultdict(lambda: {"good": 0, "bad": 0, "notes": []})
+    for r in load_feedback():
+        tt = r.get("task_type") or "general"
+        if r.get("verdict") == "good":
+            agg[tt]["good"] += 1
+        elif r.get("verdict") == "bad":
+            agg[tt]["bad"] += 1
+            for tag in (r.get("tags") or []):
+                agg[tt]["notes"].append(f"[human] {tag}")
+            if r.get("note"):
+                agg[tt]["notes"].append(f"[human] {r['note'][:60]}")
+    return agg
 
 
 def _failure_mode(issue: str) -> Optional[str]:
@@ -138,6 +187,9 @@ class Evaluator:
 
         candidates = []
 
+        # Человеческая обратная связь из мини-игры (если есть) — мягкий сигнал поверх критика
+        fb_by_type = _feedback_by_type()
+
         # Группируем по типу задачи
         by_type: dict[str, list[dict]] = defaultdict(list)
         for r in records:
@@ -152,6 +204,11 @@ class Evaluator:
             eval_recs = valid_recs if len(valid_recs) >= 2 else recs
 
             scores = [r["critic_score"] for r in eval_recs]
+            # Вплетаем человеческие вердикты: 👍→0.95, 👎→0.45 (синтетические оценки),
+            # их заметки идут в evidence. Так оценки людей реально двигают кандидатов.
+            fb = fb_by_type.get(task_type)
+            if fb:
+                scores = scores + [0.95] * fb["good"] + [0.45] * fb["bad"]
             avg_score = sum(scores) / len(scores)
             min_score = min(scores)
             retry_rate = sum(1 for r in eval_recs if r["iterations"] > 1) / len(eval_recs)
@@ -160,6 +217,8 @@ class Evaluator:
             all_issues: list[str] = []
             for r in recs:
                 all_issues.extend(r.get("issues", []))
+            if fb:
+                all_issues.extend(fb["notes"])   # человеческие пометки → в evidence
 
             # Частые проблемы
             issue_counts: dict[str, int] = defaultdict(int)

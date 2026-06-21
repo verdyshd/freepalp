@@ -1364,6 +1364,72 @@ async def api_metrics_history(n: int = 20):
         return {"records": [], "error": str(e)}
 
 
+@app.get("/api/feedback/queue")
+async def api_feedback_queue(n: int = 12):
+    """Очередь задач на человеческую оценку (мини-игра «Дрессировка»).
+    Берём недавние реальные задачи из метрик, исключаем уже оценённые."""
+    try:
+        from freepalp.core.self_improvement.metrics import Evaluator, load_feedback
+        judged = {f.get("ts") for f in load_feedback()}
+        records = Evaluator().load_recent(120)
+        items = []
+        for r in reversed(records):   # свежие первыми
+            ts = r.get("ts", "")
+            if not ts or ts in judged:
+                continue
+            # пропускаем чистые API-ошибки (нечего оценивать человеку)
+            if r.get("critic_score", 0.0) == 0.0 and r.get("tokens_total", 0) == 0:
+                continue
+            items.append({
+                "ts":           ts,
+                "task_type":    r.get("task_type", "general"),
+                "preview":      r.get("preview", ""),
+                "critic_score": r.get("critic_score", 0.0),
+                "model":        r.get("model", ""),
+                "issues":       (r.get("issues") or [])[:3],
+            })
+            if len(items) >= max(1, min(n, 50)):
+                break
+        return {"items": items}
+    except Exception as e:
+        return {"items": [], "error": str(e)}
+
+
+@app.post("/api/feedback")
+async def api_feedback(req: dict):
+    """Сохранить человеческий вердикт; влияет на выбор кандидатов самоулучшения."""
+    try:
+        from freepalp.core.self_improvement.metrics import append_feedback
+        from datetime import datetime
+        verdict = (req or {}).get("verdict")
+        if verdict not in ("good", "bad"):
+            return {"ok": False, "error": "verdict must be good|bad"}
+        rec = {
+            "logged_at": datetime.now().isoformat(),
+            "ts":        (req or {}).get("ts", ""),          # ts оцениваемой задачи
+            "task_type": (req or {}).get("task_type", "general"),
+            "verdict":   verdict,
+            "tags":      [str(t)[:40] for t in ((req or {}).get("tags") or [])][:5],
+            "note":      str((req or {}).get("note", ""))[:200],
+        }
+        count = append_feedback(rec)
+        return {"ok": True, "count": count}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/feedback/stats")
+async def api_feedback_stats():
+    """Сводка собранных человеческих сигналов."""
+    try:
+        from freepalp.core.self_improvement.metrics import load_feedback
+        fb = load_feedback()
+        good = sum(1 for f in fb if f.get("verdict") == "good")
+        return {"count": len(fb), "good": good, "bad": len(fb) - good}
+    except Exception as e:
+        return {"count": 0, "error": str(e)}
+
+
 @app.post("/api/improve")
 async def api_improve():
     try:
