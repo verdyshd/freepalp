@@ -2251,7 +2251,6 @@ async function sendMessage() {
     } else {
       playBubbles();   // 🫧 ответ готов
       const data = finalData;
-      speak(data.answer);   // 🔊 озвучка ответа (если включена в Настройках)
       const _doneId = appendMsg('assistant', data.answer, {
         model:      data.model,
         score:      data.score,
@@ -2264,6 +2263,7 @@ async function sendMessage() {
         artifacts:  data.artifacts || [],
       });
       spawnBubblesAt(_doneId);
+      try { speak(data.answer); } catch (e) {}   // 🔊 озвучка ПОСЛЕ отрисовки (не ломает сообщение)
       if (data.history_len !== undefined) {
         historyLen = data.history_len;
         if (_chatSessions[conversationId]) {
@@ -2344,7 +2344,13 @@ function setVoice(on) {
 function _pickVoice(lc) {
   if (!window.speechSynthesis) return null;
   const vs = speechSynthesis.getVoices();
-  return vs.find(v => v.lang === lc) || vs.find(v => v.lang.startsWith(lc.slice(0, 2))) || null;
+  const same = vs.filter(v => v.lang === lc);
+  const near = vs.filter(v => v.lang.toLowerCase().startsWith(lc.slice(0, 2)));
+  const pool = same.length ? same : near;
+  if (!pool.length) return null;
+  // предпочитаем «качественные» голоса (нейронные/Google/Natural/онлайн), а не робо-SAPI
+  const rank = v => (/neural|natural|google|premium|enhanced|wavenet/i.test(v.name) ? 3 : 0) + (v.localService ? 0 : 1);
+  return pool.slice().sort((a, b) => rank(b) - rank(a))[0];
 }
 if ('speechSynthesis' in window) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch (e) {} }
 // Озвучка текста. force=true — игнорировать тумблер (явное действие пользователя).
@@ -2352,12 +2358,12 @@ function speak(text, opts) {
   opts = opts || {};
   if (!('speechSynthesis' in window)) return;
   if (!opts.force && !_voiceOn()) return;
-  const clean = String(text || '')
-    .replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ')
-    .replace(/[#*_>|~]/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 600);
-  if (!clean) return;
   try {
+    const clean = String(text || '')
+      .replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ')
+      .replace(/[#*_>|~]/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 600);
+    if (!clean) return;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(clean);
     const lc = _VOICE_LANG[window._lang] || 'ru-RU';
