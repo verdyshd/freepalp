@@ -772,10 +772,11 @@
     /* Навыки-пазлы на мозге: кусочки раскладываются по отделам (по task_type) */
     .skill-brain { position:relative; width:100%; max-width:560px; margin:6px auto; aspect-ratio:286/244; }
     .skill-brain .sb-bg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-    .skill-piece.placed { position:absolute; width:98px; z-index:1;
+    .skill-grid-wrap { position:absolute; left:50%; top:43%; transform:translate(-50%,-50%); }
+    .skill-piece.placed { position:absolute; width:92px; z-index:1;
       transition:transform .15s ease, filter .15s ease; }
-    .skill-piece.placed:hover { z-index:6; transform:scale(1.09);
-      filter:drop-shadow(0 6px 16px rgba(0,0,0,.42)); }
+    .skill-piece.placed:hover { z-index:80; transform:scale(1.1);
+      filter:drop-shadow(0 6px 16px rgba(0,0,0,.5)); }
     .skill-piece.placed .skill-pc { left:11px; right:19px; top:14px; bottom:17px; gap:3px; }
     .skill-piece.placed .nm { font-size:10px; }
     .skill-piece.placed .uses { font-size:8.5px; padding:0 5px; }
@@ -2991,21 +2992,7 @@ async function loadSkills() {
     const piece = (fill, stroke) =>
       `<svg viewBox="0 0 174 132" preserveAspectRatio="none"><path d="M1,1 H72 A15 15 0 0 1 102 1 H173 V51 A15 15 0 0 0 173 81 V131 H102 A15 15 0 0 0 72 131 H1 V81 A15 15 0 0 1 1 51 Z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
     // Каждый task_type → отдел мозга (позиция в % контейнера-мозга)
-    const REGION = {
-      architecture: {x:50, y:15, zone:'префронтальная'},
-      general:      {x:50, y:31, zone:'лобная доля'},
-      research:     {x:70, y:27, zone:'затылочная'},
-      coding_small: {x:32, y:42, zone:'теменная (код)'},
-      coding:       {x:32, y:42, zone:'теменная (код)'},
-      coding_large: {x:32, y:42, zone:'теменная (код)'},
-      coding_hard:  {x:32, y:42, zone:'теменная (код)'},
-      search:       {x:67, y:47, zone:'височная'},
-      web:          {x:30, y:60, zone:'затылочная (web)'},
-      shell:        {x:50, y:62, zone:'мозжечок'},
-    };
-    const DEF = {x:50, y:45, zone:'кора'};
-    const short = s => (s || '').length > 15 ? s.slice(0, 14) + '…' : s;
-    const used = {};
+    const short = s => (s || '').length > 14 ? s.slice(0, 13) + '…' : s;
     const brainBg = `<svg class="sb-bg" viewBox="78 46 286 244" preserveAspectRatio="xMidYMid meet">
         <path d="M 96,162 C 88,108 142,62 212,58 C 286,53 350,92 354,150 C 357,188 336,220 298,231 C 293,253 266,269 239,261 C 228,279 196,281 183,266 C 152,274 124,257 121,235 C 96,224 80,193 96,162 Z"
               fill="rgba(255,255,255,0.02)" stroke="rgba(160,174,192,0.30)" stroke-width="1.5"/>
@@ -3016,15 +3003,24 @@ async function loadSkills() {
           <path d="M 115,180 C 150,165 165,195 200,178 C 235,162 255,190 295,172"/>
           <path d="M 140,230 C 170,212 195,238 225,222 C 250,209 270,228 300,212"/>
         </g></svg>`;
-    const pieces = d.skills.map(s => {
+    // Один пазл по центру мозга: сорт по типу (цвет-зоны проступают), стыковка с нахлёстом
+    const skills = d.skills.slice().sort((a, b) =>
+      String(a.task_type).localeCompare(String(b.task_type)) || String(a.name).localeCompare(String(b.name)));
+    const N = skills.length;
+    const cols = N <= 3 ? N : (N <= 8 ? 3 : 4);
+    const rows = Math.ceil(N / cols);
+    const PW = 92, PH = 70, SX = 71, SY = 52;            // шаг < размера = нахлёст-стыковка
+    const gridW = (cols - 1) * SX + PW, gridH = (rows - 1) * SY + PH;
+    const rowCount = r => Math.min(cols, N - r * cols);
+    const pieces = skills.map((s, i) => {
       const c = skillColor(s.task_type);
-      const reg = REGION[s.task_type] || DEF;
-      const i = (used[reg.zone] = (used[reg.zone] || 0) + 1) - 1;
-      const dx = (i % 2 ? 1 : -1) * Math.min((i + 1) >> 1, 2) * 36;
-      const dy = (i >> 1) * 30 - (i ? 8 : 0);
-      const tip = `${s.name}\n${s.description}\n\n🏷 ${s.task_type} → отдел: ${reg.zone}\n🔧 ${s.tools || '—'} · ${s.source_model} · ${s.created}`;
-      return `<div class="skill-piece placed" title="${escHtml(tip)}" style="left:calc(${reg.x}% - 49px + ${dx}px);top:calc(${reg.y}% - 37px + ${dy}px)">
-        ${piece(c + '33', c + 'aa')}
+      const r = Math.floor(i / cols), col = i % cols;
+      const offX = (gridW - ((rowCount(r) - 1) * SX + PW)) / 2;   // центрируем неполный ряд
+      const left = offX + col * SX, top = r * SY;
+      const z = (rows - r) * cols + (cols - col);                 // верх-лево поверх — читаемее
+      const tip = `${s.name}\n${s.description}\n\n🏷 ${s.task_type}\n🔧 ${s.tools || '—'} · ${s.source_model} · ${s.created}`;
+      return `<div class="skill-piece placed" title="${escHtml(tip)}" style="left:${left.toFixed(0)}px;top:${top.toFixed(0)}px;width:${PW}px;z-index:${z}">
+        ${piece(c + '40', c + 'cc')}
         <div class="skill-pc">
           <span class="uses" title="раз подошёл">×${s.uses}</span>
           <span class="nm">🧩 ${escHtml(short(s.name))}</span>
@@ -3033,8 +3029,8 @@ async function loadSkills() {
     }).join('');
     el.style.cssText = '';
     el.className = '';
-    el.innerHTML = `<div style="font-size:12px;color:var(--text-2);margin-bottom:2px">🧩 Навыки складываются в отделы мозга по типу задачи — переиспользуемые приёмы, собранные в один пазл</div>
-      <div class="skill-brain">${brainBg}${pieces}</div>`;
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-2);margin-bottom:2px">🧩 Навыки собираются в один пазл внутри мозга — цвет кусочка = тип задачи (зоны проступают сами)</div>
+      <div class="skill-brain">${brainBg}<div class="skill-grid-wrap" style="width:${gridW}px;height:${gridH}px">${pieces}</div></div>`;
   } catch(e) { el.innerHTML = `<div style="color:var(--accent-err)">${e.message}</div>`; }
 }
 
