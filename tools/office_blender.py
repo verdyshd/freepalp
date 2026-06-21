@@ -112,7 +112,7 @@ camdir = Vector(CAM_OFFSET); camdir.normalize()
 # доп. поворот всей комнаты вокруг центра («ещё повернуть»). Экран/лицо компенсируем,
 # чтобы после поворота они по-прежнему смотрели в камеру.
 ROOM_C = Vector((3.8, 3.0, 0.0))
-ROT_Z = math.radians(-90)
+ROT_Z = math.radians(0)            # стол у дальней стены — поворот не нужен, ставим раскладкой
 def _rotz_about(p, ang, c=ROOM_C):
     v = Vector(p) - c
     ca, sa = math.cos(ang), math.sin(ang)
@@ -138,83 +138,84 @@ for gx in range(8):
         c = (rugA if (gx + gy) % 2 else rugB) if rug else (floorA if (gx + gy) % 2 else floorB)
         box(f"t{gx}_{gy}", gx, gy, -0.12 if rug else -0.15, 1, 1, 0.12 if rug else 0.15, c)
 
-# ── низкий бэкдроп с окном (фон, не загораживает) ──
+# ── задняя стена с окном (дальняя сторона, y≈6 — «верх» сцены) ──
 wall = mat("wall", "#3c3760")
-box("wallBack", 0.3, -0.18, 0, 6.6, 0.2, 1.25, wall)
-box("window", 3.3, -0.04, 0.4, 1.5, 0.08, 0.68, mat("win", "#8fc0f0", rough=0.2, emit=1.8))
-box("winBarH", 3.3, -0.05, 0.72, 1.5, 0.1, 0.06, wall)
+box("wallBack", 0.3, 6.0, 0, 7.4, 0.2, 2.5, wall)
+box("window", 1.4, 6.02, 1.2, 1.6, 0.08, 0.95, mat("win", "#8fc0f0", rough=0.2, emit=1.8))
+box("winBar", 2.18, 6.03, 1.2, 0.06, 0.1, 0.95, wall)
+box("winBarH", 1.4, 6.03, 1.67, 1.6, 0.1, 0.06, wall)
 
 bookCols = ["#e2574c", "#4a90d9", "#f6b73c", "#6ab04c", "#9b59b6", "#e67e22", "#16a085"]
 
-# ── книжный шкаф со множеством книг (свободностоящий, левый угол) ──
+# ── книжный шкаф со множеством книг (у дальней стены, левее) ──
 shelfM = mat("shelf", "#6a4a2c")
-box("shelf", 0.3, 2.5, 0, 1.6, 0.62, 2.5, shelfM)
+box("shelf", 0.4, 5.4, 0, 1.6, 0.6, 2.5, shelfM)
 for z in (0.9, 1.7):
-    box(f"shp{z}", 0.32, 2.52, z, 1.56, 0.6, 0.07, mat(f"shp{z}", "#50361c"))
+    box(f"shp{z}", 0.42, 5.42, z, 1.56, 0.56, 0.07, mat(f"shp{z}", "#50361c"))
 for r, z in enumerate((0.95, 1.75, 2.5)):          # 3 ряда книг (верхний — на крыше)
     for i in range(6):
-        box(f"bk{r}_{i}", 0.42 + i * 0.21, 2.66, z, 0.17, 0.42, 0.46 + ((i + r) % 3) * 0.08,
+        box(f"bk{r}_{i}", 0.52 + i * 0.21, 5.5, z, 0.17, 0.4, 0.46 + ((i + r) % 3) * 0.08,
             mat(f"bk{r}{i}", bookCols[(i + r) % 7]))
 
-# ── гитара, прислонённая (правый угол интерьера) ──
+# ── гитара, прислонённая к дальней стене (правый угол) ──
 gBody = mat("guitarBody", "#c98a44", rough=0.35); gNeck = mat("guitarNeck", "#2f2113")
-ellipsoid("guitarBody", (6.5, 2.6, 1.0), (0.5, 0.5, 0.66), None, gBody)
-ellipsoid("guitarWaist", (6.5, 2.6, 1.55), (0.36, 0.36, 0.42), None, gBody)
-box("guitarNeck", 6.42, 2.55, 1.95, 0.16, 0.12, 1.5, gNeck)
-box("guitarHead", 6.4, 2.53, 3.4, 0.22, 0.12, 0.3, gNeck)
-cyl("guitarHole", 6.5, 2.6, 1.05, 0.13, 0.04, mat("ghole", "#3a2a18"), rot=(0, 0, 0))
+ellipsoid("guitarBody", (7.1, 5.5, 1.0), (0.5, 0.5, 0.66), None, gBody)
+ellipsoid("guitarWaist", (7.1, 5.5, 1.55), (0.36, 0.36, 0.42), None, gBody)
+box("guitarNeck", 7.02, 5.52, 1.95, 0.16, 0.12, 1.5, gNeck)
+box("guitarHead", 7.0, 5.53, 3.4, 0.22, 0.12, 0.3, gNeck)
+cyl("guitarHole", 7.1, 5.38, 1.05, 0.13, 0.04, mat("ghole", "#3a2a18"), rot=(math.radians(90), 0, 0))
 
-# ── стол ──
+# ── стол у дальней стены (вверх кадра) ──
 deskBody, deskTop = mat("deskBody", "#7a5c44"), mat("deskTop", "#a07a57")
-box("deskBody", 2.0, 0.8, 0, 3.2, 1.1, 1.4, deskBody)
-box("deskTop", 1.85, 0.65, 1.4, 3.5, 1.4, 0.18, deskTop, bevel=0.02)
+box("deskBody", 2.6, 4.7, 0, 3.6, 1.0, 1.4, deskBody)
+box("deskTop", 2.45, 4.55, 1.4, 3.9, 1.35, 0.18, deskTop, bevel=0.02)
 
-# ── монитор (экран = отдельный объект для проекции) ──
+# ── монитор (экран на -y грани — к камере; стоит на дальнем краю стола) ──
 monBody = mat("monBody", "#232a38")
-box("monStand", 4.0, 1.15, 1.4, 0.3, 0.5, 0.2, monBody)
-box("monBody", 3.55, 0.98, 1.58, 1.5, 0.22, 1.15, monBody, bevel=0.02)
-screen = box("Screen", 3.62, 0.95, 1.66, 1.36, 0.03, 0.99, mat("screen", "#11151f", rough=0.15, emit=0.35))
+box("monStand", 4.9, 5.05, 1.4, 0.3, 0.45, 0.2, monBody)
+box("monBody", 4.45, 5.0, 1.58, 1.5, 0.22, 1.15, monBody, bevel=0.02)
+screen = box("Screen", 4.52, 4.93, 1.66, 1.36, 0.05, 0.99, mat("screen", "#11151f", rough=0.15, emit=0.35))
 
-# ── клавиатура ──
-box("kbd", 2.2, 1.7, 1.58, 1.0, 0.45, 0.06, mat("kbd", "#cbd5e0"), bevel=0.01)
+# ── клавиатура (ближе к переднему краю стола) ──
+box("kbd", 4.15, 4.62, 1.58, 1.0, 0.42, 0.06, mat("kbd", "#cbd5e0"), bevel=0.01)
 
-# ── стул ──
+# ── стул (перед столом, спинкой к столу) ──
 chair = mat("chair", "#3f4a5e")
-box("seat", 2.5, 3.3, 0, 1.1, 1.0, 0.78, chair, bevel=0.03)
-box("back", 2.5, 4.0, 0.78, 1.1, 0.22, 1.0, chair, bevel=0.03)
+box("seat", 2.35, 3.05, 0, 1.1, 1.0, 0.78, chair, bevel=0.03)
+box("back", 2.35, 3.83, 0.78, 1.1, 0.22, 1.05, chair, bevel=0.03)
 
-# ── растение №1 (на тумбе у стены) ──
-box("pot", 0.3, 4.6, 0, 0.7, 0.7, 0.7, mat("pot", "#7a5230"))
 g = mat("plant", "#48bb78")
-sphere("leaf1", 0.65, 4.95, 1.35, 0.4, g)
-sphere("leaf2", 0.5, 4.8, 1.6, 0.26, mat("plant2", "#38a169"))
-sphere("leaf3", 0.82, 5.05, 1.55, 0.24, g)
+# ── растение №1 (на крыше шкафа, у дальней стены) ──
+box("pot", 0.6, 5.45, 2.5, 0.6, 0.5, 0.5, mat("pot", "#7a5230"))
+sphere("leaf1", 0.9, 5.7, 3.3, 0.36, g)
+sphere("leaf2", 0.75, 5.55, 3.55, 0.24, mat("plant2", "#38a169"))
+sphere("leaf3", 1.05, 5.78, 3.5, 0.22, g)
 
-# ── растение №2 (высокое, правый угол интерьера) ──
-box("pot2", 6.6, 5.4, 0, 0.66, 0.66, 0.66, mat("pot2b", "#8a5a36"))
-sphere("p2a", 6.93, 5.73, 1.2, 0.4, g)
-sphere("p2b", 6.78, 5.55, 1.55, 0.32, mat("plant3", "#3aa05f"))
-sphere("p2c", 7.05, 5.8, 1.5, 0.28, g)
+# ── растение №2 (высокое, передний правый угол) ──
+box("pot2", 6.7, 1.4, 0, 0.66, 0.66, 0.66, mat("pot2b", "#8a5a36"))
+sphere("p2a", 7.03, 1.73, 1.2, 0.4, g)
+sphere("p2b", 6.88, 1.55, 1.55, 0.32, mat("plant3", "#3aa05f"))
+sphere("p2c", 7.15, 1.8, 1.5, 0.28, g)
 
-# ── торшер (напольная лампа, левый интерьер) ──
+# ── торшер (напольная лампа, у дальней стены справа) ──
 lampM = mat("lampM", "#2d3748")
-cyl("lampBase", 0.6, 4.5, 0.04, 0.3, 0.08, lampM)
-cyl("lampPole", 0.6, 4.5, 1.3, 0.05, 2.5, lampM)
-ellipsoid("lampShade", (0.6, 4.5, 2.45), (0.34, 0.34, 0.3), None, mat("lampShade", "#ffd36a", emit=1.4))
+cyl("lampBase", 6.2, 5.5, 0.04, 0.3, 0.08, lampM)
+cyl("lampPole", 6.2, 5.5, 1.3, 0.05, 2.5, lampM)
+ellipsoid("lampShade", (6.2, 5.5, 2.45), (0.34, 0.34, 0.3), None, mat("lampShade", "#ffd36a", emit=1.4))
 
-# ── зона отдыха: круглый коврик + два пуфика (front-left открытый пол) ──
-cyl("roundRug", 1.9, 5.1, -0.07, 1.1, 0.05, mat("roundRug", "#c2724f"))
-ellipsoid("cushion", (1.9, 5.1, 0.26), (0.66, 0.66, 0.26), None, mat("cushion", "#3aa6a0"))
-ellipsoid("cushion2", (2.7, 5.4, 0.2), (0.46, 0.46, 0.2), None, mat("cushion2", "#d96ba0"))
+# ── зона отдыха: круглый коврик + два пуфика (передний открытый пол) ──
+cyl("roundRug", 4.6, 1.9, -0.07, 1.1, 0.05, mat("roundRug", "#c2724f"))
+ellipsoid("cushion", (4.6, 1.9, 0.26), (0.66, 0.66, 0.26), None, mat("cushion", "#3aa6a0"))
+ellipsoid("cushion2", (5.4, 2.5, 0.2), (0.46, 0.46, 0.2), None, mat("cushion2", "#d96ba0"))
 
 # ── кружка на столе + стопка книг ──
-cyl("mug", 4.8, 1.55, 1.69, 0.13, 0.22, mat("mugM", "#e2574c"))
-cyl("mugIn", 4.8, 1.55, 1.74, 0.09, 0.18, mat("mugIn", "#7a2018"))
+cyl("mug", 5.7, 4.8, 1.69, 0.13, 0.22, mat("mugM", "#e2574c"))
+cyl("mugIn", 5.7, 4.8, 1.74, 0.09, 0.18, mat("mugIn", "#7a2018"))
 for i in range(3):
-    box(f"deskBook{i}", 2.4, 1.0, 1.58 + i * 0.09, 0.5, 0.34, 0.09, mat(f"dbk{i}", bookCols[(i + 1) % 7]))
+    box(f"deskBook{i}", 3.0, 4.85, 1.58 + i * 0.09, 0.5, 0.34, 0.09, mat(f"dbk{i}", bookCols[(i + 1) % 7]))
 
 # ── ОСЬМИНОГ-МАСКОТ (как лого FreePalp): круглая оранжево-жёлтая голова + розовые щупальца ──
-hc = Vector((3.15, 3.45, 1.74))                          # центр головы
+hc = Vector((2.9, 3.45, 1.74))                           # центр головы (перед столом, слева от монитора)
 headM = mat_grad("octoHead", "#ef8a28", "#ffd24a")       # низ оранжевый → верх жёлтый
 ellipsoid("octoHead", hc, (0.70, 0.66, 0.64), None, headM)
 # глаза на ПОВЕРХНОСТИ головы, к камере (eyedir = camdir с компенсацией поворота комнаты)
@@ -257,11 +258,11 @@ bpy.ops.object.parent_set(type="OBJECT", keep_transform=True)
 room_root.rotation_euler = (0, 0, ROT_Z)
 bpy.context.view_layer.update()
 
-# ── камера (истинная изометрия, зеркальный «наоборот» вид; комната больше → шире охват) ──
-target = Vector((3.8, 3.0, 0.85))
+# ── камера (истинная изометрия, зеркальный «наоборот» вид; стол у дальней стены) ──
+target = Vector((4.0, 3.6, 0.9))
 bpy.ops.object.empty_add(location=target)
 empty = bpy.context.active_object
-cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 9.2
+cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 9.7
 cam = bpy.data.objects.new("Cam", cam_data)
 bpy.context.collection.objects.link(cam)
 cam.location = target + CAM_OFFSET
@@ -308,10 +309,10 @@ coords = {
     "res": [RES_X, RES_Y],
     # 4 угла плоскости экрана (грань -y монитора, обращённая к камере) после поворота
     "screen": {
-        "tl": pxr((3.62, 0.95, 1.66 + 0.99)),
-        "tr": pxr((3.62 + 1.36, 0.95, 1.66 + 0.99)),
-        "br": pxr((3.62 + 1.36, 0.95, 1.66)),
-        "bl": pxr((3.62, 0.95, 1.66)),
+        "tl": pxr((4.52, 4.93, 1.66 + 0.99)),
+        "tr": pxr((4.52 + 1.36, 4.93, 1.66 + 0.99)),
+        "br": pxr((4.52 + 1.36, 4.93, 1.66)),
+        "bl": pxr((4.52, 4.93, 1.66)),
     },
     "headTop": pxr((hc.x, hc.y, hc.z + 0.66)),
 }
