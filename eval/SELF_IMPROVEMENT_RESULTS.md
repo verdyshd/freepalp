@@ -43,28 +43,33 @@ Net +2 tasks. Holdout unchanged — no overfitting to the validation set.
 - The point is not "+X% guaranteed" — it is **safe, gated self-modification**: the system
   found its own failure mode, fixed it, and a regression gate guarded the change.
 
-## 50-task tuned run (2026-06-21)
+## 50-task tuned run — two independent runs (2026-06-21)
 
-Re-measured v1.0.27 on the expanded 50-task set (`eval/hard_tasks.json`).
+Re-measured v1.0.27 on the expanded 50-task set (`eval/hard_tasks.json`), config frozen
+(`FREEPALP_NO_AUTOIMPROVE=1`). Run twice the same day to expose free-tier run-to-run variance.
 
-| Split | v1.0.27 |
-|---|---|
-| Overall | 45/50 = **90.0%** |
-| val | 21/25 = **84.0%** |
-| holdout | 24/25 = **96.0%** |
+| Split | Run 1 | Run 2 | Mean |
+|---|---|---|---|
+| Overall | 45/50 = 90.0% | 47/50 = 94.0% | 46/50 = **92.0%** |
+| val | 21/25 = 84.0% | 23/25 = 92.0% | 22/25 = **88.0%** |
+| holdout (frozen) | 24/25 = 96.0% | 24/25 = 96.0% | 24/25 = **96.0%** |
 
-**Fails (all check-fail, not provider errors):** `hard_max_points_line`, `hard_merge_intervals`,
-`hard_eval_rpn`, `hard_sieve_primes`, `hard_rotate_array`.
+Both runs were clean — **zero provider contamination** (no 429/quota aborts); every failure is
+a deterministic check-fail (wrong output), not a quota error. In both runs the router converged
+on `mistral-small-latest` (it solved 44/50 in run 1, 50/50 in run 2 after others hit 429 early).
 
-Provider picture: groq/cerebras/sambanova/gemini all hit 429 early, system fell back to
-`mistral-small-latest` which ran 44/50 tasks cleanly. No contamination — failures are
-wrong-code or deterministic check failures, not quota-abort.
+**Stable failures (failed in *both* runs)** — genuine model weaknesses, the clean signal:
+`hard_max_points_line`, `hard_eval_rpn`, `hard_sieve_primes`.
+**Noise failures (run 1 only, passed in run 2):** `hard_merge_intervals`, `hard_rotate_array`.
 
-**Honest caveats:** single run on free-tier; mistral dominated (44/50), so results reflect
-that model's coding ability more than ensemble diversity. One-off prогон — don't read too
-much into val vs holdout split (84% vs 96% is large; small holdout size N=25 inflates variance).
-The headline **90.0% on 50 tasks** is consistent with the 32-task result (90.6%) — no
-degradation at larger set size.
+**Honest caveats:** free-tier variance is real and visible here — overall swung 90%↔94%, val
+84%↔92% between two runs of the *same* frozen config. The **holdout is rock-stable at 96% both
+times** (the frozen split it was never tuned on), and three failures reproduce across both runs —
+those are the trustworthy bits. The val/holdout gap is partly small-N (25 each) inflating
+variance. Results reflect `mistral-small-latest`'s coding ability under FreePalp's harness +
+tuned prompt, not ensemble diversity. Mean **92.0% on 50 tasks** is consistent with the earlier
+32-task result (90.6%) — no degradation at larger set size. Still a seed-scale demonstration of
+the *mechanism*, not a final benchmark; statistically firm numbers need more runs and a larger set.
 
 ## Reproduce
 
