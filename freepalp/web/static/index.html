@@ -772,8 +772,15 @@
     /* Навыки-пазлы на мозге: кусочки раскладываются по отделам (по task_type) */
     .skill-brain { position:relative; width:100%; max-width:560px; margin:6px auto; aspect-ratio:286/244; }
     .skill-brain .sb-bg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-    .skill-grid-wrap { position:absolute; left:50%; top:43%; transform:translate(-50%,-50%); }
-    .skill-piece.placed { position:absolute; width:92px; z-index:1;
+    .skill-region { position:absolute; transform:translate(-50%,-50%); }
+    .skill-region .sr-halo { position:absolute; inset:-22px -30px; border-radius:50%;
+      background:radial-gradient(closest-side, var(--rc), transparent 78%);
+      opacity:.4; filter:blur(3px); z-index:0; pointer-events:none;
+      animation:srPulse 3.4s ease-in-out infinite; }
+    @keyframes srPulse { 0%,100%{opacity:.3} 50%{opacity:.5} }
+    .skill-region .sr-label { position:absolute; left:50%; bottom:-15px; transform:translateX(-50%);
+      font-size:9.5px; font-weight:600; white-space:nowrap; opacity:.9; pointer-events:none; }
+    .skill-piece.placed { position:absolute; width:80px; z-index:1;
       transition:transform .15s ease, filter .15s ease; }
     .skill-piece.placed:hover { z-index:80; transform:scale(1.1);
       filter:drop-shadow(0 6px 16px rgba(0,0,0,.5)); }
@@ -3003,34 +3010,55 @@ async function loadSkills() {
           <path d="M 115,180 C 150,165 165,195 200,178 C 235,162 255,190 295,172"/>
           <path d="M 140,230 C 170,212 195,238 225,222 C 250,209 270,228 300,212"/>
         </g></svg>`;
-    // Один пазл по центру мозга: сорт по типу (цвет-зоны проступают), стыковка с нахлёстом
-    const skills = d.skills.slice().sort((a, b) =>
-      String(a.task_type).localeCompare(String(b.task_type)) || String(a.name).localeCompare(String(b.name)));
-    const N = skills.length;
-    const cols = N <= 3 ? N : (N <= 8 ? 3 : 4);
-    const rows = Math.ceil(N / cols);
-    const PW = 92, PH = 70, SX = 71, SY = 52;            // шаг < размера = нахлёст-стыковка
-    const gridW = (cols - 1) * SX + PW, gridH = (rows - 1) * SY + PH;
-    const rowCount = r => Math.min(cols, N - r * cols);
-    const pieces = skills.map((s, i) => {
-      const c = skillColor(s.task_type);
-      const r = Math.floor(i / cols), col = i % cols;
-      const offX = (gridW - ((rowCount(r) - 1) * SX + PW)) / 2;   // центрируем неполный ряд
-      const left = offX + col * SX, top = r * SY;
-      const z = (rows - r) * cols + (cols - col);                 // верх-лево поверх — читаемее
-      const tip = `${s.name}\n${s.description}\n\n🏷 ${s.task_type}\n🔧 ${s.tools || '—'} · ${s.source_model} · ${s.created}`;
-      return `<div class="skill-piece placed" title="${escHtml(tip)}" style="left:${left.toFixed(0)}px;top:${top.toFixed(0)}px;width:${PW}px;z-index:${z}">
-        ${piece(c + '40', c + 'cc')}
-        <div class="skill-pc">
-          <span class="uses" title="раз подошёл">×${s.uses}</span>
-          <span class="nm">🧩 ${escHtml(short(s.name))}</span>
-        </div>
+    // Каждый тип задач → СВОЙ отдел мозга. Скилы группы собираются мини-пазлом в своей
+    // области (со свечением-ореолом) → отделы специализируются = «умеющий мозг».
+    const REGION = {
+      architecture: {x:50, y:17, label:'архитектура'},
+      general:      {x:50, y:33, label:'общее'},
+      research:     {x:71, y:28, label:'research'},
+      coding_small: {x:31, y:45, label:'код'},
+      coding:       {x:31, y:45, label:'код'},
+      coding_large: {x:31, y:45, label:'код'},
+      coding_hard:  {x:31, y:45, label:'код'},
+      search:       {x:69, y:48, label:'поиск'},
+      web:          {x:31, y:63, label:'web'},
+      shell:        {x:52, y:64, label:'мозжечок'},
+    };
+    const DEF = {x:50, y:50, label:'кора'};
+    const cut = s => (s || '').length > 11 ? s.slice(0, 10) + '…' : s;
+    // группируем по ОБЛАСТИ (coding_* сливаются в одну зону «код»)
+    const groups = {};
+    for (const s of d.skills) {
+      const reg = REGION[s.task_type] || DEF;
+      const key = reg.x + ',' + reg.y;
+      (groups[key] = groups[key] || { reg, color: skillColor(s.task_type), items: [] }).items.push(s);
+    }
+    const PW = 80, PH = 60, SX = 60, SY = 44;
+    const regionsHtml = Object.values(groups).map(g => {
+      const n = g.items.length, cols = n <= 1 ? 1 : 2, rows = Math.ceil(n / cols);
+      const gw = (cols - 1) * SX + PW, gh = (rows - 1) * SY + PH;
+      const rowCount = r => Math.min(cols, n - r * cols);
+      const pcs = g.items.map((s, i) => {
+        const c = skillColor(s.task_type);
+        const r = Math.floor(i / cols), col = i % cols;
+        const offX = (gw - ((rowCount(r) - 1) * SX + PW)) / 2;
+        const left = offX + col * SX, top = r * SY;
+        const z = (rows - r) * cols + (cols - col);
+        const tip = `${s.name}\n${s.description}\n\n🏷 ${s.task_type} → отдел «${g.reg.label}»\n🔧 ${s.tools || '—'} · ${s.source_model} · ${s.created}`;
+        return `<div class="skill-piece placed" title="${escHtml(tip)}" style="left:${left.toFixed(0)}px;top:${top.toFixed(0)}px;width:${PW}px;z-index:${z}">
+          ${piece(c + '4d', c + 'dd')}
+          <div class="skill-pc"><span class="uses">×${s.uses}</span><span class="nm">🧩 ${escHtml(cut(s.name))}</span></div>
+        </div>`;
+      }).join('');
+      return `<div class="skill-region" style="left:${g.reg.x}%;top:${g.reg.y}%;width:${gw}px;height:${gh}px">
+        <div class="sr-halo" style="--rc:${g.color}"></div>${pcs}
+        <div class="sr-label" style="color:${g.color}">${g.reg.label} · ${n}</div>
       </div>`;
     }).join('');
     el.style.cssText = '';
     el.className = '';
-    el.innerHTML = `<div style="font-size:12px;color:var(--text-2);margin-bottom:2px">🧩 Навыки собираются в один пазл внутри мозга — цвет кусочка = тип задачи (зоны проступают сами)</div>
-      <div class="skill-brain">${brainBg}<div class="skill-grid-wrap" style="width:${gridW}px;height:${gridH}px">${pieces}</div></div>`;
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-2);margin-bottom:2px">🧠 Навыки специализируют области мозга — каждый отдел осваивает свой тип задач, формируя умеющий мозг</div>
+      <div class="skill-brain">${brainBg}${regionsHtml}</div>`;
   } catch(e) { el.innerHTML = `<div style="color:var(--accent-err)">${e.message}</div>`; }
 }
 
