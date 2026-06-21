@@ -1523,16 +1523,22 @@ async def api_system_versions():
     try:
         from .core.winproc import no_window
         r = subprocess.run(
-            ["git", "log", "--max-count=20", "--pretty=format:%h|%ad|%s",
+            ["git", "log", "--max-count=40", "--no-merges", "--pretty=format:%h|%ad|%s",
              "--date=format:%Y-%m-%d %H:%M"],
             capture_output=True, cwd=repo_root, timeout=10, **no_window(),
         )
         if r.returncode == 0:
             for line in r.stdout.decode("utf-8", errors="replace").splitlines():
                 parts = line.split("|", 2)
-                if len(parts) == 3:
-                    history.append({"date": parts[1], "label": parts[0],
-                                    "kind": "код", "text": parts[2]})
+                if len(parts) != 3:
+                    continue
+                subj = parts[2]
+                # В пользовательскую хронологию НЕ включаем шум: авто-коммиты
+                # самомодификации (их видно в ленте «промпты»/самообучение отдельно).
+                if subj.startswith("self-mod:") or "(изменено агентом)" in subj:
+                    continue
+                history.append({"date": parts[1], "label": parts[0],
+                                "kind": "код", "text": subj})
     except Exception:
         pass
 
