@@ -781,6 +781,14 @@
     .skill-region .sr-label { position:absolute; left:50%; bottom:-15px; transform:translateX(-50%);
       font-size:9.5px; font-weight:600; white-space:nowrap; opacity:.9; pointer-events:none; }
     .skill-region .skill-piece.placed .skill-pc { left:26px; right:26px; top:24px; bottom:26px; gap:2px; }
+    .skill-tip { position:fixed; display:none; z-index:600; max-width:300px; pointer-events:none;
+      background:var(--bg-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.5); font-size:12px; line-height:1.5; }
+    .skill-tip .st-name { font-size:13px; font-weight:700; margin-bottom:4px; }
+    .skill-tip .st-desc { color:var(--text-2); margin-bottom:7px; }
+    .skill-tip .st-meta { color:var(--text-3); font-size:11px; margin-top:2px; }
+    .skill-tip .st-meta b { color:var(--text-2); }
+    .skill-tip .st-uses { color:var(--accent-3); font-size:11px; margin-top:6px; }
     .skill-piece.placed { position:absolute; width:80px; z-index:1;
       transition:transform .15s ease, filter .15s ease; }
     .skill-piece.placed:hover { z-index:80; transform:scale(1.1);
@@ -3056,6 +3064,7 @@ async function loadSkills() {
     }
     const W = 70, H = 56, M = 20;   // тело кусочка + поля под выступы шипов
     const has = (n, rows, cols, r, c) => r >= 0 && c >= 0 && r < rows && c < cols && (r * cols + c) < n;
+    const tipHTML = {}; let _sid = 0;   // полная инфа о навыке для ховер-поповера
     const regionsHtml = Object.values(groups).map(g => {
       const n = g.items.length, cols = n <= 1 ? 1 : 2, rows = Math.ceil(n / cols);
       const gw = cols * W, gh = rows * H;
@@ -3071,8 +3080,14 @@ async function loadSkills() {
           has(n, rows, cols, r, col-1) ? -1 : 0,   // лево: паз
         ];
         const z = (rows - r) * cols + (cols - col);
-        const tip = `${s.name}\n${s.description}\n\n🏷 ${s.task_type} → отдел «${g.reg.label}»\n🔧 ${s.tools || '—'} · ${s.source_model} · ${s.created}`;
-        return `<div class="skill-piece placed" title="${escHtml(tip)}" style="left:${col*W - M}px;top:${r*H - M}px;width:${W + 2*M}px;z-index:${z}">
+        const sid = _sid++;
+        tipHTML[sid] = `<div class="st-name" style="color:${c}">🧩 ${escHtml(s.name)}</div>`
+          + `<div class="st-desc">${escHtml(s.description || '—')}</div>`
+          + `<div class="st-meta">🏷 <b>${escHtml(s.task_type)}</b> → отдел «${escHtml(g.reg.label)}»</div>`
+          + `<div class="st-meta">🔧 ${escHtml(s.tools || '—')}</div>`
+          + `<div class="st-meta">🤖 ${escHtml(s.source_model || '—')} · 📅 ${escHtml(s.created || '—')}</div>`
+          + `<div class="st-uses">подходил под задачу <b>×${s.uses}</b></div>`;
+        return `<div class="skill-piece placed" data-skill="${sid}" style="left:${col*W - M}px;top:${r*H - M}px;width:${W + 2*M}px;z-index:${z}">
           <svg viewBox="${-M} ${-M} ${W + 2*M} ${H + 2*M}" style="width:100%;overflow:visible"><path d="${jig(W, H, e)}" fill="${c}66" stroke="${c}ee" stroke-width="1.6"/></svg>
           <div class="skill-pc"><span class="uses">×${s.uses}</span><span class="nm">🧩 ${escHtml(cut(s.name))}</span></div>
         </div>`;
@@ -3086,6 +3101,23 @@ async function loadSkills() {
     el.className = '';
     el.innerHTML = `<div style="font-size:12px;color:var(--text-2);margin-bottom:2px">🧠 Навыки специализируют области мозга — каждый отдел осваивает свой тип задач, формируя умеющий мозг</div>
       <div class="skill-brain">${brainBg}${regionsHtml}</div>`;
+
+    // Ховер-поповер с полной инфой о навыке
+    const tipEl = document.getElementById('skill-tip') ||
+      document.body.appendChild(Object.assign(document.createElement('div'), { id: 'skill-tip', className: 'skill-tip' }));
+    const brain = el.querySelector('.skill-brain');
+    brain.addEventListener('mousemove', ev => {
+      const pc = ev.target.closest('.skill-piece[data-skill]');
+      if (!pc) { tipEl.style.display = 'none'; return; }
+      tipEl.innerHTML = tipHTML[pc.dataset.skill] || '';
+      tipEl.style.display = 'block';
+      let x = ev.clientX + 16, y = ev.clientY + 16;
+      const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+      if (x + tw > innerWidth - 8) x = ev.clientX - tw - 16;
+      if (y + th > innerHeight - 8) y = Math.max(8, innerHeight - th - 8);
+      tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
+    });
+    brain.addEventListener('mouseleave', () => { tipEl.style.display = 'none'; });
   } catch(e) { el.innerHTML = `<div style="color:var(--accent-err)">${e.message}</div>`; }
 }
 
