@@ -780,6 +780,7 @@
     @keyframes srPulse { 0%,100%{opacity:.3} 50%{opacity:.5} }
     .skill-region .sr-label { position:absolute; left:50%; bottom:-15px; transform:translateX(-50%);
       font-size:9.5px; font-weight:600; white-space:nowrap; opacity:.9; pointer-events:none; }
+    .skill-region .skill-piece.placed .skill-pc { left:26px; right:26px; top:24px; bottom:26px; gap:2px; }
     .skill-piece.placed { position:absolute; width:80px; z-index:1;
       transition:transform .15s ease, filter .15s ease; }
     .skill-piece.placed:hover { z-index:80; transform:scale(1.1);
@@ -2995,9 +2996,29 @@ async function loadSkills() {
       general:'#9f7aea', coding_small:'#63b3ed', coding_large:'#4299e1', coding_hard:'#3182ce',
       coding:'#63b3ed', shell:'#48bb78', research:'#ed8936', architecture:'#ecc94b', web:'#38b2ac'
     }[t] || '#9f7aea');
-    // SVG-кусочек пазла: выемка сверху+слева, таб справа+снизу → кусочки «стыкуются»
-    const piece = (fill, stroke) =>
-      `<svg viewBox="0 0 174 132" preserveAspectRatio="none"><path d="M1,1 H72 A15 15 0 0 1 102 1 H173 V51 A15 15 0 0 0 173 81 V131 H102 A15 15 0 0 0 72 131 H1 V81 A15 15 0 0 1 1 51 Z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
+    // Классический пазл-шип (узкая шейка + круглая головка). e=[верх,право,низ,лево]:
+    // +1 шип (наружу), -1 паз (внутрь), 0 ровный край. Края соседей комплементарны
+    // (шип одного = паз другого, одна кривая) → кусочки стыкуются без нахлёста.
+    const jig = (W, H, e) => {
+      const edges = [
+        { S:[0,0], a:[1,0],  nr:[0,-1], L:W, d:e[0] },  // верх
+        { S:[W,0], a:[0,1],  nr:[1,0],  L:H, d:e[1] },  // право
+        { S:[W,H], a:[-1,0], nr:[0,1],  L:W, d:e[2] },  // низ
+        { S:[0,H], a:[0,-1], nr:[-1,0], L:H, d:e[3] },  // лево
+      ];
+      const P = (s,a,nr,u,v) => `${(s[0]+a[0]*u+nr[0]*v).toFixed(1)} ${(s[1]+a[1]*u+nr[1]*v).toFixed(1)}`;
+      let p = `M0 0`;
+      for (const { S, a, nr, L, d } of edges) {
+        const ex = (S[0]+a[0]*L).toFixed(1), ey = (S[1]+a[1]*L).toFixed(1);
+        if (!d) { p += ` L${ex} ${ey}`; continue; }
+        const m = L/2, nw = 0.16*L, hh = 0.11*L, hr = 0.16*L;   // шейка / высота / головка
+        p += ` L${P(S,a,nr,m-nw,0)}`                                   // до шейки
+           + ` C${P(S,a,nr,m-nw,d*hh)} ${P(S,a,nr,m-hr,d*(hh+hr))} ${P(S,a,nr,m,d*(hh+hr))}` // левый бок головки
+           + ` C${P(S,a,nr,m+hr,d*(hh+hr))} ${P(S,a,nr,m+nw,d*hh)} ${P(S,a,nr,m+nw,0)}`       // правый бок
+           + ` L${ex} ${ey}`;
+      }
+      return p + ' Z';
+    };
     // Каждый task_type → отдел мозга (позиция в % контейнера-мозга)
     const short = s => (s || '').length > 14 ? s.slice(0, 13) + '…' : s;
     const brainBg = `<svg class="sb-bg" viewBox="78 46 286 244" preserveAspectRatio="xMidYMid meet">
@@ -3033,20 +3054,26 @@ async function loadSkills() {
       const key = reg.x + ',' + reg.y;
       (groups[key] = groups[key] || { reg, color: skillColor(s.task_type), items: [] }).items.push(s);
     }
-    const PW = 80, PH = 60, SX = 60, SY = 44;
+    const W = 70, H = 56, M = 20;   // тело кусочка + поля под выступы шипов
+    const has = (n, rows, cols, r, c) => r >= 0 && c >= 0 && r < rows && c < cols && (r * cols + c) < n;
     const regionsHtml = Object.values(groups).map(g => {
       const n = g.items.length, cols = n <= 1 ? 1 : 2, rows = Math.ceil(n / cols);
-      const gw = (cols - 1) * SX + PW, gh = (rows - 1) * SY + PH;
-      const rowCount = r => Math.min(cols, n - r * cols);
+      const gw = cols * W, gh = rows * H;
       const pcs = g.items.map((s, i) => {
         const c = skillColor(s.task_type);
         const r = Math.floor(i / cols), col = i % cols;
-        const offX = (gw - ((rowCount(r) - 1) * SX + PW)) / 2;
-        const left = offX + col * SX, top = r * SY;
+        // края: внутренние — комплементарны соседям (паз сверху/слева, шип снизу/справа);
+        // внешние (нет соседа) — ровные. Так шипы входят в пазы без нахлёста.
+        const e = [
+          has(n, rows, cols, r-1, col) ? -1 : 0,   // верх: паз под нижний шип верхнего
+          has(n, rows, cols, r, col+1) ?  1 : 0,   // право: шип
+          has(n, rows, cols, r+1, col) ?  1 : 0,   // низ: шип
+          has(n, rows, cols, r, col-1) ? -1 : 0,   // лево: паз
+        ];
         const z = (rows - r) * cols + (cols - col);
         const tip = `${s.name}\n${s.description}\n\n🏷 ${s.task_type} → отдел «${g.reg.label}»\n🔧 ${s.tools || '—'} · ${s.source_model} · ${s.created}`;
-        return `<div class="skill-piece placed" title="${escHtml(tip)}" style="left:${left.toFixed(0)}px;top:${top.toFixed(0)}px;width:${PW}px;z-index:${z}">
-          ${piece(c + '4d', c + 'dd')}
+        return `<div class="skill-piece placed" title="${escHtml(tip)}" style="left:${col*W - M}px;top:${r*H - M}px;width:${W + 2*M}px;z-index:${z}">
+          <svg viewBox="${-M} ${-M} ${W + 2*M} ${H + 2*M}" style="width:100%;overflow:visible"><path d="${jig(W, H, e)}" fill="${c}66" stroke="${c}ee" stroke-width="1.6"/></svg>
           <div class="skill-pc"><span class="uses">×${s.uses}</span><span class="nm">🧩 ${escHtml(cut(s.name))}</span></div>
         </div>`;
       }).join('');
