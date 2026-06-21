@@ -874,6 +874,39 @@
       color:var(--text-2); font-size:15px; cursor:pointer; line-height:1;
       transition:background .15s ease, color .15s ease; }
     .set-close:hover { background:rgba(255,255,255,.1); color:var(--text); }
+    /* Настройки: боковые вкладки + панели */
+    #panel-settings.as-sheet .set-body { padding:0; display:flex; flex-direction:row; min-height:0; }
+    .set-nav { flex:0 0 196px; border-right:1px solid var(--border); padding:14px 10px;
+      display:flex; flex-direction:column; gap:2px; overflow-y:auto;
+      background:color-mix(in srgb, var(--text) 2%, transparent); }
+    .set-tab { display:flex; align-items:center; gap:9px; text-align:left; width:100%;
+      padding:8px 11px; border-radius:9px; border:none; background:none; color:var(--text-2);
+      font-size:13px; cursor:pointer; transition:background .14s ease, color .14s ease; white-space:nowrap; }
+    .set-tab:hover { background:rgba(255,255,255,.05); color:var(--text); }
+    .set-tab.active { background:color-mix(in srgb, var(--accent) 16%, transparent);
+      color:var(--text); font-weight:600; }
+    .set-panes { flex:1 1 auto; min-width:0; overflow-y:auto; padding:20px 24px; }
+    .set-pane { display:none; }
+    .set-pane.active { display:block; animation:gmIn .18s ease; }
+    .set-pane .sp-h { font-size:15px; color:var(--text); margin:0 0 3px; }
+    .set-pane .sp-sub { font-size:11.5px; color:var(--text-3); margin:0 0 16px; line-height:1.5; }
+    .set-pane .sp-note { font-size:11px; color:var(--text-3); margin-top:12px; font-style:italic; }
+    .feat-row { display:flex; align-items:flex-start; gap:11px; padding:10px 12px;
+      background:rgba(255,255,255,.025); border:1px solid var(--border); border-radius:10px;
+      margin-bottom:8px; }
+    .feat-row .feat-ic { font-size:17px; line-height:1.3; flex-shrink:0; }
+    .feat-row > div { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+    .feat-row b { font-size:13px; color:var(--text); font-weight:600; }
+    .feat-row span:not(.feat-ic):not(.feat-on) { font-size:11.5px; color:var(--text-3); line-height:1.45; }
+    .feat-row code { font-family:var(--font-mono); font-size:11px; background:var(--bg-3);
+      padding:0 4px; border-radius:4px; }
+    .feat-row .feat-on { flex:0 0 auto; align-self:center; font-size:10px; color:var(--accent-3);
+      background:rgba(72,187,120,.16); border-radius:8px; padding:2px 8px; white-space:nowrap; }
+    @media (max-width:560px) {
+      #panel-settings.as-sheet .set-body { flex-direction:column; }
+      .set-nav { flex:0 0 auto; flex-direction:row; border-right:none;
+        border-bottom:1px solid var(--border); overflow-x:auto; }
+    }
     /* Мозг: интерактивный разбор когнитивных слоёв */
     .brain-layers { display:flex; flex-direction:column; gap:8px; }
     .brain-layer { display:flex; align-items:flex-start; gap:9px; background:rgba(255,255,255,.03);
@@ -1590,73 +1623,171 @@
       <p data-i18n="set.sub">Конфигурация FreePalp</p>
       <button class="set-close" onclick="closeSettings()" title="Закрыть" aria-label="Закрыть">✕</button>
     </div>
-    <div class="set-body" style="padding:24px;overflow-y:auto">
-      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-        <div class="rp-title" data-i18n="set.theme">🎨 Тема</div>
-        <div id="theme-switch" style="display:flex;gap:8px;margin-top:10px">
-          <button class="theme-btn" data-t="light"  onclick="setTheme('light')" data-i18n="theme.light">☀️ Светлая</button>
-          <button class="theme-btn" data-t="dark"   onclick="setTheme('dark')" data-i18n="theme.dark">🌙 Тёмная</button>
-          <button class="theme-btn" data-t="system" onclick="setTheme('system')" data-i18n="theme.system">💻 Системная</button>
-        </div>
-      </div>
-      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-        <div class="rp-title" data-i18n="set.lang">🌐 Язык</div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="theme-btn lang-btn" data-l="en" onclick="setLang('en')">English</button>
-          <button class="theme-btn lang-btn" data-l="ru" onclick="setLang('ru')">Русский</button>
-          <button class="theme-btn lang-btn" data-l="zh" onclick="setLang('zh')">中文</button>
-        </div>
-      </div>
-      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-        <div class="rp-title" data-i18n="set.sysinfo">Информация о системе</div>
-        <div id="settings-info" style="font-size:13px;color:var(--text-2);line-height:1.8" data-i18n="common.loading">Загрузка...</div>
-      </div>
-      <div id="training-notice" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px;border-left:3px solid var(--accent);padding:10px 12px;display:none">
-        <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px" data-i18n="set.selfTraining">🧬 Самообучение</div>
-        <div id="training-status" style="font-size:11px;color:var(--text-2);line-height:1.6"></div>
-      </div>
-      <!-- Единая версия FreePalp: вехи + код + промпты в одной ленте -->
-      <div id="versions-wrap" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="rp-title" style="margin:0"><span data-i18n="sys.versionHdr">🐙 Версия FreePalp:</span> <span id="fp-version" style="color:var(--accent)">…</span></div>
-          <button class="btn" style="font-size:11px;padding:3px 8px" onclick="rollbackVersion()" title="Откат версии промптов" data-i18n-title="tip.rollback" data-i18n="set.rollback">↩ Откат промптов</button>
-        </div>
-        <div style="font-size:10px;color:var(--text-3);margin-bottom:6px" data-i18n="set.versionsDesc">
-          Хронология: вехи проекта, изменения кода (git, автокоммит самомодификаций) и версии промптов (самоулучшение)
-        </div>
-        <div id="versions-list" style="font-size:11px;color:var(--text-2);max-height:300px;overflow-y:auto"></div>
-      </div>
-      <!-- Поведение системы (настоящие настройки) -->
-      <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-        <div class="rp-title" data-i18n="set.behavior">⚙️ Поведение</div>
-        <div style="margin-top:6px">
-          <label class="set-row toggle">
-            <span class="label"><span data-i18n="set.sound">🔔 Звук при завершении ответа</span><span class="hint" data-i18n="set.soundHint">по умолчанию выкл</span></span>
-            <input type="checkbox" id="set-sound" onchange="setSound(this.checked)">
-          </label>
+    <div class="set-body">
+      <nav class="set-nav">
+        <button class="set-tab active" data-pane="general"    onclick="setSettingsTab('general',this)">⚙️ Общий</button>
+        <button class="set-tab"        data-pane="features"   onclick="setSettingsTab('features',this)">✨ Возможности</button>
+        <button class="set-tab"        data-pane="agents"     onclick="setSettingsTab('agents',this)">🤖 Команда агентов</button>
+        <button class="set-tab"        data-pane="selftrain"  onclick="setSettingsTab('selftrain',this)">♻️ Самообучение</button>
+        <button class="set-tab"        data-pane="memory"     onclick="setSettingsTab('memory',this)">🧠 Память</button>
+        <button class="set-tab"        data-pane="connectors" onclick="setSettingsTab('connectors',this)">🧩 Коннекторы и IDE</button>
+        <button class="set-tab"        data-pane="privacy"    onclick="setSettingsTab('privacy',this)">🔒 Конфиденциальность</button>
+        <button class="set-tab"        data-pane="about"      onclick="setSettingsTab('about',this)">ℹ️ О FreePalp</button>
+      </nav>
+      <div class="set-panes">
+
+        <!-- ───────── ОБЩИЙ ───────── -->
+        <section class="set-pane active" data-pane="general">
+          <h3 class="sp-h">⚙️ Общий</h3>
+          <p class="sp-sub">Внешний вид и базовое поведение приложения.</p>
+          <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+            <div class="rp-title" data-i18n="set.theme">🎨 Тема</div>
+            <div id="theme-switch" style="display:flex;gap:8px;margin-top:10px">
+              <button class="theme-btn" data-t="light"  onclick="setTheme('light')" data-i18n="theme.light">☀️ Светлая</button>
+              <button class="theme-btn" data-t="dark"   onclick="setTheme('dark')" data-i18n="theme.dark">🌙 Тёмная</button>
+              <button class="theme-btn" data-t="system" onclick="setTheme('system')" data-i18n="theme.system">💻 Системная</button>
+            </div>
+          </div>
+          <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+            <div class="rp-title" data-i18n="set.lang">🌐 Язык</div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="theme-btn lang-btn" data-l="en" onclick="setLang('en')">English</button>
+              <button class="theme-btn lang-btn" data-l="ru" onclick="setLang('ru')">Русский</button>
+              <button class="theme-btn lang-btn" data-l="zh" onclick="setLang('zh')">中文</button>
+            </div>
+          </div>
+          <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+            <div class="rp-title" data-i18n="set.behavior">⚙️ Поведение</div>
+            <div style="margin-top:6px">
+              <label class="set-row toggle">
+                <span class="label"><span data-i18n="set.sound">🔔 Звук при завершении ответа</span><span class="hint" data-i18n="set.soundHint">по умолчанию выкл</span></span>
+                <input type="checkbox" id="set-sound" onchange="setSound(this.checked)">
+              </label>
+              <div class="set-row">
+                <span class="label"><span data-i18n="set.idleBefore">Авто-выключение через</span><span class="hint" data-i18n="set.idleHint">0 = никогда; нужен перезапуск</span></span>
+                <span class="control">
+                  <input type="number" id="set-idle" min="0" max="1440" onchange="saveSetting('idle_shutdown_minutes', parseInt(this.value)||0)">
+                  <span data-i18n="set.idleMin">мин</span>
+                </span>
+              </div>
+              <div class="set-row">
+                <span class="label"><span data-i18n="set.retryLabel">Порог критика для ретрая</span><span class="hint" data-i18n="set.retryHint">score ниже — повтор; 0.7 по умолчанию</span></span>
+                <span class="control">
+                  <input type="number" id="set-retry" min="0" max="1" step="0.05" onchange="saveSetting('retry_threshold', parseFloat(this.value)||0.7)">
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ───────── ВОЗМОЖНОСТИ ───────── -->
+        <section class="set-pane" data-pane="features">
+          <h3 class="sp-h">✨ Возможности</h3>
+          <p class="sp-sub">Что оркестратор умеет из коробки. Включаются автоматически по типу задачи.</p>
+          <div class="feat-row"><span class="feat-ic">⌨️</span><div><b>Токен-стриминг</b><span>живой вывод ответа по мере генерации</span></div><span class="feat-on">вкл</span></div>
+          <div class="feat-row"><span class="feat-ic">🪶</span><div><b>Lean-режим</b><span>короткий промпт на простых задачах — быстрее и дешевле</span></div><span class="feat-on">авто</span></div>
+          <div class="feat-row"><span class="feat-ic">🔬</span><div><b>Deep research</b><span>многоугловой веб-поиск с выжимкой и источниками</span></div><span class="feat-on">по интенту</span></div>
+          <div class="feat-row"><span class="feat-ic">🌐</span><div><b>Веб-инструменты</b><span>агент сам ходит в браузер / fetch / Reddit (наш аналог «Claude в Chrome»)</span></div><span class="feat-on">вкл</span></div>
+          <div class="feat-row"><span class="feat-ic">🎨</span><div><b>Артефакты-превью</b><span>HTML и мини-игры из песочницы играются прямо в чате</span></div><span class="feat-on">вкл</span></div>
+          <div class="feat-row"><span class="feat-ic">🧩</span><div><b>Навыки (teacher→skill)</b><span>удачные приёмы сохраняются и подставляются заранее</span></div><span class="feat-on">вкл</span></div>
+        </section>
+
+        <!-- ───────── КОМАНДА АГЕНТОВ ───────── -->
+        <section class="set-pane" data-pane="agents">
+          <h3 class="sp-h">🤖 Команда агентов</h3>
+          <p class="sp-sub">FreePalp решает задачу не одной моделью, а конвейером ролей (наш аналог «коворкинга»).</p>
+          <div class="feat-row"><span class="feat-ic">🧱</span><div><b>Architect</b><span>декомпозирует сложную задачу в граф подзадач (DAG)</span></div></div>
+          <div class="feat-row"><span class="feat-ic">⚙️</span><div><b>Worker</b><span>выполняет шаги, вызывает инструменты, пишет файлы</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🧪</span><div><b>Critic</b><span>двухъярусная проверка ответа; ниже порога score — ретрай</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🔀</span><div><b>Параллельные субагенты</b><span>независимые ветки DAG считаются одновременно (лимит 2)</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🛟</span><div><b>Фолбэк провайдеров</b><span>429/лимит у модели → автопереключение, вплоть до локальной Ollama</span></div></div>
+          <p class="sp-note">Порог ретрая критика настраивается во вкладке «Общий».</p>
+        </section>
+
+        <!-- ───────── САМООБУЧЕНИЕ ───────── -->
+        <section class="set-pane" data-pane="selftrain">
+          <h3 class="sp-h">♻️ Самообучение</h3>
+          <p class="sp-sub">Система измеряет свои провалы, чинит промпты и гейтит изменения с защитой от регресса.</p>
+          <div id="training-notice" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px;border-left:3px solid var(--accent);padding:10px 12px;display:none">
+            <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px" data-i18n="set.selfTraining">🧬 Самообучение</div>
+            <div id="training-status" style="font-size:11px;color:var(--text-2);line-height:1.6"></div>
+          </div>
           <label class="set-row toggle">
             <span class="label"><span data-i18n="set.siStartup">Самоулучшение при старте сервера</span><span class="hint" data-i18n="set.siStartupHint">жжёт квоту провайдеров</span></span>
             <input type="checkbox" id="set-si-startup" onchange="saveSetting('si_on_startup', this.checked)">
           </label>
-          <div class="set-row">
-            <span class="label"><span data-i18n="set.idleBefore">Авто-выключение через</span><span class="hint" data-i18n="set.idleHint">0 = никогда; нужен перезапуск</span></span>
-            <span class="control">
-              <input type="number" id="set-idle" min="0" max="1440" onchange="saveSetting('idle_shutdown_minutes', parseInt(this.value)||0)">
-              <span data-i18n="set.idleMin">мин</span>
-            </span>
+          <div id="versions-wrap" class="rp-section" style="border-radius:var(--radius);margin:12px 0">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div class="rp-title" style="margin:0"><span data-i18n="sys.versionHdr">🐙 Версия FreePalp:</span> <span id="fp-version" style="color:var(--accent)">…</span></div>
+              <button class="btn" style="font-size:11px;padding:3px 8px" onclick="rollbackVersion()" title="Откат версии промптов" data-i18n-title="tip.rollback" data-i18n="set.rollback">↩ Откат промптов</button>
+            </div>
+            <div style="font-size:10px;color:var(--text-3);margin-bottom:6px" data-i18n="set.versionsDesc">
+              Хронология: вехи проекта, изменения кода (git, автокоммит самомодификаций) и версии промптов (самоулучшение)
+            </div>
+            <div id="versions-list" style="font-size:11px;color:var(--text-2);max-height:300px;overflow-y:auto"></div>
           </div>
-          <div class="set-row">
-            <span class="label"><span data-i18n="set.retryLabel">Порог критика для ретрая</span><span class="hint" data-i18n="set.retryHint">score ниже — повтор; 0.7 по умолчанию</span></span>
-            <span class="control">
-              <input type="number" id="set-retry" min="0" max="1" step="0.05" onchange="saveSetting('retry_threshold', parseFloat(this.value)||0.7)">
-            </span>
+          <button class="btn primary" onclick="triggerImprove()" data-i18n="set.improve">🧬 Запустить самоулучшение</button>
+        </section>
+
+        <!-- ───────── ПАМЯТЬ ───────── -->
+        <section class="set-pane" data-pane="memory">
+          <h3 class="sp-h">🧠 Память</h3>
+          <p class="sp-sub">Трёхъярусная память агента. Подробный разбор — на главной панели «Память».</p>
+          <div class="feat-row"><span class="feat-ic">🔥</span><div><b>HOT</b><span>активная — инжектируется в каждый промпт</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🌡️</span><div><b>WARM</b><span>недавние сессии — подгружаются при продолжении</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🧊</span><div><b>COLD</b><span>глубокий архив — доступен поиском по векторам</span></div></div>
+          <div class="feat-row"><span class="feat-ic">📝</span><div><b>Консолидация исправлений</b><span>на 50 накопленных уроков — авто-сведение в постоянную память</span></div></div>
+          <button class="btn" style="margin-top:6px" onclick="triggerMemClean()" data-i18n="set.clearmem">🧹 Очистить память</button>
+        </section>
+
+        <!-- ───────── КОННЕКТОРЫ И IDE ───────── -->
+        <section class="set-pane" data-pane="connectors">
+          <h3 class="sp-h">🧩 Коннекторы и IDE</h3>
+          <p class="sp-sub">Подключение внешних инструментов и доступ к оркестратору из редактора.</p>
+          <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+            <div class="rp-title">🔌 MCP-серверы</div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-top:6px">
+              Подключают внешние инструменты по протоколу MCP (stdio JSON-RPC). Конфиг — <code>config/mcp_servers.json</code> (пусто = выкл).
+              Статус и список — на главной панели <b>MCP</b>.
+            </div>
           </div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn primary" onclick="triggerImprove()" data-i18n="set.improve">🧬 Самоулучшение</button>
-        <button class="btn" onclick="triggerMemClean()" data-i18n="set.clearmem">🧹 Очистить память</button>
-        <button class="btn" onclick="window.open('/docs','_blank')">📖 API Docs</button>
+          <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+            <div class="rp-title">⌨️ FreePalp в IDE <span style="font-size:10px;color:var(--text-3);font-weight:400">(наш аналог «Claude Code»)</span></div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-top:6px">
+              Весь оркестратор доступен по <b>OpenAI-совместимому API</b>. Укажи в плагине редактора (Continue.dev, Cursor, любой openai-клиент):
+              <div style="margin:8px 0;padding:8px 10px;background:var(--bg-3);border-radius:8px;font-family:var(--font-mono);font-size:12px">base_url: <span style="color:var(--accent)">http://localhost:28800/v1</span></div>
+              Эндпоинты <code>/v1/chat/completions</code> и <code>/v1/models</code> — под капотом весь роутинг, критик и память.
+            </div>
+            <button class="btn" style="margin-top:4px" onclick="window.open('/docs','_blank')">📖 API Docs</button>
+          </div>
+        </section>
+
+        <!-- ───────── КОНФИДЕНЦИАЛЬНОСТЬ ───────── -->
+        <section class="set-pane" data-pane="privacy">
+          <h3 class="sp-h">🔒 Конфиденциальность</h3>
+          <p class="sp-sub">FreePalp работает локально и не отправляет данные «домой».</p>
+          <div class="feat-row"><span class="feat-ic">🖥️</span><div><b>Всё локально</b><span>ключи в <code>.env</code> на твоём ПК, память в <code>freepalp/memory/</code> — не в облаке, не в git</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🚫</span><div><b>Без телеметрии</b><span>приложение не шлёт аналитику и не «звонит домой»</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🆓</span><div><b>Free-model-first</b><span>запросы идут только в выбранных тобой провайдеров; фолбэк — локальная Ollama без внешних API</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🛡️</span><div><b>Санитизация инъекций</b><span>недоверенный веб-контент дефангуется и оборачивается баннером перед подачей модели</span></div></div>
+        </section>
+
+        <!-- ───────── О FREEPALP ───────── -->
+        <section class="set-pane" data-pane="about">
+          <h3 class="sp-h">ℹ️ О FreePalp</h3>
+          <p class="sp-sub">Мультиагентный AI-оркестратор на бесплатных и локальных моделях.</p>
+          <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
+            <div class="rp-title" data-i18n="set.sysinfo">Информация о системе</div>
+            <div id="settings-info" style="font-size:13px;color:var(--text-2);line-height:1.8" data-i18n="common.loading">Загрузка...</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" onclick="window.open('https://github.com/verdyshd/freepalp','_blank')">🐙 GitHub</button>
+            <button class="btn" onclick="gearGo('changelog')">📋 История изменений</button>
+            <button class="btn" onclick="window.open('/docs','_blank')">📖 API Docs</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:12px">Лицензия MIT · автор: Дмитрий (verdyshd)</div>
+        </section>
+
       </div>
     </div>
   </section>
@@ -4353,7 +4484,15 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal
 function openSettings() {
   document.getElementById('settings-backdrop').classList.add('open');
   document.getElementById('panel-settings').classList.add('open');
+  setSettingsTab('general');   // всегда открываем на «Общий»
   if (typeof loadSettings === 'function') loadSettings();
+}
+// Переключение вкладок настроек (боковой сайдбар)
+function setSettingsTab(name, btn) {
+  document.querySelectorAll('#panel-settings .set-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.pane === name));
+  document.querySelectorAll('#panel-settings .set-pane').forEach(p =>
+    p.classList.toggle('active', p.dataset.pane === name));
 }
 function closeSettings() {
   document.getElementById('settings-backdrop').classList.remove('open');
