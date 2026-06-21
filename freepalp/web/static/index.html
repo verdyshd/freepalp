@@ -800,6 +800,14 @@
     .sr-card { transition:border-color .15s ease, background .15s ease; }
     .sr-card.hot { border-color:var(--accent);
       background:color-mix(in srgb, var(--accent) 9%, var(--bg-glass)); }
+    /* Голос: клик-осьминожка «щекотно» + кнопка микрофона */
+    .msg-avatar img { cursor:pointer; }
+    @keyframes octoTickle { 0%,100%{transform:rotate(0) scale(1)} 12%{transform:rotate(-13deg) scale(1.12)}
+      28%{transform:rotate(11deg) scale(1.12)} 44%{transform:rotate(-8deg) scale(1.06)}
+      60%{transform:rotate(7deg)} 76%{transform:rotate(-4deg)} 88%{transform:rotate(2deg)} }
+    .msg-avatar img.octo-tickle { animation:octoTickle .72s ease; }
+    #mic-btn.rec { color:#fc8181; animation:micPulse 1s ease-in-out infinite; }
+    @keyframes micPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     .skill-piece.placed { position:absolute; width:80px; z-index:1;
       transition:transform .15s ease, filter .15s ease; }
     .skill-piece.placed:hover { z-index:80; transform:scale(1.1);
@@ -1368,6 +1376,11 @@
               </svg>
             </button>
             <textarea id="user-input" data-i18n-ph="composer.ph" placeholder="Задайте вопрос или задачу..." rows="1"></textarea>
+            <button id="mic-btn" onclick="toggleVoiceInput()" title="Голосовой ввод" data-i18n-title="tip.mic">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
+              </svg>
+            </button>
             <button id="send-btn" onclick="sendMessage()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="19" x2="12" y2="5"></line>
@@ -1690,6 +1703,10 @@
               <label class="set-row toggle">
                 <span class="label"><span data-i18n="set.sound">🔔 Звук при завершении ответа</span><span class="hint" data-i18n="set.soundHint">по умолчанию выкл</span></span>
                 <input type="checkbox" id="set-sound" onchange="setSound(this.checked)">
+              </label>
+              <label class="set-row toggle">
+                <span class="label"><span data-i18n="set.voice">🔊 Озвучивать ответы голосом</span><span class="hint" data-i18n="set.voiceHint">осьминожий голос, по языку интерфейса</span></span>
+                <input type="checkbox" id="set-voice" onchange="setVoice(this.checked)">
               </label>
               <div class="set-row">
                 <span class="label"><span data-i18n="set.idleBefore">Авто-выключение через</span><span class="hint" data-i18n="set.idleHint">0 = никогда; нужен перезапуск</span></span>
@@ -2179,6 +2196,7 @@ async function sendMessage() {
     } else {
       playBubbles();   // 🫧 ответ готов
       const data = finalData;
+      speak(data.answer);   // 🔊 озвучка ответа (если включена в Настройках)
       const _doneId = appendMsg('assistant', data.answer, {
         model:      data.model,
         score:      data.score,
@@ -2259,6 +2277,87 @@ function playBubbles() {
       osc.start(t0); osc.stop(t0 + b.d + 0.02);
     }
   } catch (e) { /* нет аудио — молча пропускаем */ }
+}
+
+// ── Голос (TTS) — Web Speech API, «осьминожий» характер, 3 языка ──
+const _VOICE_LANG = { ru: 'ru-RU', en: 'en-US', zh: 'zh-CN' };
+function _voiceOn() { try { return localStorage.getItem('freepalp-voice') === '1'; } catch (e) { return false; } }
+function setVoice(on) {
+  try { localStorage.setItem('freepalp-voice', on ? '1' : '0'); } catch (e) {}
+  if (!on && window.speechSynthesis) speechSynthesis.cancel();
+}
+function _pickVoice(lc) {
+  if (!window.speechSynthesis) return null;
+  const vs = speechSynthesis.getVoices();
+  return vs.find(v => v.lang === lc) || vs.find(v => v.lang.startsWith(lc.slice(0, 2))) || null;
+}
+if ('speechSynthesis' in window) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch (e) {} }
+// Озвучка текста. force=true — игнорировать тумблер (явное действие пользователя).
+function speak(text, opts) {
+  opts = opts || {};
+  if (!('speechSynthesis' in window)) return;
+  if (!opts.force && !_voiceOn()) return;
+  const clean = String(text || '')
+    .replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ')
+    .replace(/[#*_>|~]/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 600);
+  if (!clean) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(clean);
+    const lc = _VOICE_LANG[window._lang] || 'ru-RU';
+    u.lang = lc; const v = _pickVoice(lc); if (v) u.voice = v;
+    u.pitch = opts.pitch != null ? opts.pitch : 1.35;   // повыше — «осьминожий», игривый
+    u.rate  = opts.rate  != null ? opts.rate  : 1.03;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+// Короткий игривый «бульк» (для клика по осьминожке) — независимо от тумблера звука
+function octoGiggle() {
+  try {
+    _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _audioCtx; if (ctx.state === 'suspended') ctx.resume();
+    [[660, 0], [880, 0.08], [740, 0.16], [990, 0.24]].forEach(([f, t]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(), t0 = ctx.currentTime + t;
+      o.type = 'sine'; o.frequency.setValueAtTime(f, t0);
+      o.frequency.exponentialRampToValueAtTime(f * 1.6, t0 + 0.07);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.1, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+      o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + 0.11);
+    });
+  } catch (e) {}
+}
+// Клик по эмодзи-осьминожке в чате → подрыгивается + «щекотно» голосом
+const _TICKLE = { ru: 'Хи-хи, щекотно!', en: 'Hee-hee, that tickles!', zh: '嘻嘻，好痒！' };
+document.getElementById('messages')?.addEventListener('click', e => {
+  const img = e.target.closest('.msg-avatar img');
+  if (!img) return;
+  img.classList.remove('octo-tickle'); void img.offsetWidth; img.classList.add('octo-tickle');
+  octoGiggle();
+  speak(_TICKLE[window._lang] || _TICKLE.ru, { force: true, pitch: 1.6, rate: 1.1 });
+});
+
+// ── Голосовой ВВОД (STT) — Web Speech Recognition, по языку интерфейса ──
+let _recog = null;
+function toggleVoiceInput() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('mic-btn');
+  if (!SR) { showToast ? showToast('Голосовой ввод не поддерживается этим браузером') : alert('Голосовой ввод не поддерживается'); return; }
+  if (_recog) { _recog.stop(); return; }
+  _recog = new SR();
+  _recog.lang = _VOICE_LANG[window._lang] || 'ru-RU';
+  _recog.interimResults = true; _recog.continuous = false;
+  const ta = document.getElementById('user-input');
+  const base = ta.value.trim();
+  if (btn) btn.classList.add('rec');
+  _recog.onresult = ev => {
+    let txt = ''; for (const r of ev.results) txt += r[0].transcript;
+    ta.value = (base ? base + ' ' : '') + txt;
+    ta.dispatchEvent(new Event('input'));
+  };
+  const stop = () => { if (btn) btn.classList.remove('rec'); _recog = null; };
+  _recog.onend = stop; _recog.onerror = stop;
+  try { _recog.start(); } catch (e) { stop(); }
 }
 
 // Токен-стриминг: живой вывод ответа в прогресс-панель, пока модель печатает
@@ -4283,6 +4382,8 @@ async function loadBehaviorSettings() {
     document.getElementById('set-retry').value = s.retry_threshold ?? 0.7;
     const snd = document.getElementById('set-sound');   // звук — клиентский (localStorage)
     if (snd) snd.checked = _soundOn();
+    const vc = document.getElementById('set-voice');    // озвучка — клиентский (localStorage)
+    if (vc) vc.checked = _voiceOn();
   } catch(e) {}
 }
 
@@ -4891,6 +4992,7 @@ const I18N = {
   'panel.expand':   {ru:'Развернуть панель', en:'Expand panel', zh:'展开面板'},
   'tip.newChat':    {ru:'Новый диалог', en:'New chat', zh:'新对话'},
   'tip.attach':     {ru:'Прикрепить файл или картинку', en:'Attach a file or image', zh:'附加文件或图片'},
+  'tip.mic':        {ru:'Голосовой ввод', en:'Voice input', zh:'语音输入'},
   'tip.resetCd':    {ru:'Сбросить кулдауны', en:'Reset cooldowns', zh:'重置冷却'},
   'tip.shutdown':   {ru:'Graceful shutdown — сохранит память и завершит сервер', en:'Graceful shutdown — saves memory and stops the server', zh:'优雅关闭 —— 保存记忆并停止服务器'},
   'tip.reconnect':  {ru:'Переподключить после правки конфига', en:'Reconnect after editing the config', zh:'编辑配置后重新连接'},
@@ -4919,6 +5021,8 @@ const I18N = {
   'set.behavior':   {ru:'⚙️ Поведение', en:'⚙️ Behavior', zh:'⚙️ 行为'},
   'set.sound':      {ru:'🔔 Звук при завершении ответа', en:'🔔 Sound when the answer is ready', zh:'🔔 回答完成时提示音'},
   'set.soundHint':  {ru:'(по умолчанию выкл)', en:'(off by default)', zh:'（默认关闭）'},
+  'set.voice':      {ru:'🔊 Озвучивать ответы голосом', en:'🔊 Read answers aloud', zh:'🔊 朗读回答'},
+  'set.voiceHint':  {ru:'осьминожий голос, по языку интерфейса', en:'octopus voice, follows UI language', zh:'章鱼嗓音，跟随界面语言'},
   'set.improve':    {ru:'🧬 Самоулучшение', en:'🧬 Self-improvement', zh:'🧬 自我改进'},
   'set.clearmem':   {ru:'🧹 Очистить память', en:'🧹 Clear memory', zh:'🧹 清除记忆'},
   'set.selfTraining':{ru:'🧬 Самообучение', en:'🧬 Self-training', zh:'🧬 自我训练'},
