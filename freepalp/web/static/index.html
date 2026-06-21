@@ -1731,14 +1731,14 @@
     </div>
     <div class="set-body">
       <nav class="set-nav">
-        <button class="set-tab active" data-pane="general"    onclick="setSettingsTab('general',this)">⚙️ Общий</button>
-        <button class="set-tab"        data-pane="features"   onclick="setSettingsTab('features',this)">✨ Возможности</button>
-        <button class="set-tab"        data-pane="agents"     onclick="setSettingsTab('agents',this)">🤖 Команда агентов</button>
-        <button class="set-tab"        data-pane="selftrain"  onclick="setSettingsTab('selftrain',this)">♻️ Самообучение</button>
-        <button class="set-tab"        data-pane="memory"     onclick="setSettingsTab('memory',this)">🧠 Память</button>
-        <button class="set-tab"        data-pane="connectors" onclick="setSettingsTab('connectors',this)">🧩 Коннекторы и IDE</button>
-        <button class="set-tab"        data-pane="privacy"    onclick="setSettingsTab('privacy',this)">🔒 Конфиденциальность</button>
-        <button class="set-tab"        data-pane="about"      onclick="setSettingsTab('about',this)">ℹ️ О FreePalp</button>
+        <button class="set-tab active" data-pane="general"    onclick="setSettingsTab('general',this)" data-i18n="set.tab.general">⚙️ Общий</button>
+        <button class="set-tab"        data-pane="features"   onclick="setSettingsTab('features',this)" data-i18n="set.tab.features">✨ Возможности</button>
+        <button class="set-tab"        data-pane="agents"     onclick="setSettingsTab('agents',this)" data-i18n="set.tab.agents">🤖 Команда агентов</button>
+        <button class="set-tab"        data-pane="selftrain"  onclick="setSettingsTab('selftrain',this)" data-i18n="set.tab.selftrain">♻️ Самообучение</button>
+        <button class="set-tab"        data-pane="memory"     onclick="setSettingsTab('memory',this)" data-i18n="set.tab.memory">🧠 Память</button>
+        <button class="set-tab"        data-pane="connectors" onclick="setSettingsTab('connectors',this)" data-i18n="set.tab.connectors">🧩 Коннекторы и IDE</button>
+        <button class="set-tab"        data-pane="privacy"    onclick="setSettingsTab('privacy',this)" data-i18n="set.tab.privacy">🔒 Конфиденциальность</button>
+        <button class="set-tab"        data-pane="about"      onclick="setSettingsTab('about',this)" data-i18n="set.tab.about">ℹ️ О FreePalp</button>
       </nav>
       <div class="set-panes">
 
@@ -2529,29 +2529,65 @@ function toggleVoiceInput() {
   try { _recog.start(); } catch (e) { stop(); }
 }
 
-// ── Презентация FreePalp (по клику на лого) — слайды-оверлей ──
-const PRES_SLIDES = [
-  { icon:'🐙', title:'FreePalp', sub:'Мультиагентный AI-оркестратор на бесплатных и локальных моделях', bullets:[] },
-  { icon:'🆓', title:'Бесплатно и локально', sub:'Free-model-first', bullets:[
-    'Авто-роутинг 14+ провайдеров (Groq, Cerebras, Gemini, Mistral…)',
-    'Фолбэк на локальную Ollama — без внешних API',
-    'Кулдауны и обход лимитов из коробки'] },
-  { icon:'🤖', title:'Команда агентов', sub:'Не одна модель, а конвейер ролей', bullets:[
-    'Architect → Worker → Critic',
-    'Параллельные субагенты (DAG)',
-    'Детерминированная обвязка вместо слепого доверия LLM'] },
-  { icon:'♻️', title:'Самообучение с измеренным Δ', sub:'Безопасное само-изменение', bullets:[
-    'Система находит свой провал и чинит промпт',
-    'Двойной гейт (test + held-out) с защитой от регресса',
-    'На бенчмарке 84%→92%, holdout стабилен'] },
-  { icon:'🧠', title:'Живая память', sub:'Прозрачно и наглядно', bullets:[
-    'Ярусы HOT / WARM / COLD',
-    'Граф связей по реальным векторам — с физикой',
-    'Навыки складываются в «умеющий мозг»'] },
-  { icon:'⭐', title:'Открыто', sub:'MIT · github.com/verdyshd/freepalp', bullets:[
-    'Воспроизводимый eval прямо в репозитории',
-    'Присоединяйся — звезда, issue, PR'] },
-];
+// ── Презентация FreePalp (по клику на лого) — слайды-оверлей, 3 языка ──
+const PRES_I18N = {
+  ru: [
+    { icon:'🐙', title:'FreePalp', sub:'Мультиагентный AI-оркестратор на бесплатных и локальных моделях', bullets:[] },
+    { icon:'🆓', title:'Бесплатно и локально', sub:'Free-model-first', bullets:[
+      'Авто-роутинг 14+ провайдеров (Groq, Cerebras, Gemini, Mistral…)',
+      'Фолбэк на локальную Ollama — без внешних API',
+      'Кулдауны и обход лимитов из коробки'] },
+    { icon:'🤖', title:'Команда агентов', sub:'Не одна модель, а конвейер ролей', bullets:[
+      'Architect → Worker → Critic', 'Параллельные субагенты (DAG)',
+      'Детерминированная обвязка вместо слепого доверия LLM'] },
+    { icon:'♻️', title:'Самообучение с измеренным Δ', sub:'Безопасное само-изменение', bullets:[
+      'Система находит свой провал и чинит промпт',
+      'Двойной гейт (test + held-out) с защитой от регресса',
+      'На бенчмарке 84%→92%, holdout стабилен'] },
+    { icon:'🧠', title:'Живая память', sub:'Прозрачно и наглядно', bullets:[
+      'Ярусы HOT / WARM / COLD', 'Граф связей по реальным векторам — с физикой',
+      'Навыки складываются в «умеющий мозг»'] },
+    { icon:'⭐', title:'Открыто', sub:'MIT · github.com/verdyshd/freepalp', bullets:[
+      'Воспроизводимый eval прямо в репозитории', 'Присоединяйся — звезда, issue, PR'] },
+  ],
+  en: [
+    { icon:'🐙', title:'FreePalp', sub:'A multi-agent AI orchestrator on free and local models', bullets:[] },
+    { icon:'🆓', title:'Free and local', sub:'Free-model-first', bullets:[
+      'Auto-routing across 14+ providers (Groq, Cerebras, Gemini, Mistral…)',
+      'Fallback to local Ollama — no external APIs',
+      'Cooldowns and limit-handling out of the box'] },
+    { icon:'🤖', title:'Agent team', sub:'Not one model, but a pipeline of roles', bullets:[
+      'Architect → Worker → Critic', 'Parallel sub-agents (DAG)',
+      'Deterministic scaffolding instead of blind trust in the LLM'] },
+    { icon:'♻️', title:'Self-improvement with a measured Δ', sub:'Safe self-modification', bullets:[
+      'The system finds its own failure and fixes the prompt',
+      'Double gate (test + held-out) guarded against regressions',
+      'On the benchmark 84%→92%, holdout stable'] },
+    { icon:'🧠', title:'Living memory', sub:'Transparent and visual', bullets:[
+      'HOT / WARM / COLD tiers', 'Connection graph over real vectors — with physics',
+      'Skills assemble into a capable brain'] },
+    { icon:'⭐', title:'Open', sub:'MIT · github.com/verdyshd/freepalp', bullets:[
+      'Reproducible eval right in the repo', 'Join in — a star, an issue, a PR'] },
+  ],
+  zh: [
+    { icon:'🐙', title:'FreePalp', sub:'基于免费与本地模型的多智能体 AI 编排器', bullets:[] },
+    { icon:'🆓', title:'免费且本地', sub:'优先免费模型', bullets:[
+      '自动在 14+ 提供商间路由（Groq、Cerebras、Gemini、Mistral…）',
+      '回退到本地 Ollama——无需外部 API', '内置冷却与限额处理'] },
+    { icon:'🤖', title:'智能体团队', sub:'不是单一模型，而是角色流水线', bullets:[
+      'Architect → Worker → Critic', '并行子智能体（DAG）',
+      '用确定性框架取代对 LLM 的盲目信任'] },
+    { icon:'♻️', title:'可测量 Δ 的自我改进', sub:'安全的自我修改', bullets:[
+      '系统发现自身失败并修复提示词', '双重门控（test + held-out）防止退化',
+      '基准测试 84%→92%，holdout 稳定'] },
+    { icon:'🧠', title:'活的记忆', sub:'透明且可视', bullets:[
+      'HOT / WARM / COLD 分层', '基于真实向量的连接图——带物理效果',
+      '技能汇聚成会思考的大脑'] },
+    { icon:'⭐', title:'开放', sub:'MIT · github.com/verdyshd/freepalp', bullets:[
+      '仓库内可复现的评测', '加入我们——星标、issue、PR'] },
+  ],
+};
+function PRES_SLIDES_() { return PRES_I18N[window._lang] || PRES_I18N.ru; }
 let _presI = 0;
 function _presEl() {
   let o = document.getElementById('pres-overlay');
@@ -2568,18 +2604,18 @@ function _presEl() {
   document.body.appendChild(o); return o;
 }
 function presRender() {
-  const s = PRES_SLIDES[_presI];
+  const slides = PRES_SLIDES_(), s = slides[_presI];
   document.getElementById('pres-card').innerHTML =
     `<div class="pres-ic">${s.icon}</div>
      <div class="pres-title">${escHtml(s.title)}</div>
      ${s.sub ? `<div class="pres-sub">${escHtml(s.sub)}</div>` : ''}
      ${s.bullets.length ? `<ul class="pres-list">${s.bullets.map(b => `<li>${escHtml(b)}</li>`).join('')}</ul>` : ''}`;
   document.getElementById('pres-dots').innerHTML =
-    PRES_SLIDES.map((_, i) => `<span class="pres-dot${i === _presI ? ' on' : ''}" onclick="_presI=${i};presRender()"></span>`).join('');
+    slides.map((_, i) => `<span class="pres-dot${i === _presI ? ' on' : ''}" onclick="_presI=${i};presRender()"></span>`).join('');
 }
 function openPresentation() { _presI = 0; const o = _presEl(); presRender(); requestAnimationFrame(() => o.classList.add('open')); }
 function closePresentation() { const o = document.getElementById('pres-overlay'); if (o) o.classList.remove('open'); }
-function presNav(d) { _presI = (_presI + d + PRES_SLIDES.length) % PRES_SLIDES.length; presRender(); }
+function presNav(d) { const n = PRES_SLIDES_().length; _presI = (_presI + d + n) % n; presRender(); }
 document.addEventListener('keydown', e => {
   const o = document.getElementById('pres-overlay');
   if (!o || !o.classList.contains('open')) return;
@@ -5374,6 +5410,14 @@ const I18N = {
   'tip.attach':     {ru:'Прикрепить файл или картинку', en:'Attach a file or image', zh:'附加文件或图片'},
   'tip.mic':        {ru:'Голосовой ввод', en:'Voice input', zh:'语音输入'},
   'voice.stop':     {ru:'Стоп голос', en:'Stop voice', zh:'停止朗读'},
+  'set.tab.general':    {ru:'⚙️ Общий', en:'⚙️ General', zh:'⚙️ 常规'},
+  'set.tab.features':   {ru:'✨ Возможности', en:'✨ Features', zh:'✨ 功能'},
+  'set.tab.agents':     {ru:'🤖 Команда агентов', en:'🤖 Agent team', zh:'🤖 智能体团队'},
+  'set.tab.selftrain':  {ru:'♻️ Самообучение', en:'♻️ Self-learning', zh:'♻️ 自我学习'},
+  'set.tab.memory':     {ru:'🧠 Память', en:'🧠 Memory', zh:'🧠 记忆'},
+  'set.tab.connectors': {ru:'🧩 Коннекторы и IDE', en:'🧩 Connectors & IDE', zh:'🧩 连接器与 IDE'},
+  'set.tab.privacy':    {ru:'🔒 Конфиденциальность', en:'🔒 Privacy', zh:'🔒 隐私'},
+  'set.tab.about':      {ru:'ℹ️ О FreePalp', en:'ℹ️ About FreePalp', zh:'ℹ️ 关于 FreePalp'},
   'tip.resetCd':    {ru:'Сбросить кулдауны', en:'Reset cooldowns', zh:'重置冷却'},
   'tip.shutdown':   {ru:'Graceful shutdown — сохранит память и завершит сервер', en:'Graceful shutdown — saves memory and stops the server', zh:'优雅关闭 —— 保存记忆并停止服务器'},
   'tip.reconnect':  {ru:'Переподключить после правки конфига', en:'Reconnect after editing the config', zh:'编辑配置后重新连接'},
