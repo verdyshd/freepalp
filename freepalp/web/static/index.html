@@ -844,6 +844,16 @@
       transition:opacity .35s ease, transform .42s cubic-bezier(.2,1.25,.3,1),
         left .8s cubic-bezier(.34,.1,.3,1), top .8s cubic-bezier(.34,.1,.3,1), bottom .8s cubic-bezier(.34,.1,.3,1); }
     .fp-asst.open { opacity:1; transform:none; pointer-events:auto; }
+    /* «подплыв» — осьминог покачивается во время перемещения по экрану */
+    @keyframes asstSwim {
+      0%   { transform: rotate(0deg)   translateY(0); }
+      18%  { transform: rotate(-8deg)  translateY(-5px); }
+      42%  { transform: rotate(6deg)   translateY(3px); }
+      68%  { transform: rotate(-4deg)  translateY(-3px); }
+      85%  { transform: rotate(2deg)   translateY(1px); }
+      100% { transform: rotate(0deg)   translateY(0); }
+    }
+    .fp-asst.swim .asst-octo { animation: asstSwim .8s cubic-bezier(.34,.1,.3,1); }
     /* осьминожка «уплыла» из чата на время помощи */
     body.asst-on #messages .msg-avatar img { opacity:0; transition:opacity .3s ease; }
     .asst-octo { width:92px; height:92px; object-fit:contain; flex-shrink:0;
@@ -1311,6 +1321,20 @@
     }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
     @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+    /* Панель действий под сообщением (копировать/озвучить/оценить/повторить/ветка/правка) */
+    .msg-actions { display: flex; gap: 2px; align-items: center; margin-top: 5px; opacity: 0; transition: opacity .15s; flex-wrap: wrap; }
+    .msg:hover .msg-actions, .msg-actions:focus-within { opacity: 1; }
+    .msg-actions button {
+      background: transparent; border: 1px solid transparent; border-radius: 6px;
+      width: 26px; height: 24px; cursor: pointer; font-size: 13px; line-height: 1;
+      color: var(--text-3); transition: all .12s; padding: 0;
+    }
+    .msg-actions button:hover { background: var(--bg-glass-h); color: var(--text); border-color: var(--border); }
+    .msg-actions button:disabled { cursor: default; opacity: .5; }
+    .msg-actions button.on { color: var(--accent); opacity: 1; }
+    .msg-rate { display: inline-flex; gap: 2px; margin-left: 4px; padding-left: 6px; border-left: 1px solid var(--border); }
+    .msg.user .msg-actions { justify-content: flex-end; }
 
     /* ═══════════ OFFICE (isometric voxel scene) ═══════════ */
     .nav-live-dot {
@@ -2353,11 +2377,12 @@ function stopGeneration() {
   if (_abortCtrl) { _abortCtrl.abort(); _abortCtrl = null; }
 }
 
-async function sendMessage() {
+async function sendMessage(forced) {
   if (_abortCtrl) return;   // уже идёт задача — сначала Стоп
-  const text = ta.value.trim();
+  const text = (typeof forced === 'string' ? forced : ta.value).trim();
   if (!text && _attachments.length === 0) return;
-  ta.value = ''; ta.style.height = 'auto';
+  if (typeof forced !== 'string') { ta.value = ''; ta.style.height = 'auto'; }
+  window._lastPrompt = text;   // для «повторить» под ответом
 
   // Обновляем заголовок диалога из первого сообщения
   _updateChatTitle(text || (_attachments[0] && _attachments[0].name) || '📎');
@@ -2372,7 +2397,7 @@ async function sendMessage() {
     ).join('');
     userDisplayHtml += (userDisplayHtml ? '<br>' : '') + chipHtml;
   }
-  appendMsg('user', userDisplayHtml, {}, true);
+  appendMsg('user', userDisplayHtml, { raw: text }, true);
 
   // Снимаем прикрепления
   const attachmentsToSend = [..._attachments];
@@ -2457,6 +2482,8 @@ async function sendMessage() {
         cost_usd:   data.cost_usd,
         tool_calls: data.tool_calls || [],
         artifacts:  data.artifacts || [],
+        task_type:  data.task_type || '',
+        prompt:     window._lastPrompt || '',
       });
       spawnBubblesAt(_doneId);
       try { speak(data.answer, { smart: true }); } catch (e) {}   // 🔊 умная озвучка ПОСЛЕ отрисовки
@@ -2987,7 +3014,9 @@ async function assistantProactiveCheck() {
     }
   } catch (e) {}
 }
-setTimeout(assistantProactiveCheck, 35000);   // не сразу — дать осмотреться
+// Авто-всплытие ассистента ОТКЛЮЧЕНО по просьбе (чтобы не открывалось окно само на старте).
+// Включить обратно: localStorage.setItem('freepalp-proactive','1')
+try { if (localStorage.getItem('freepalp-proactive') === '1') setTimeout(assistantProactiveCheck, 35000); } catch (e) {}
 function closeAssistant() {
   const a = document.getElementById('assistant'); if (a) a.classList.remove('open');
   document.body.classList.remove('asst-on');   // осьминожка возвращается в чат
@@ -3124,6 +3153,15 @@ function appendMsg(role, text, meta = {}, rawHtml = false) {
 
   const formattedText = rawHtml ? text : formatText(text);
 
+  // Сохраняем «сырой» текст для действий (копировать/озвучить/повторить/ветка/правка)
+  _msgStore[id] = {
+    role,
+    text: isUser ? (meta.raw || '') : text,
+    taskType: meta.task_type || '',
+    prompt: meta.prompt || '',
+  };
+  const actions = _msgActionsHtml(id, isUser);
+
   msgs.innerHTML += `
     <div class="msg ${role}" id="${id}">
       <div class="msg-avatar">${avatar}</div>
@@ -3132,11 +3170,96 @@ function appendMsg(role, text, meta = {}, rawHtml = false) {
         <div class="msg-content">${formattedText}</div>
         ${artifactBtns}
         ${metaHtml}
+        ${actions}
       </div>
     </div>`;
   msgs.scrollTop = msgs.scrollHeight;
   highlightCode(document.getElementById(id));
   return id;
+}
+
+// ── Панель действий под сообщением ──
+const _msgStore = {};
+function _msgActionsHtml(id, isUser) {
+  if (isUser) {
+    return `<div class="msg-actions">
+      <button onclick="msgCopy('${id}')" title="${t('msg.copy')}">📋</button>
+      <button onclick="msgEdit('${id}')" title="${t('msg.edit')}">✏️</button>
+      <button onclick="msgBranch('${id}')" title="${t('msg.branch')}">🌿</button>
+    </div>`;
+  }
+  return `<div class="msg-actions">
+    <button onclick="msgSpeak('${id}',this)" title="${t('msg.speak')}">🔊</button>
+    <button onclick="msgCopy('${id}')" title="${t('msg.copy')}">📋</button>
+    <button onclick="msgRegen('${id}')" title="${t('msg.regen')}">🔁</button>
+    <button onclick="msgBranch('${id}')" title="${t('msg.branch')}">🌿</button>
+    <span class="msg-rate">
+      <button onclick="msgRate('${id}','good',this)" title="${t('msg.good')}">👍</button>
+      <button onclick="msgRate('${id}','bad',this)" title="${t('msg.bad')}">👎</button>
+    </span>
+  </div>`;
+}
+function msgCopy(id) { const m = _msgStore[id]; if (m) copyText(m.text); }
+function msgSpeak(id, btn) {
+  const m = _msgStore[id]; if (!m) return;
+  try { if (typeof _stopTTS === 'function') _stopTTS(); } catch (e) {}
+  try { speak(m.text, { force: true }); } catch (e) {}
+}
+function msgEdit(id) {
+  const m = _msgStore[id]; if (!m) return;
+  fillInput(m.text);
+}
+function msgRegen(id) {
+  const m = _msgStore[id]; if (!m || _abortCtrl) return;
+  const p = m.prompt || window._lastPrompt;
+  if (p) sendMessage(p);
+}
+async function msgRate(id, verdict, btn) {
+  const m = _msgStore[id]; if (!m) return;
+  const wrap = btn.parentElement;
+  wrap.querySelectorAll('button').forEach(b => { b.disabled = true; b.classList.remove('on'); });
+  btn.classList.add('on');
+  try {
+    await fetch('/api/feedback', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ts: new Date().toISOString(), task_type: m.taskType || 'general', verdict, tags: [] }),
+    });
+    showToast(verdict === 'good' ? '👍 ' + t('msg.rated') : '👎 ' + t('msg.rated'));
+  } catch (e) {}
+}
+async function msgBranch(id) {
+  // Ветка: новый чат с копией диалога до этого сообщения (серверный контекст форкается)
+  try {
+    const r = await fetch('/api/chat/fork', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversation_id: conversationId }),
+    }).then(x => x.json()).catch(() => null);
+    // Сохраняем текущий диалог в память сессий
+    if (_chatSessions[conversationId]) {
+      _chatSessions[conversationId].msgsHtml = document.getElementById('messages').innerHTML;
+      _chatSessions[conversationId].historyLen = historyLen;
+    }
+    const clonedHtml = _branchHtmlUpTo(id);
+    _createNewChat();
+    if (r && r.ok && r.conversation_id) conversationId = r.conversation_id;
+    document.getElementById('messages').innerHTML = clonedHtml;
+    if (_chatSessions[conversationId]) {
+      _chatSessions[conversationId].msgsHtml = clonedHtml;
+      _chatSessions[conversationId].title = '🌿 ' + (_chatSessions[conversationId].title || 'Ветка');
+    }
+    renderChatList();
+    showToast('🌿 ' + t('msg.branched'));
+  } catch (e) { showToast('❌ ' + e.message); }
+}
+// HTML сообщений до указанного (включительно)
+function _branchHtmlUpTo(id) {
+  const msgs = document.getElementById('messages');
+  const out = [];
+  for (const el of msgs.children) {
+    out.push(el.outerHTML);
+    if (el.id === id) break;
+  }
+  return out.join('');
 }
 
 function formatText(text) {
@@ -4749,7 +4872,7 @@ const OfficeScene = (() => {
     const thx = ht[0] + 70, thy = ht[1] - 40;   // пузырь мыслей над головой
     const cfx = ht[0], cfy = ht[1] - 16;
     stage.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-      <image href="/static/office.png" x="0" y="0" width="${W}" height="${H}"/>
+      <image href="/static/office.png?v=${co.v || 0}" x="0" y="0" width="${W}" height="${H}"/>
       <polygon id="screen-glow" points="${quad}" fill="#9f7aea" opacity=".5"/>
       <g id="screen-content" transform="${_screenMatrix}">${screen('sleep', 50, 50)}</g>
       <g id="octo-think">
@@ -6041,6 +6164,15 @@ const I18N = {
   'art.empty':      {ru:'Пока нет HTML/SVG-артефактов. Попроси «сделай игру на html» — появится здесь.', en:'No HTML/SVG artifacts yet. Ask "make a game in html" — it will appear here.', zh:'暂无 HTML/SVG 产物。试试「用 html 做个游戏」—— 会出现在这里。'},
   'art.openPreview':{ru:'▶ Открыть превью', en:'▶ Open preview', zh:'▶ 打开预览'},
   'chat.dropFiles': {ru:'📎 Перетащи файлы сюда', en:'📎 Drop files here', zh:'📎 把文件拖到这里'},
+  'msg.copy':       {ru:'Копировать', en:'Copy', zh:'复制'},
+  'msg.edit':       {ru:'Изменить и отправить заново', en:'Edit and resend', zh:'编辑并重新发送'},
+  'msg.speak':      {ru:'Прочитать голосом', en:'Read aloud', zh:'朗读'},
+  'msg.regen':      {ru:'Повторить запрос заново', en:'Regenerate', zh:'重新生成'},
+  'msg.branch':     {ru:'Ветка в новом чате', en:'Branch into a new chat', zh:'在新对话中分支'},
+  'msg.good':       {ru:'Хороший ответ', en:'Good answer', zh:'好回答'},
+  'msg.bad':        {ru:'Слабый ответ', en:'Weak answer', zh:'差回答'},
+  'msg.rated':      {ru:'Спасибо за оценку!', en:'Thanks for the feedback!', zh:'感谢评价！'},
+  'msg.branched':   {ru:'Создана ветка в новом чате', en:'Branched into a new chat', zh:'已在新对话中创建分支'},
   'shutdown.title': {ru:'FreePalp выключен', en:'FreePalp is shut down', zh:'FreePalp 已关闭'},
   'shutdown.sub':   {ru:'Память сохранена. Закройте вкладку или перезапустите сервер.', en:'Memory saved. Close the tab or restart the server.', zh:'记忆已保存。关闭此标签页或重启服务器。'},
   'shutdown.reconnect':{ru:'↺ Переподключиться', en:'↺ Reconnect', zh:'↺ 重新连接'},

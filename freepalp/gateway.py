@@ -797,6 +797,18 @@ async def get_session(conv_id: str):
     return JSONResponse(status_code=404, content={"error": "Session not found"})
 
 
+@app.post("/api/chat/fork")
+async def fork_conversation(req: dict):
+    """Ветка: копирует историю диалога в новый conversation_id (серверный контекст
+    сохраняется), чтобы продолжить в новом чате, не трогая исходный."""
+    import uuid
+    src = (req or {}).get("conversation_id", "")
+    history = list(_conversations.get(src, []))
+    new_id = "conv-" + uuid.uuid4().hex[:12]
+    _conversations[new_id] = history
+    return {"ok": True, "conversation_id": new_id, "msg_count": len(history)}
+
+
 @app.get("/api/chat/digest")
 async def get_session_digest():
     """Дайджест последних сессий (что было обсуждено)."""

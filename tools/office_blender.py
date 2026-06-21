@@ -5,7 +5,7 @@
          freepalp/web/static/office.coords.json (пиксельные прямоугольники монитора/головы)
 Модель в «грид-единицах»: пол 7×6, ось z — вверх. Истинная изометрия (камера 1,1,1).
 """
-import bpy, json, math, os, sys, traceback
+import bpy, json, math, os, sys, time, traceback
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 
@@ -269,7 +269,7 @@ bpy.context.view_layer.update()
 target = Vector((4.0, 3.3, 0.7))
 bpy.ops.object.empty_add(location=target)
 empty = bpy.context.active_object
-cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 11.6
+cam_data = bpy.data.cameras.new("Cam"); cam_data.type = "ORTHO"; cam_data.ortho_scale = 12.6
 cam = bpy.data.objects.new("Cam", cam_data)
 bpy.context.collection.objects.link(cam)
 cam.location = target + CAM_OFFSET
@@ -318,6 +318,7 @@ def px(co):
 def pxr(co):                                   # проекция точки С УЧЁТОМ поворота комнаты
     return px(_rotz_about(co, ROT_Z))
 coords = {
+    "v": int(time.time()),          # версия для cache-bust картинки на фронте
     "res": [RES_X, RES_Y],
     # 4 угла плоскости экрана (грань -y монитора, обращённая к камере) после поворота
     "screen": {
