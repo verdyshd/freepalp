@@ -1439,7 +1439,7 @@
 
 <!-- ═══════════ SIDEBAR ═══════════ -->
 <nav class="sidebar">
-  <div class="logo" onclick="openPresentation()" title="О FreePalp — презентация" style="cursor:pointer">
+  <div class="logo" onclick="openPresentation()" title="О FreePalp — презентация" data-i18n-title="tip.logo" style="cursor:pointer">
     <img src="/static/freepalp-mark.svg?v=1" alt="FreePalp">
   </div>
 
@@ -1481,11 +1481,7 @@
 <div class="gear-menu" id="gear-menu">
   <div class="gm-item" onclick="gearGo('settings')"><span class="ic">⚙️</span><span data-i18n="gm.settings">Настройки</span></div>
   <div class="gm-cap" data-i18n="gm.lang">Язык</div>
-  <div class="gm-lang">
-    <button data-l="en" onclick="setLang('en');markGearLang()">EN</button>
-    <button data-l="ru" onclick="setLang('ru');markGearLang()">RU</button>
-    <button data-l="zh" onclick="setLang('zh');markGearLang()">中文</button>
-  </div>
+  <div class="gm-lang" id="gm-lang"><!-- кнопки языков рендерит renderLangSwitchers() --></div>
   <div class="gm-sep"></div>
   <div class="gm-item" onclick="gearGo('help')"><span class="ic">❓</span><span data-i18n="gm.help">Помощь</span></div>
   <div class="gm-item" onclick="gearGo('changelog')"><span class="ic">📋</span><span data-i18n="gm.changelog">История изменений</span></div>
@@ -1553,7 +1549,7 @@
         </div>
 
         <div class="input-area" id="input-area-wrap" style="position:relative;">
-          <div id="drop-overlay"><span>📎 Перетащи файлы сюда</span></div>
+          <div id="drop-overlay"><span data-i18n="chat.dropFiles">📎 Перетащи файлы сюда</span></div>
           <input type="file" id="file-input" multiple accept="image/*,.txt,.md,.py,.js,.ts,.json,.yaml,.yml,.csv,.pdf,.log,.sh,.html,.css,.xml,.toml,.ini,.env,.rs,.go,.java,.cpp,.c,.h">
           <div id="attach-preview"></div>
           <div class="input-row">
@@ -1715,12 +1711,12 @@
           раз подставляется в промпт — справится сразу. Коррекция накапливается.
         </div>
         <details style="margin-bottom:12px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
-          <summary style="cursor:pointer;font-size:12px;color:var(--accent)">➕ Добавить свой навык</summary>
+          <summary style="cursor:pointer;font-size:12px;color:var(--accent)" data-i18n="skill.add">➕ Добавить свой навык</summary>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
-            <input id="skill-name" placeholder="название навыка" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-            <input id="skill-desc" placeholder="когда применять (кратко)" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-            <textarea id="skill-proc" placeholder="процедура: шаги, как решать такую задачу" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text);min-height:70px;resize:vertical"></textarea>
-            <button class="btn primary" style="align-self:flex-start" onclick="addSkill()">Сохранить навык</button>
+            <input id="skill-name" placeholder="название навыка" data-i18n-ph="skill.phName" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+            <input id="skill-desc" placeholder="когда применять (кратко)" data-i18n-ph="skill.phWhen" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+            <textarea id="skill-proc" placeholder="процедура: шаги, как решать такую задачу" data-i18n-ph="skill.phProc" style="font-size:12px;padding:7px 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text);min-height:70px;resize:vertical"></textarea>
+            <button class="btn primary" style="align-self:flex-start" onclick="addSkill()" data-i18n="skill.save">Сохранить навык</button>
           </div>
         </details>
         <div id="mem-skills-list" style="display:flex;flex-direction:column;gap:10px" data-i18n="common.loading">Загрузка...</div>
@@ -1737,7 +1733,7 @@
         </div>
         <div style="display:flex;gap:14px;font-size:11px;color:var(--text-3);margin-bottom:8px" id="mem-graph-legend"></div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <button class="btn" id="graph-play-btn" onclick="playGraph(this)" title="Проиграть развитие памяти" style="min-width:34px;white-space:nowrap">▶</button>
+          <button class="btn" id="graph-play-btn" onclick="playGraph(this)" title="Проиграть развитие памяти" data-i18n-title="tip.graphPlay" style="min-width:34px;white-space:nowrap">▶</button>
           <span style="font-size:11px;color:var(--text-3);white-space:nowrap">развитие памяти</span>
           <input type="range" id="mem-graph-time" min="5" max="100" value="100" style="flex:1"
                  oninput="onGraphTimeScrub(this.value)">
@@ -1750,7 +1746,7 @@
       <div id="mem-search" style="display:none">
         <div class="search-bar">
           <span style="color:var(--text-3)">🔍</span>
-          <input type="text" id="mem-search-input" placeholder="Поиск по памяти и истории диалогов..." onkeydown="if(event.key==='Enter')searchMemory()">
+          <input type="text" id="mem-search-input" placeholder="Поиск по памяти и истории диалогов..." data-i18n-ph="mem.phSearch" onkeydown="if(event.key==='Enter')searchMemory()">
           <button class="btn primary" onclick="searchMemory()">Найти</button>
         </div>
         <div id="mem-search-results" style="font-size:13px;color:var(--text-3)">Введите запрос для поиска</div>
@@ -1872,7 +1868,7 @@
     <div class="panel-header">
       <h2 data-i18n="panel.settings">⚙️ Настройки</h2>
       <p data-i18n="set.sub">Конфигурация FreePalp</p>
-      <button class="set-close" onclick="closeSettings()" title="Закрыть" aria-label="Закрыть">✕</button>
+      <button class="set-close" onclick="closeSettings()" title="Закрыть" data-i18n-title="tip.close" aria-label="Закрыть">✕</button>
     </div>
     <div class="set-body">
       <nav class="set-nav">
@@ -1901,10 +1897,17 @@
           </div>
           <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
             <div class="rp-title" data-i18n="set.lang">🌐 Язык</div>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="theme-btn lang-btn" data-l="en" onclick="setLang('en')">English</button>
-              <button class="theme-btn lang-btn" data-l="ru" onclick="setLang('ru')">Русский</button>
-              <button class="theme-btn lang-btn" data-l="zh" onclick="setLang('zh')">中文</button>
+            <div id="set-lang-row" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><!-- рендерит renderLangSwitchers() --></div>
+            <div style="margin-top:12px;font-size:11px;color:var(--text-3);line-height:1.6">
+              <span data-i18n="i18n.contribHint">Своего языка нет? Экспортируй шаблон, переведи и положи в</span>
+              <code>freepalp/web/static/i18n/&lt;код&gt;.json</code>
+              <span data-i18n="i18n.contribHint2">+ строчку в manifest.json — язык появится здесь.</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <button class="btn" onclick="exportI18nTemplate()" data-i18n="i18n.export">📥 Экспорт шаблона</button>
+              <label class="btn" style="cursor:pointer"><span data-i18n="i18n.preview2">👁 Примерить файл</span>
+                <input type="file" accept=".json" onchange="importLangFile(this)" style="display:none"></label>
+              <a class="btn" href="https://github.com/verdyshd/freepalp/tree/main/freepalp/web/static/i18n" target="_blank" data-i18n="i18n.howto">📖 Как добавить</a>
             </div>
           </div>
           <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
@@ -2727,7 +2730,7 @@ let _recog = null;
 function toggleVoiceInput() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const btn = document.getElementById('mic-btn');
-  if (!SR) { showToast ? showToast('Голосовой ввод не поддерживается этим браузером') : alert('Голосовой ввод не поддерживается'); return; }
+  if (!SR) { const m = t('toast.micUnsupported'); showToast ? showToast(m) : alert(m); return; }
   if (_recog) { _recog.stop(); return; }
   _recog = new SR();
   _recog.lang = _VOICE_LANG[window._lang] || 'ru-RU';
@@ -3072,7 +3075,7 @@ function newChat() {
     _chatSessions[conversationId].historyLen = historyLen;
   }
   _createNewChat();
-  showToast('🐙 Новый диалог начат');
+  showToast(t('toast.newChat'));
 }
 
 function updateHistoryBadge() {
@@ -3259,10 +3262,10 @@ async function addFiles(files) {
   const MAX_FILE_SIZE = 10 * 1024 * 1024;  // 10 MB
   for (const file of files) {
     if (file.size > MAX_FILE_SIZE) {
-      alert(`Файл "${file.name}" слишком большой (>${(MAX_FILE_SIZE/1024/1024).toFixed(0)} MB)`);
+      alert(tf('toast.fileTooBig', { name: file.name }));
       continue;
     }
-    if (_attachments.length >= 8) { alert('Максимум 8 файлов за раз'); break; }
+    if (_attachments.length >= 8) { alert(t('toast.tooManyFiles')); break; }
     const dataUrl = await readFileAsBase64(file);
     const b64 = dataUrl.split(',')[1];
     _attachments.push({
@@ -3702,15 +3705,15 @@ async function addKey(provider, slot, inputId, resultId) {
 }
 
 async function deleteKey(provider, slot) {
-  if (!confirm(`Удалить ключ #${slot} провайдера ${provider}?`)) return;
+  if (!confirm(tf('toast.confirmDelKey', { slot, provider }))) return;
   const r = await fetch('/api/keys/delete', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({provider, slot})
   });
   const d = await r.json();
-  if (d.ok) { showToast(`Ключ #${slot} удалён`); await loadProviders(); }
-  else showToast('Ошибка: ' + (d.error || '?'));
+  if (d.ok) { showToast(tf('toast.keyDeleted', { slot })); await loadProviders(); }
+  else showToast(tf('toast.error', { msg: d.error || '?' }));
 }
 
 async function testKey(provider, inputId, resultId) {
@@ -4989,7 +4992,7 @@ async function reconnectMcp() {
   el.innerHTML = 'Переподключение...';
   try {
     const d = await fetch('/api/mcp/reconnect', {method:'POST'}).then(r => r.json());
-    if (d.ok) showToast(`🔌 MCP: ${d.summary.connected.length} серверов, ${d.summary.tools} инструментов`);
+    if (d.ok) showToast(tf('toast.mcpStatus', { servers: d.summary.connected.length, tools: d.summary.tools }));
     else showToast('❌ ' + (d.error || 'ошибка'));
   } catch(e) { showToast('❌ ' + e.message); }
   await loadTools();
@@ -4999,13 +5002,13 @@ async function addMcpServer() {
   const name = document.getElementById('mcp-name').value.trim();
   const command = document.getElementById('mcp-cmd').value.trim();
   const args = document.getElementById('mcp-args').value.trim();
-  if (!name || !command) { showToast('❌ Нужны имя и command'); return; }
-  showToast('🔌 Подключаю...');
+  if (!name || !command) { showToast(t('toast.mcpNeedNameCmd')); return; }
+  showToast(t('toast.mcpConnecting'));
   try {
     const d = await fetch('/api/mcp/add', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({name, command, args})}).then(r => r.json());
     if (d.ok) {
-      showToast(`✅ MCP «${name}» подключён`);
+      showToast(tf('toast.mcpConnected', { name }));
       ['mcp-name','mcp-cmd','mcp-args'].forEach(id => document.getElementById(id).value = '');
     } else showToast('❌ ' + (d.error || 'не поднялся'));
   } catch(e) { showToast('❌ ' + e.message); }
@@ -5016,12 +5019,12 @@ async function addSkill() {
   const name = document.getElementById('skill-name').value.trim();
   const description = document.getElementById('skill-desc').value.trim();
   const procedure = document.getElementById('skill-proc').value.trim();
-  if (!name || !procedure) { showToast('❌ Нужны название и процедура'); return; }
+  if (!name || !procedure) { showToast(t('toast.skillNeedFields')); return; }
   try {
     const d = await fetch('/api/skills/add', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({name, description, procedure})}).then(r => r.json());
     if (d.ok) {
-      showToast(`✅ Навык «${name}» сохранён`);
+      showToast(tf('toast.skillSaved', { name }));
       ['skill-name','skill-desc','skill-proc'].forEach(id => document.getElementById(id).value = '');
       loadSkills();
     } else showToast('❌ ' + (d.error || 'ошибка'));
@@ -5440,15 +5443,15 @@ async function loadUnifiedVersions() {
 }
 
 async function triggerImprove() {
-  showToast('🧬 Запускаю самоулучшение...');
+  showToast(t('toast.improveStart'));
   try {
     const resp = await fetch('/api/improve', { method: 'POST' });
     const d = await resp.json();
     if (d.version_activated) {
       const changes = (d.changes || []).map(c => `${c.component}[${c.task_type||'all'}]`).join(', ');
-      showToast(`✅ v${d.version_proposed} активирована! Изменено: ${changes || d.changes?.length || 0}`);
+      showToast(tf('toast.improveDone', { ver: d.version_proposed, changes: changes || d.changes?.length || 0 }));
       if (d.restarting) {
-        setTimeout(() => showToast('🔄 Сервер перезапускается для применения улучшений...'), 1000);
+        setTimeout(() => showToast(t('toast.improveRestart')), 1000);
         setTimeout(() => _waitForRestart(), 7000);
       }
     } else {
@@ -5463,14 +5466,14 @@ async function _waitForRestart() {
     await new Promise(r => setTimeout(r, 1500));
     try {
       const r = await fetch('/api/status');
-      if (r.ok) { showToast('✅ Сервер перезапущен — улучшения применены!'); location.reload(); return; }
+      if (r.ok) { showToast(t('toast.improveRestarted')); location.reload(); return; }
     } catch(e) {}
   }
-  showToast('⚠️ Сервер не ответил — обнови страницу вручную');
+  showToast(t('toast.improveNoAnswer'));
 }
 
 async function rollbackVersion() {
-  if (!confirm('Откатиться к предыдущей версии промптов?')) return;
+  if (!confirm(t('toast.confirmRollback'))) return;
   try {
     const resp = await fetch('/api/improve/rollback', { method: 'POST' });
     const d = await resp.json();
@@ -5506,12 +5509,12 @@ async function loadImproveStatus() {
 }
 
 async function triggerMemClean() {
-  if (!confirm('Очистить память агента? Консолидация удалит устаревшие записи. Действие необратимо.')) return;
-  showToast('🧹 Очищаю память...');
+  if (!confirm(t('toast.confirmClearMem'))) return;
+  showToast(t('toast.clearingMem'));
   try {
     const resp = await fetch('/api/memory/clean', { method: 'POST' });
     const d = await resp.json();
-    showToast(`✅ Очищено: ${d.hot_trimmed} HOT, ${d.corrections_archived} corrections`);
+    showToast(tf('toast.memCleared', { hot: d.hot_trimmed, corr: d.corrections_archived }));
   } catch(e) { showToast('❌ ' + e.message); }
 }
 
@@ -5607,7 +5610,7 @@ async function loadSidebarData() {
 // ── Артефакты: превью в iframe ──────────────────────────────
 function openArtifact(encPath, name) {
   const src = '/api/sandbox/raw?path=' + encPath;
-  document.getElementById('artifact-title').textContent = name || 'Артефакт';
+  document.getElementById('artifact-title').textContent = name || t('art.title');
   document.getElementById('artifact-frame').src = src;
   document.getElementById('artifact-open').href = src;
   document.getElementById('artifact-modal').style.display = 'flex';
@@ -5623,7 +5626,7 @@ function _artifactViewMode(frame) {
   document.getElementById('artifact-gallery').style.display = frame ? 'none' : 'block';
 }
 async function openArtifactGallery() {
-  document.getElementById('artifact-title').textContent = 'Артефакты песочницы';
+  document.getElementById('artifact-title').textContent = t('art.galleryTitle');
   document.getElementById('artifact-modal').style.display = 'flex';
   _artifactViewMode(false);
   const g = document.getElementById('artifact-gallery');
@@ -5631,7 +5634,7 @@ async function openArtifactGallery() {
   try {
     const d = await fetch('/api/sandbox/artifacts').then(r => r.json());
     if (!d.ok || !d.artifacts.length) {
-      g.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:40px">Пока нет HTML/SVG-артефактов. Попроси «сделай игру на html» — появится здесь.</div>';
+      g.innerHTML = `<div style="color:var(--text-3);text-align:center;padding:40px">${t('art.empty')}</div>`;
       return;
     }
     g.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">' +
@@ -5641,7 +5644,7 @@ async function openArtifactGallery() {
              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
           <div style="font-size:13px;color:var(--text);font-weight:600">🎨 ${escHtml(a.name)}</div>
           <div style="font-size:10px;color:var(--text-3);margin-top:5px">${escHtml(a.path)} · ${(a.size/1024).toFixed(1)} КБ</div>
-          <div style="margin-top:8px;font-size:11px;color:var(--accent)">▶ Открыть превью</div>
+          <div style="margin-top:8px;font-size:11px;color:var(--accent)">${t('art.openPreview')}</div>
         </div>`).join('') + '</div>';
   } catch(e) { g.innerHTML = `<div style="color:var(--accent-err)">${e.message}</div>`; }
 }
@@ -5703,19 +5706,19 @@ document.head.appendChild(chartScript);
 
 // Кнопка "Выключить сервер"
 async function shutdownServer() {
-  if (!confirm('Выключить сервер FreePalp?\n\nПамять будет сохранена.')) return;
+  if (!confirm(t('toast.confirmShutdown'))) return;
   try {
-    showToast('⏻ Выключение сервера...');
+    showToast(t('toast.shuttingDown'));
     await fetch('/api/shutdown', { method: 'POST' });
     document.body.innerHTML = `
       <div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f1117;color:#8b9ab8;font-family:sans-serif;gap:16px">
         <div style="font-size:48px">⏻</div>
-        <div style="font-size:20px;color:#e8eaf0">FreePalp выключен</div>
-        <div style="font-size:14px">Память сохранена. Закройте вкладку или перезапустите сервер.</div>
-        <button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:rgba(99,179,237,0.15);border:1px solid rgba(99,179,237,0.3);color:#63b3ed;border-radius:8px;cursor:pointer;font-size:14px">↺ Переподключиться</button>
+        <div style="font-size:20px;color:#e8eaf0">${t('shutdown.title')}</div>
+        <div style="font-size:14px">${t('shutdown.sub')}</div>
+        <button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:rgba(99,179,237,0.15);border:1px solid rgba(99,179,237,0.3);color:#63b3ed;border-radius:8px;cursor:pointer;font-size:14px">${t('shutdown.reconnect')}</button>
       </div>`;
   } catch(e) {
-    showToast('Сервер уже недоступен');
+    showToast(t('toast.serverGone'));
   }
 }
 
@@ -5859,33 +5862,11 @@ async function gearGo(what) {
   }
   const repo = 'https://github.com/verdyshd/freepalp';
   const CONTENT = {
-    help: ['❓ ' + t('gm.help'),
-      `<p><b>FreePalp</b> — мульти-агентный AI-оркестратор на <b>бесплатных и локальных</b> LLM.</p>
-       <p style="margin-top:10px">• Слева — <b>чат</b>: задай вопрос или задачу.<br>
-       • Навигация слева: Чат · Провайдеры (ключи) · Память (HOT / граф / навыки / поиск) · Инструменты · Метрики.<br>
-       • Эта шестерёнка — настройки, язык, справка.</p>
-       <p style="margin-top:10px">Без единого ключа работает на локальном Ollama. Добавь бесплатные ключи провайдеров в разделе «Провайдеры».</p>
-       <p style="margin-top:10px">Исходники и документация: <a href="${repo}" target="_blank">${repo}</a></p>`],
-    shortcuts: ['⌨️ ' + t('gm.shortcuts'),
-      `<div style="display:flex;flex-direction:column;gap:8px">
-         <div><span class="kbd">Enter</span> — отправить сообщение</div>
-         <div><span class="kbd">Shift</span> + <span class="kbd">Enter</span> — новая строка</div>
-         <div><span class="kbd">Esc</span> — закрыть это окно / меню</div>
-       </div>
-       <p style="margin-top:12px;color:var(--text-3);font-size:12px">Список будет пополняться.</p>`],
-    about: ['🐙 ' + t('gm.about'),
-      `<p>FreePalp создан <b>Дмитрием</b> (<a href="https://github.com/verdyshd" target="_blank">verdyshd</a>), Молдова.</p>
-       <p style="margin-top:10px">Открытый код под лицензией <b>MIT</b>. Цель — показать, что мульти-агентная система может делать реальную работу на бесплатных моделях, прозрачно улучшая себя.</p>
-       <p style="margin-top:10px">Репозиторий: <a href="${repo}" target="_blank">${repo}</a><br>
-       Поддержать: GitHub Sponsors / USDT (ссылки в репозитории).</p>`],
-    terms: ['📜 ' + t('gm.terms'),
-      `<p>FreePalp распространяется по лицензии <b>MIT</b>, «как есть» (as is), без каких-либо гарантий. Вы используете его на свой риск.</p>
-       <p style="margin-top:10px">Вы сами отвечаете за ключи сторонних LLM-провайдеров и за соблюдение <b>их</b> условий использования и лимитов.</p>
-       <p style="margin-top:10px">Не используйте инструмент для незаконных действий. Полный текст лицензии — в файле LICENSE репозитория.</p>`],
-    privacy: ['🔒 ' + t('gm.privacy'),
-      `<p>FreePalp работает <b>локально</b> на вашем компьютере.</p>
-       <p style="margin-top:10px">Память, история диалогов и настройки хранятся <b>только у вас на диске</b> и не отправляются проекту — мы их не видим и не собираем.</p>
-       <p style="margin-top:10px">Ваши запросы уходят <b>лишь тем</b> LLM-провайдерам, чьи API-ключи вы сами добавили, и обрабатываются согласно <b>их</b> политикам конфиденциальности.</p>`],
+    help:      ['❓ ' + t('gm.help'),      tf('modal.help', { repo })],
+    shortcuts: ['⌨️ ' + t('gm.shortcuts'), t('modal.shortcuts')],
+    about:     ['🐙 ' + t('gm.about'),     tf('modal.about', { repo })],
+    terms:     ['📜 ' + t('gm.terms'),     t('modal.terms')],
+    privacy:   ['🔒 ' + t('gm.privacy'),   t('modal.privacy')],
   };
   const c = CONTENT[what];
   if (c) openModal(c[0], c[1]);
@@ -6022,6 +6003,69 @@ const I18N = {
   'panel.collapse': {ru:'Свернуть панель', en:'Collapse panel', zh:'收起面板'},
   'panel.expand':   {ru:'Развернуть панель', en:'Expand panel', zh:'展开面板'},
   'tip.newChat':    {ru:'Новый диалог', en:'New chat', zh:'新对话'},
+  'tip.logo':       {ru:'О FreePalp — презентация', en:'About FreePalp — presentation', zh:'关于 FreePalp —— 演示'},
+  'tip.graphPlay':  {ru:'Проиграть развитие памяти', en:'Play memory growth animation', zh:'播放记忆成长动画'},
+  'tip.close':      {ru:'Закрыть', en:'Close', zh:'关闭'},
+  'mem.phSearch':   {ru:'Поиск по памяти и истории диалогов...', en:'Search memory and chat history...', zh:'搜索记忆与对话历史……'},
+  'skill.add':      {ru:'➕ Добавить свой навык', en:'➕ Add your own skill', zh:'➕ 添加自定义技能'},
+  'skill.phName':   {ru:'название навыка', en:'skill name', zh:'技能名称'},
+  'skill.phWhen':   {ru:'когда применять (кратко)', en:'when to apply (briefly)', zh:'何时使用（简要）'},
+  'skill.phProc':   {ru:'процедура: шаги, как решать такую задачу', en:'procedure: steps to solve such a task', zh:'步骤：如何解决此类任务'},
+  'skill.save':     {ru:'Сохранить навык', en:'Save skill', zh:'保存技能'},
+  // ── Тосты/подтверждения (динамические сообщения) ──
+  'toast.newChat':  {ru:'🐙 Новый диалог начат', en:'🐙 New chat started', zh:'🐙 已开始新对话'},
+  'toast.micUnsupported':{ru:'Голосовой ввод не поддерживается этим браузером', en:'Voice input is not supported by this browser', zh:'此浏览器不支持语音输入'},
+  'toast.fileTooBig':{ru:'Файл «{name}» слишком большой (макс 20 МБ)', en:'File "{name}" is too large (max 20 MB)', zh:'文件「{name}」过大（上限 20 MB）'},
+  'toast.tooManyFiles':{ru:'Максимум 8 файлов за раз', en:'Up to 8 files at a time', zh:'每次最多 8 个文件'},
+  'toast.confirmDelKey':{ru:'Удалить ключ #{slot} провайдера {provider}?', en:'Delete key #{slot} of provider {provider}?', zh:'删除提供商 {provider} 的密钥 #{slot}？'},
+  'toast.keyDeleted':{ru:'Ключ #{slot} удалён', en:'Key #{slot} deleted', zh:'密钥 #{slot} 已删除'},
+  'toast.error':    {ru:'Ошибка: {msg}', en:'Error: {msg}', zh:'错误：{msg}'},
+  'toast.mcpStatus':{ru:'🔌 MCP: {servers} серверов, {tools} инструментов', en:'🔌 MCP: {servers} servers, {tools} tools', zh:'🔌 MCP：{servers} 个服务器，{tools} 个工具'},
+  'toast.mcpNeedNameCmd':{ru:'❌ Нужны имя и command', en:'❌ Name and command required', zh:'❌ 需要名称和 command'},
+  'toast.mcpConnecting':{ru:'🔌 Подключаю...', en:'🔌 Connecting...', zh:'🔌 连接中……'},
+  'toast.mcpConnected':{ru:'✅ MCP «{name}» подключён', en:'✅ MCP "{name}" connected', zh:'✅ MCP「{name}」已连接'},
+  'toast.skillNeedFields':{ru:'❌ Нужны название и процедура', en:'❌ Name and procedure required', zh:'❌ 需要名称和步骤'},
+  'toast.skillSaved':{ru:'✅ Навык «{name}» сохранён', en:'✅ Skill "{name}" saved', zh:'✅ 技能「{name}」已保存'},
+  'toast.improveStart':{ru:'🧬 Запускаю самоулучшение...', en:'🧬 Starting self-improvement...', zh:'🧬 开始自我改进……'},
+  'toast.improveDone':{ru:'✅ v{ver} активирована! Изменено: {changes}', en:'✅ v{ver} activated! Changed: {changes}', zh:'✅ v{ver} 已启用！变更：{changes}'},
+  'toast.improveRestart':{ru:'🔄 Сервер перезапускается для применения улучшений...', en:'🔄 Server restarting to apply improvements...', zh:'🔄 服务器正在重启以应用改进……'},
+  'toast.improveRestarted':{ru:'✅ Сервер перезапущен — улучшения применены!', en:'✅ Server restarted — improvements applied!', zh:'✅ 服务器已重启 —— 改进已应用！'},
+  'toast.improveNoAnswer':{ru:'⚠️ Сервер не ответил — обнови страницу вручную', en:'⚠️ Server did not respond — refresh the page manually', zh:'⚠️ 服务器无响应 —— 请手动刷新页面'},
+  'toast.confirmRollback':{ru:'Откатиться к предыдущей версии промптов?', en:'Roll back to the previous prompt version?', zh:'回滚到上一个提示词版本？'},
+  'toast.confirmClearMem':{ru:'Очистить память агента? Консолидация удалит устаревшие записи. Действие необратимо.', en:'Clear agent memory? Consolidation will remove stale entries. This cannot be undone.', zh:'清除智能体记忆？整合会删除过时条目。此操作不可撤销。'},
+  'toast.clearingMem':{ru:'🧹 Очищаю память...', en:'🧹 Clearing memory...', zh:'🧹 正在清除记忆……'},
+  'toast.memCleared':{ru:'✅ Очищено: {hot} HOT, {corr} corrections', en:'✅ Cleared: {hot} HOT, {corr} corrections', zh:'✅ 已清除：{hot} HOT，{corr} 条修正'},
+  'toast.confirmShutdown':{ru:'Выключить сервер FreePalp?\n\nПамять будет сохранена.', en:'Shut down the FreePalp server?\n\nMemory will be saved.', zh:'关闭 FreePalp 服务器？\n\n记忆将被保存。'},
+  'toast.shuttingDown':{ru:'⏻ Выключение сервера...', en:'⏻ Shutting down the server...', zh:'⏻ 正在关闭服务器……'},
+  'toast.serverGone':{ru:'Сервер уже недоступен', en:'Server is already unavailable', zh:'服务器已不可用'},
+  'art.title':      {ru:'Артефакт', en:'Artifact', zh:'产物'},
+  'art.galleryTitle':{ru:'Артефакты песочницы', en:'Sandbox artifacts', zh:'沙箱产物'},
+  'art.empty':      {ru:'Пока нет HTML/SVG-артефактов. Попроси «сделай игру на html» — появится здесь.', en:'No HTML/SVG artifacts yet. Ask "make a game in html" — it will appear here.', zh:'暂无 HTML/SVG 产物。试试「用 html 做个游戏」—— 会出现在这里。'},
+  'art.openPreview':{ru:'▶ Открыть превью', en:'▶ Open preview', zh:'▶ 打开预览'},
+  'chat.dropFiles': {ru:'📎 Перетащи файлы сюда', en:'📎 Drop files here', zh:'📎 把文件拖到这里'},
+  'shutdown.title': {ru:'FreePalp выключен', en:'FreePalp is shut down', zh:'FreePalp 已关闭'},
+  'shutdown.sub':   {ru:'Память сохранена. Закройте вкладку или перезапустите сервер.', en:'Memory saved. Close the tab or restart the server.', zh:'记忆已保存。关闭此标签页或重启服务器。'},
+  'shutdown.reconnect':{ru:'↺ Переподключиться', en:'↺ Reconnect', zh:'↺ 重新连接'},
+  'modal.help': {
+    ru:`<p><b>FreePalp</b> — мульти-агентный AI-оркестратор на <b>бесплатных и локальных</b> LLM.</p><p style="margin-top:10px">• Слева — <b>чат</b>: задай вопрос или задачу.<br>• Навигация слева: Чат · Провайдеры (ключи) · Память (HOT / граф / навыки / поиск) · Инструменты · Метрики.<br>• Эта шестерёнка — настройки, язык, справка.</p><p style="margin-top:10px">Без единого ключа работает на локальном Ollama. Добавь бесплатные ключи провайдеров в разделе «Провайдеры».</p><p style="margin-top:10px">Исходники и документация: <a href="{repo}" target="_blank">{repo}</a></p>`,
+    en:`<p><b>FreePalp</b> is a multi-agent AI orchestrator on <b>free and local</b> LLMs.</p><p style="margin-top:10px">• On the left — <b>chat</b>: ask a question or give a task.<br>• Left nav: Chat · Providers (keys) · Memory (HOT / graph / skills / search) · Tools · Metrics.<br>• This gear — settings, language, help.</p><p style="margin-top:10px">Runs on local Ollama with zero keys. Add free provider keys in the “Providers” section.</p><p style="margin-top:10px">Source & docs: <a href="{repo}" target="_blank">{repo}</a></p>`,
+    zh:`<p><b>FreePalp</b> 是基于<b>免费与本地</b> LLM 的多智能体 AI 编排器。</p><p style="margin-top:10px">• 左侧是<b>聊天</b>：提问或下达任务。<br>• 左侧导航：聊天 · 提供商（密钥）· 记忆（HOT / 关系图 / 技能 / 搜索）· 工具 · 指标。<br>• 此齿轮 —— 设置、语言、帮助。</p><p style="margin-top:10px">无需任何密钥即可在本地 Ollama 上运行。在「提供商」中添加免费的提供商密钥。</p><p style="margin-top:10px">源码与文档：<a href="{repo}" target="_blank">{repo}</a></p>`},
+  'modal.shortcuts': {
+    ru:`<div style="display:flex;flex-direction:column;gap:8px"><div><span class="kbd">Enter</span> — отправить сообщение</div><div><span class="kbd">Shift</span> + <span class="kbd">Enter</span> — новая строка</div><div><span class="kbd">Esc</span> — закрыть это окно / меню</div></div><p style="margin-top:12px;color:var(--text-3);font-size:12px">Список будет пополняться.</p>`,
+    en:`<div style="display:flex;flex-direction:column;gap:8px"><div><span class="kbd">Enter</span> — send message</div><div><span class="kbd">Shift</span> + <span class="kbd">Enter</span> — new line</div><div><span class="kbd">Esc</span> — close this window / menu</div></div><p style="margin-top:12px;color:var(--text-3);font-size:12px">The list will grow.</p>`,
+    zh:`<div style="display:flex;flex-direction:column;gap:8px"><div><span class="kbd">Enter</span> —— 发送消息</div><div><span class="kbd">Shift</span> + <span class="kbd">Enter</span> —— 换行</div><div><span class="kbd">Esc</span> —— 关闭此窗口 / 菜单</div></div><p style="margin-top:12px;color:var(--text-3);font-size:12px">列表会持续补充。</p>`},
+  'modal.about': {
+    ru:`<p>FreePalp создан <b>Дмитрием</b> (<a href="https://github.com/verdyshd" target="_blank">verdyshd</a>), Молдова.</p><p style="margin-top:10px">Открытый код под лицензией <b>MIT</b>. Цель — показать, что мульти-агентная система может делать реальную работу на бесплатных моделях, прозрачно улучшая себя.</p><p style="margin-top:10px">Репозиторий: <a href="{repo}" target="_blank">{repo}</a><br>Поддержать: GitHub Sponsors / USDT (ссылки в репозитории).</p>`,
+    en:`<p>FreePalp is created by <b>Dmitry</b> (<a href="https://github.com/verdyshd" target="_blank">verdyshd</a>), Moldova.</p><p style="margin-top:10px">Open source under the <b>MIT</b> license. The goal — to show that a multi-agent system can do real work on free models while transparently improving itself.</p><p style="margin-top:10px">Repository: <a href="{repo}" target="_blank">{repo}</a><br>Support: GitHub Sponsors / USDT (links in the repo).</p>`,
+    zh:`<p>FreePalp 由<b>Dmitry</b>（<a href="https://github.com/verdyshd" target="_blank">verdyshd</a>，摩尔多瓦）创建。</p><p style="margin-top:10px">基于 <b>MIT</b> 许可证的开源项目。目标 —— 证明多智能体系统能在免费模型上完成真实工作，并透明地自我改进。</p><p style="margin-top:10px">仓库：<a href="{repo}" target="_blank">{repo}</a><br>支持：GitHub Sponsors / USDT（链接见仓库）。</p>`},
+  'modal.terms': {
+    ru:`<p>FreePalp распространяется по лицензии <b>MIT</b>, «как есть» (as is), без каких-либо гарантий. Вы используете его на свой риск.</p><p style="margin-top:10px">Вы сами отвечаете за ключи сторонних LLM-провайдеров и за соблюдение <b>их</b> условий использования и лимитов.</p><p style="margin-top:10px">Не используйте инструмент для незаконных действий. Полный текст лицензии — в файле LICENSE репозитория.</p>`,
+    en:`<p>FreePalp is distributed under the <b>MIT</b> license, “as is”, without any warranty. You use it at your own risk.</p><p style="margin-top:10px">You are responsible for your third-party LLM provider keys and for complying with <b>their</b> terms of use and limits.</p><p style="margin-top:10px">Do not use the tool for illegal activities. The full license text is in the repository’s LICENSE file.</p>`,
+    zh:`<p>FreePalp 依据 <b>MIT</b> 许可证「按现状」分发，不提供任何担保。使用风险自负。</p><p style="margin-top:10px">第三方 LLM 提供商密钥由你自行负责，并需遵守<b>其</b>使用条款与限额。</p><p style="margin-top:10px">请勿将本工具用于非法用途。完整许可证文本见仓库的 LICENSE 文件。</p>`},
+  'modal.privacy': {
+    ru:`<p>FreePalp работает <b>локально</b> на вашем компьютере.</p><p style="margin-top:10px">Память, история диалогов и настройки хранятся <b>только у вас на диске</b> и не отправляются проекту — мы их не видим и не собираем.</p><p style="margin-top:10px">Ваши запросы уходят <b>лишь тем</b> LLM-провайдерам, чьи API-ключи вы сами добавили, и обрабатываются согласно <b>их</b> политикам конфиденциальности.</p>`,
+    en:`<p>FreePalp runs <b>locally</b> on your computer.</p><p style="margin-top:10px">Memory, chat history and settings are stored <b>only on your disk</b> and are not sent to the project — we don’t see or collect them.</p><p style="margin-top:10px">Your requests go <b>only to</b> the LLM providers whose API keys you added yourself, and are processed under <b>their</b> privacy policies.</p>`,
+    zh:`<p>FreePalp 在你的电脑上<b>本地</b>运行。</p><p style="margin-top:10px">记忆、对话历史与设置<b>仅存于你的磁盘</b>，不会发送给项目方 —— 我们看不到也不收集。</p><p style="margin-top:10px">你的请求<b>仅</b>发往你自己添加了 API 密钥的 LLM 提供商，并依据<b>其</b>隐私政策处理。</p>`},
   'tip.attach':     {ru:'Прикрепить файл или картинку', en:'Attach a file or image', zh:'附加文件或图片'},
   'tip.mic':        {ru:'Голосовой ввод', en:'Voice input', zh:'语音输入'},
   'voice.stop':     {ru:'Стоп голос', en:'Stop voice', zh:'停止朗读'},
@@ -6107,6 +6151,13 @@ const I18N = {
   'set.retryHint':  {ru:'(score ниже — повтор; 0.7 по умолчанию)', en:'(below this score = retry; default 0.7)', zh:'（低于此分则重试；默认 0.7）'},
   'set.theme':      {ru:'🎨 Тема', en:'🎨 Theme', zh:'🎨 主题'},
   'set.lang':       {ru:'🌐 Язык', en:'🌐 Language', zh:'🌐 语言'},
+  'i18n.contribHint':{ru:'Своего языка нет? Экспортируй шаблон, переведи и положи в', en:'Your language missing? Export the template, translate it and drop it into', zh:'没有你的语言？导出模板、翻译后放入'},
+  'i18n.contribHint2':{ru:'+ строчку в manifest.json — язык появится здесь.', en:'+ a line in manifest.json — the language shows up here.', zh:'+ 在 manifest.json 加一行 —— 语言就会出现在这里。'},
+  'i18n.export':    {ru:'📥 Экспорт шаблона', en:'📥 Export template', zh:'📥 导出模板'},
+  'i18n.preview2':  {ru:'👁 Примерить файл', en:'👁 Preview a file', zh:'👁 预览文件'},
+  'i18n.howto':     {ru:'📖 Как добавить', en:'📖 How to add', zh:'📖 如何添加'},
+  'i18n.exported':  {ru:'Шаблон скачан — переведи значения и сохрани как <код>.json', en:'Template downloaded — translate the values and save as <code>.json', zh:'模板已下载 —— 翻译各值并保存为 <code>.json'},
+  'i18n.preview':   {ru:'Перевод применён (предпросмотр, не сохранён)', en:'Translation applied (preview, not saved)', zh:'翻译已应用（预览，未保存）'},
   'theme.light':    {ru:'☀️ Светлая', en:'☀️ Light', zh:'☀️ 浅色'},
   'theme.dark':     {ru:'🌙 Тёмная', en:'🌙 Dark', zh:'🌙 深色'},
   'theme.system':   {ru:'💻 Системная', en:'💻 System', zh:'💻 跟随系统'},
@@ -6237,6 +6288,88 @@ function t(key) {
   const e = I18N[key]; if (!e) return key;
   return e[window._lang] || e.en || e.ru;
 }
+// t() с подстановкой {name}: tf('toast.keyDeleted', {slot:3}) → "Ключ #3 удалён"
+function tf(key, vars) {
+  let s = t(key);
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
+
+// ════════════════════════════════════════════════
+// СООБЩЕСТВО-ПЕРЕВОДЫ: встроенные + подгружаемые из /static/i18n/<код>.json
+// ════════════════════════════════════════════════
+const LANGS = [
+  { code: 'en', name: 'English' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'zh', name: '中文' },
+];
+const LANG_SHORT = { en: 'EN', ru: 'RU', zh: '中文' };
+
+// Подгружает пользовательские языки: manifest.json {languages:[{code,name}]} + <код>.json {key:перевод}
+async function loadExtraLocales() {
+  try {
+    const mani = await fetch('/static/i18n/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null);
+    if (!mani || !Array.isArray(mani.languages)) return;
+    for (const L of mani.languages) {
+      const code = (L && L.code || '').trim();
+      if (!code || LANGS.some(x => x.code === code)) continue;
+      try {
+        const data = await fetch(`/static/i18n/${code}.json`, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null);
+        if (!data || typeof data !== 'object') continue;
+        for (const k in data) {
+          if (I18N[k]) I18N[k][code] = data[k];
+          else I18N[k] = { en: data[k], [code]: data[k] };
+        }
+        LANGS.push({ code, name: L.name || code });
+        LANG_SHORT[code] = L.short || code.toUpperCase();
+      } catch (e) {}
+    }
+    renderLangSwitchers();
+    // если сохранён пользовательский язык — применить теперь, когда он загрузился
+    let saved = null; try { saved = localStorage.getItem('freepalp-lang'); } catch (e) {}
+    if (saved && saved !== window._lang && LANGS.some(x => x.code === saved)) setLang(saved);
+  } catch (e) {}
+}
+
+// Перерисовать переключатели языка (меню-шестерёнка + Настройки) из списка LANGS
+function renderLangSwitchers() {
+  const gm = document.getElementById('gm-lang');
+  if (gm) gm.innerHTML = LANGS.map(L =>
+    `<button data-l="${L.code}" onclick="setLang('${L.code}');markGearLang()">${LANG_SHORT[L.code] || L.code.toUpperCase()}</button>`).join('');
+  const sr = document.getElementById('set-lang-row');
+  if (sr) sr.innerHTML = LANGS.map(L =>
+    `<button class="theme-btn lang-btn" data-l="${L.code}" onclick="setLang('${L.code}')">${escHtml(L.name)}</button>`).join('');
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.l === window._lang));
+  try { if (typeof markGearLang === 'function') markGearLang(); } catch (e) {}
+}
+
+// Экспорт шаблона перевода: все ключи с английским текстом → файл, бери и переводи
+function exportI18nTemplate() {
+  const out = {};
+  for (const k of Object.keys(I18N).sort()) { const e = I18N[k]; out[k] = e.en || e.ru || k; }
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'freepalp-i18n-template.json';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  showToast('📥 ' + t('i18n.exported'));
+}
+// Импорт файла перевода для МГНОВЕННОГО предпросмотра (без сохранения на диск)
+function importLangFile(input) {
+  const f = input.files && input.files[0]; if (!f) return;
+  const code = (f.name.replace(/\.json$/i, '') || 'custom').toLowerCase().slice(0, 8);
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const data = JSON.parse(rd.result);
+      for (const k in data) { if (I18N[k]) I18N[k][code] = data[k]; else I18N[k] = { en: data[k], [code]: data[k] }; }
+      if (!LANGS.some(x => x.code === code)) { LANGS.push({ code, name: code }); LANG_SHORT[code] = code.toUpperCase(); }
+      renderLangSwitchers(); setLang(code);
+      showToast('👁 ' + t('i18n.preview'));
+    } catch (e) { showToast('❌ ' + e.message); }
+  };
+  rd.readAsText(f);
+  input.value = '';
+}
 function applyLang(lang) {
   window._lang = lang;
   try { localStorage.setItem('freepalp-lang', lang); } catch(e) {}
@@ -6279,6 +6412,8 @@ function initLang() {
   let l = null;
   try { l = localStorage.getItem('freepalp-lang'); } catch(e) {}
   applyLang(l || detectLang());   // первый вход → по языку ПК
+  renderLangSwitchers();          // переключатели из встроенных языков
+  loadExtraLocales();             // догрузить пользовательские (async)
 }
 initLang();
 
