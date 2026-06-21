@@ -839,10 +839,10 @@
       transition:background .15s, transform .15s; }
     .pres-dot.on { background:var(--accent); transform:scale(1.25); }
     /* Аватар-ассистент (клик «Помощь») */
-    .assistant { position:fixed; left:64px; bottom:18px; z-index:650; display:flex; align-items:flex-end; gap:6px;
+    .fp-asst { position:fixed; left:64px; bottom:18px; z-index:650; display:flex; align-items:flex-end; gap:6px;
       opacity:0; transform:translateY(34px) scale(.55); transform-origin:left bottom; pointer-events:none;
       transition:opacity .35s ease, transform .42s cubic-bezier(.2,1.25,.3,1); }
-    .assistant.open { opacity:1; transform:none; pointer-events:auto; }
+    .fp-asst.open { opacity:1; transform:none; pointer-events:auto; }
     .asst-octo { width:92px; height:92px; object-fit:contain; flex-shrink:0;
       filter:drop-shadow(0 8px 20px rgba(0,0,0,.5)); animation:asstBob 3s ease-in-out infinite; }
     @keyframes asstBob { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-7px) rotate(2deg)} }
@@ -2601,7 +2601,7 @@ function _impL() { return ASST_IMP[window._lang] || ASST_IMP.ru; }
 function _asstEl() {
   let a = document.getElementById('assistant');
   if (a) return a;
-  a = document.createElement('div'); a.id = 'assistant'; a.className = 'assistant';
+  a = document.createElement('div'); a.id = 'assistant'; a.className = 'fp-asst';
   a.innerHTML = `<img class="asst-octo" id="asst-octo" src="/static/octopus-still.png" alt="FreePalp">
     <div class="asst-bubble"><button class="asst-x" onclick="closeAssistant()" aria-label="Закрыть">✕</button>
       <div class="asst-text" id="asst-text"></div><div class="asst-actions" id="asst-actions"></div></div>`;
