@@ -1882,6 +1882,10 @@
                 <span class="label"><span data-i18n="set.voice">🔊 Озвучивать ответы голосом</span><span class="hint" data-i18n="set.voiceHint">осьминожий голос, по языку интерфейса</span></span>
                 <input type="checkbox" id="set-voice" onchange="setVoice(this.checked)">
               </label>
+              <label class="set-row toggle">
+                <span class="label"><span data-i18n="set.notify">🪟 Уведомлять о готовности</span><span class="hint" data-i18n="set.notifyHint">Windows-плашка, когда вкладка свёрнута</span></span>
+                <input type="checkbox" id="set-notify" onchange="setNotify(this.checked)">
+              </label>
               <div class="set-row">
                 <span class="label"><span data-i18n="set.idleBefore">Авто-выключение через</span><span class="hint" data-i18n="set.idleHint">0 = никогда; нужен перезапуск</span></span>
                 <span class="control">
@@ -2371,6 +2375,7 @@ async function sendMessage() {
     if (!finalData || finalData.type === 'error') {
       appendMsg('assistant', '❌ ' + (finalData?.text || 'Ошибка соединения'));
       try { OfficeScene.finish(false); } catch(_) {}
+      try { notifyTaskDone(false, finalData); } catch(_) {}
     } else {
       try { OfficeScene.finish(true); } catch(_) {}
       playBubbles();   // 🫧 ответ готов
@@ -2388,6 +2393,7 @@ async function sendMessage() {
       });
       spawnBubblesAt(_doneId);
       try { speak(data.answer, { smart: true }); } catch (e) {}   // 🔊 умная озвучка ПОСЛЕ отрисовки
+      try { notifyTaskDone(true, data); } catch (e) {}            // 🪟 Windows-плашка, если вкладка свёрнута
       if (data.history_len !== undefined) {
         historyLen = data.history_len;
         if (_chatSessions[conversationId]) {
@@ -2407,6 +2413,7 @@ async function sendMessage() {
     } else {
       appendMsg('assistant', '❌ Ошибка соединения с сервером: ' + e.message);
       try { OfficeScene.finish(false); } catch(_) {}
+      try { notifyTaskDone(false, null); } catch(_) {}
     }
   }
   _abortCtrl = null;
@@ -2466,6 +2473,41 @@ function _voiceOn() { try { return localStorage.getItem('freepalp-voice') === '1
 function setVoice(on) {
   try { localStorage.setItem('freepalp-voice', on ? '1' : '0'); } catch (e) {}
   if (!on && typeof _stopTTS === 'function') _stopTTS();
+}
+
+// ── Уведомления о готовности: Web Notification → нативная Windows-плашка ──
+// Срабатывает ТОЛЬКО когда юзер «вышел из интерфейса» (вкладка скрыта/без фокуса),
+// а агент закончил задачу. Никаких нативных зависимостей — чистый веб.
+function _notifyOn() { try { return localStorage.getItem('freepalp-notify') === '1'; } catch (e) { return false; } }
+function setNotify(on) {
+  const cb = document.getElementById('set-notify');
+  if (!on) { try { localStorage.setItem('freepalp-notify', '0'); } catch (e) {} return; }
+  if (!('Notification' in window)) { showToast('⚠️ ' + t('notify.unsupported')); if (cb) cb.checked = false; return; }
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') {
+      try { localStorage.setItem('freepalp-notify', '1'); } catch (e) {}
+      showToast('🔔 ' + t('notify.enabled'));
+    } else {
+      try { localStorage.setItem('freepalp-notify', '0'); } catch (e) {}
+      if (cb) cb.checked = false;
+      showToast('⚠️ ' + t('notify.denied'));
+    }
+  });
+}
+function _notifyTrim(s) {
+  // грубо чистим markdown/html и режем до короткой плашки
+  return (s || '').replace(/<[^>]+>/g, ' ').replace(/[#*`_>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 140);
+}
+function notifyTaskDone(ok, data) {
+  try {
+    if (!_notifyOn() || !('Notification' in window) || Notification.permission !== 'granted') return;
+    if (!document.hidden && document.hasFocus()) return;   // юзер тут — не дёргаем
+    const body = ok ? (_notifyTrim(data && data.answer) || t('notify.bodyOk')) : t('notify.bodyErr');
+    const n = new Notification('🐙 FreePalp — ' + t(ok ? 'notify.titleOk' : 'notify.titleErr'), {
+      body, icon: '/static/octopus-still.png', tag: 'freepalp-task', renotify: true,
+    });
+    n.onclick = () => { try { window.focus(); switchPanel('chat'); } catch (e) {} n.close(); };
+  } catch (e) {}
 }
 function _pickVoice(lc) {
   if (!window.speechSynthesis) return null;
@@ -5135,6 +5177,8 @@ async function loadBehaviorSettings() {
     if (snd) snd.checked = _soundOn();
     const vc = document.getElementById('set-voice');    // озвучка — клиентский (localStorage)
     if (vc) vc.checked = _voiceOn();
+    const nt = document.getElementById('set-notify');   // уведомления — клиентский + разрешение браузера
+    if (nt) nt.checked = _notifyOn() && ('Notification' in window) && Notification.permission === 'granted';
   } catch(e) {}
 }
 
@@ -5798,6 +5842,15 @@ const I18N = {
   'set.soundHint':  {ru:'(по умолчанию выкл)', en:'(off by default)', zh:'（默认关闭）'},
   'set.voice':      {ru:'🔊 Озвучивать ответы голосом', en:'🔊 Read answers aloud', zh:'🔊 朗读回答'},
   'set.voiceHint':  {ru:'осьминожий голос, по языку интерфейса', en:'octopus voice, follows UI language', zh:'章鱼嗓音，跟随界面语言'},
+  'set.notify':     {ru:'🪟 Уведомлять о готовности', en:'🪟 Notify when ready', zh:'🪟 完成时通知'},
+  'set.notifyHint': {ru:'Windows-плашка, когда вкладка свёрнута', en:'Windows toast when the tab is in the background', zh:'标签页在后台时弹出 Windows 通知'},
+  'notify.enabled': {ru:'Уведомления включены', en:'Notifications enabled', zh:'通知已开启'},
+  'notify.denied':  {ru:'Браузер не дал разрешение', en:'Browser denied permission', zh:'浏览器已拒绝权限'},
+  'notify.unsupported':{ru:'Браузер не поддерживает уведомления', en:'Browser does not support notifications', zh:'浏览器不支持通知'},
+  'notify.titleOk': {ru:'готово', en:'done', zh:'完成'},
+  'notify.titleErr':{ru:'ошибка', en:'error', zh:'出错'},
+  'notify.bodyOk':  {ru:'Ответ готов — загляни к осьминогу 🐙', en:'Your answer is ready — check on the octopus 🐙', zh:'回答已就绪 —— 回到章鱼这儿看看 🐙'},
+  'notify.bodyErr': {ru:'Задача завершилась с ошибкой', en:'The task finished with an error', zh:'任务以错误结束'},
   'set.improve':    {ru:'🧬 Самоулучшение', en:'🧬 Self-improvement', zh:'🧬 自我改进'},
   'set.clearmem':   {ru:'🧹 Очистить память', en:'🧹 Clear memory', zh:'🧹 清除记忆'},
   'set.selfTraining':{ru:'🧬 Самообучение', en:'🧬 Self-training', zh:'🧬 自我训练'},
