@@ -838,6 +838,31 @@
     .pres-dot { width:9px; height:9px; border-radius:50%; background:var(--border); cursor:pointer;
       transition:background .15s, transform .15s; }
     .pres-dot.on { background:var(--accent); transform:scale(1.25); }
+    /* Аватар-ассистент (клик «Помощь») */
+    .assistant { position:fixed; left:64px; bottom:18px; z-index:650; display:flex; align-items:flex-end; gap:6px;
+      opacity:0; transform:translateY(34px) scale(.55); transform-origin:left bottom; pointer-events:none;
+      transition:opacity .35s ease, transform .42s cubic-bezier(.2,1.25,.3,1); }
+    .assistant.open { opacity:1; transform:none; pointer-events:auto; }
+    .asst-octo { width:92px; height:92px; object-fit:contain; flex-shrink:0;
+      filter:drop-shadow(0 8px 20px rgba(0,0,0,.5)); animation:asstBob 3s ease-in-out infinite; }
+    @keyframes asstBob { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-7px) rotate(2deg)} }
+    .asst-octo.asst-talk { animation:asstTalk .5s ease; }
+    @keyframes asstTalk { 0%,100%{transform:scale(1)} 30%{transform:scale(1.1) rotate(-5deg)} 60%{transform:scale(1.07) rotate(4deg)} }
+    .asst-bubble { position:relative; max-width:300px; background:var(--bg-2); border:1px solid var(--border);
+      border-radius:14px; padding:12px 14px; margin-bottom:24px; box-shadow:0 10px 30px rgba(0,0,0,.45); }
+    .asst-bubble::after { content:''; position:absolute; left:-7px; bottom:16px; width:13px; height:13px;
+      background:var(--bg-2); border-left:1px solid var(--border); border-bottom:1px solid var(--border);
+      transform:rotate(45deg); }
+    .asst-text { font-size:13px; color:var(--text); line-height:1.5; margin-bottom:10px; }
+    .asst-actions { display:flex; flex-wrap:wrap; gap:6px; }
+    .asst-btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:5px 12px;
+      font-size:12px; cursor:pointer; }
+    .asst-chip { background:var(--bg-3); border:1px solid var(--border); color:var(--text-2);
+      border-radius:8px; padding:5px 10px; font-size:12px; cursor:pointer; transition:border-color .15s, color .15s; }
+    .asst-chip:hover { border-color:var(--accent); color:var(--text); }
+    .asst-x { position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:50%;
+      background:var(--bg-3); border:1px solid var(--border); color:var(--text-2); font-size:12px;
+      cursor:pointer; line-height:1; z-index:1; }
     .skill-piece.placed { position:absolute; width:80px; z-index:1;
       transition:transform .15s ease, filter .15s ease; }
     .skill-piece.placed:hover { z-index:80; transform:scale(1.1);
@@ -2339,7 +2364,26 @@ function speak(text, opts) {
     u.lang = lc; const v = _pickVoice(lc); if (v) u.voice = v;
     u.pitch = opts.pitch != null ? opts.pitch : 1.35;   // повыше — «осьминожий», игривый
     u.rate  = opts.rate  != null ? opts.rate  : 1.03;
+    // «Звуковые моменты»: осьминог булькает по ходу речи (на границах слов) + старт/финиш
+    let _lb = 0;
+    u.onstart = () => octoBlub(0.05);
+    u.onboundary = ev => { const now = performance.now();
+      if (now - _lb > 430 && Math.random() < 0.5) { _lb = now; octoBlub(0.022); } };
+    u.onend = () => octoBlub(0.028);
     speechSynthesis.speak(u);
+  } catch (e) {}
+}
+// Один мягкий пузырёк-«бульк» — звуковой момент осьминожьей речи
+function octoBlub(vol) {
+  try {
+    _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _audioCtx; if (ctx.state === 'suspended') ctx.resume();
+    const o = ctx.createOscillator(), g = ctx.createGain(), t0 = ctx.currentTime;
+    const f = 360 + Math.random() * 300;
+    o.type = 'sine'; o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f * 1.7, t0 + 0.06);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || 0.03, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.08);
+    o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + 0.1);
   } catch (e) {}
 }
 // Короткий игривый «бульк» (для клика по осьминожке) — независимо от тумблера звука
@@ -2474,6 +2518,75 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowRight') presNav(1);
   else if (e.key === 'ArrowLeft') presNav(-1);
 });
+
+// ── Аватар-ассистент (клик «Помощь») — осьминог выходит, садится, ведёт диалог ──
+const ASST = {
+  ru: { steps: [
+      'Привет! Я FreePalp — твой мульти-агентный помощник. Покажу, что умею?',
+      'Я сам подбираю из 50+ бесплатных моделей, ищу в вебе, помню контекст и складываю навыки в умеющий мозг.',
+      'Подсказки: диктуй голосом через микрофон, включи озвучку в настройках, ищи по извилинам памяти, кликни логотип — увидишь презентацию.',
+      'Как мне работать с тобой?'],
+    modes: ['Спрашивать перед действиями', 'Действовать самостоятельно', 'Покороче', 'Поподробнее'],
+    next: 'Дальше', done: 'Понял! Обращайся, я рядом.', set: 'Запомнил режим: ' },
+  en: { steps: [
+      'Hi! I am FreePalp — your multi-agent helper. Want to see what I can do?',
+      'I pick from 50+ free models, search the web, remember context and grow skills into a capable brain.',
+      'Tips: dictate with the mic, turn on voice in settings, search through the memory gyri, click the logo for a presentation.',
+      'How should I work with you?'],
+    modes: ['Ask before acting', 'Act autonomously', 'Be brief', 'Be detailed'],
+    next: 'Next', done: 'Got it! I am here when you need me.', set: 'Saved mode: ' },
+  zh: { steps: [
+      '你好！我是 FreePalp——你的多智能体助手。想看看我能做什么吗？',
+      '我从 50+ 免费模型中自动挑选、联网搜索、记忆上下文，并把技能汇聚成会思考的大脑。',
+      '提示：用麦克风口述、在设置里开启朗读、在记忆脑回中搜索、点击徽标查看演示。',
+      '我该如何与你协作？'],
+    modes: ['行动前先询问', '自主行动', '简洁', '详细'],
+    next: '下一步', done: '明白了！需要时我就在这里。', set: '已记住模式：' },
+};
+let _asstStep = 0;
+function _asstL() { return ASST[window._lang] || ASST.ru; }
+function _asstEl() {
+  let a = document.getElementById('assistant');
+  if (a) return a;
+  a = document.createElement('div'); a.id = 'assistant'; a.className = 'assistant';
+  a.innerHTML = `<img class="asst-octo" id="asst-octo" src="/static/octopus-still.png" alt="FreePalp">
+    <div class="asst-bubble"><button class="asst-x" onclick="closeAssistant()" aria-label="Закрыть">✕</button>
+      <div class="asst-text" id="asst-text"></div><div class="asst-actions" id="asst-actions"></div></div>`;
+  document.body.appendChild(a); return a;
+}
+function _asstSay(text) {
+  document.getElementById('asst-text').textContent = text;
+  const octo = document.getElementById('asst-octo');
+  if (octo) { octo.classList.remove('asst-talk'); void octo.offsetWidth; octo.classList.add('asst-talk'); }
+  speak(text, { force: true });
+}
+function renderAssistant() {
+  const L = _asstL(), acts = document.getElementById('asst-actions');
+  if (_asstStep < 3) {
+    _asstSay(L.steps[_asstStep]);
+    acts.innerHTML = `<button class="asst-btn" onclick="assistantNext()">${escHtml(L.next)} →</button>`;
+  } else {
+    _asstSay(L.steps[3]);
+    acts.innerHTML = L.modes.map((m, i) => `<button class="asst-chip" onclick="assistantSetMode(${i})">${escHtml(m)}</button>`).join('');
+  }
+}
+function assistantNext() { _asstStep++; renderAssistant(); }
+function assistantSetMode(i) {
+  const L = _asstL();
+  try { localStorage.setItem('freepalp-mode', String(i)); } catch (e) {}
+  _asstSay(L.set + L.modes[i] + '. ' + L.done);
+  document.getElementById('asst-actions').innerHTML = `<button class="asst-btn" onclick="closeAssistant()">OK</button>`;
+}
+function openAssistant() {
+  if (typeof closeGearMenu === 'function') closeGearMenu();
+  _asstStep = 0; const a = _asstEl();
+  requestAnimationFrame(() => a.classList.add('open'));
+  renderAssistant();
+}
+function closeAssistant() {
+  const a = document.getElementById('assistant'); if (a) a.classList.remove('open');
+  if (window.speechSynthesis) speechSynthesis.cancel();
+}
 
 // Токен-стриминг: живой вывод ответа в прогресс-панель, пока модель печатает
 function appendStreamToken(msgId, delta) {
@@ -4944,6 +5057,7 @@ function closeModal() { document.getElementById('modal-back').classList.remove('
 async function gearGo(what) {
   closeGearMenu();
   if (what === 'settings') { openSettings(); return; }
+  if (what === 'help') { openAssistant(); return; }
   if (what === 'changelog') {
     openModal('📋 ' + t('gm.changelog'), '<div style="color:var(--text-3)">Загрузка…</div>');
     try {
