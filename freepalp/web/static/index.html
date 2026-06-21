@@ -2528,29 +2528,48 @@ document.addEventListener('keydown', e => {
 // ── Аватар-ассистент (клик «Помощь») — осьминог выходит, садится, ведёт диалог ──
 const ASST = {
   ru: { steps: [
-      'Привет! Я FreePalp — твой мульти-агентный помощник. Покажу, что умею?',
-      'Я сам подбираю из 50+ бесплатных моделей, ищу в вебе, помню контекст и складываю навыки в умеющий мозг.',
-      'Подсказки: диктуй голосом через микрофон, включи озвучку в настройках, ищи по извилинам памяти, кликни логотип — увидишь презентацию.',
+      'Привет! Я FreePalp — твой осьминог-помощник. Научу за минуту, как со мной работать.',
+      'Просто опиши задачу в чате обычными словами. Я сам разобью её на шаги, подберу модель из 50+ бесплатных и проверю результат критиком. Можно надиктовать голосом — кнопка-микрофон.',
+      'Слева — твои диалоги, справа — текущая сессия: активные модели, токены, квоты провайдеров. Снизу под чатом — Код, Исследование, Провайдеры, Память, Метрики, Артефакты.',
+      'Память у меня живая. Открой вкладку «Память»: мозг по статистике, граф связей (узлы можно тянуть!), навыки-пазлы по отделам мозга и поиск прямо по извилинам.',
+      'И главное — я учусь сам: на ошибках сохраняю навыки и аккуратно подтягиваю промпты под метрики, с защитой от регресса. Когда замечу, что могу подрасти — сам тебя позову.',
       'Как мне работать с тобой?'],
     modes: ['Спрашивать перед действиями', 'Действовать самостоятельно', 'Покороче', 'Поподробнее'],
     next: 'Дальше', done: 'Понял! Обращайся, я рядом.', set: 'Запомнил режим: ' },
   en: { steps: [
-      'Hi! I am FreePalp — your multi-agent helper. Want to see what I can do?',
-      'I pick from 50+ free models, search the web, remember context and grow skills into a capable brain.',
-      'Tips: dictate with the mic, turn on voice in settings, search through the memory gyri, click the logo for a presentation.',
+      'Hi! I am FreePalp — your octopus helper. Let me teach you how to work with me in a minute.',
+      'Just describe your task in plain words. I split it into steps, pick a model from 50+ free ones and check the result with a critic. You can dictate by voice — the mic button.',
+      'Left — your chats, right — the current session: active models, tokens, provider quotas. Below the chat: Code, Research, Providers, Memory, Metrics, Artifacts.',
+      'My memory is alive. Open the Memory tab: a brain by stats, a connection graph (drag the nodes!), skill puzzles by brain regions, and search right through the gyri.',
+      'Most importantly — I learn by myself: I save skills from mistakes and carefully tune prompts to the metrics, guarded against regressions. When I see room to grow, I will call you.',
       'How should I work with you?'],
     modes: ['Ask before acting', 'Act autonomously', 'Be brief', 'Be detailed'],
     next: 'Next', done: 'Got it! I am here when you need me.', set: 'Saved mode: ' },
   zh: { steps: [
-      '你好！我是 FreePalp——你的多智能体助手。想看看我能做什么吗？',
-      '我从 50+ 免费模型中自动挑选、联网搜索、记忆上下文，并把技能汇聚成会思考的大脑。',
-      '提示：用麦克风口述、在设置里开启朗读、在记忆脑回中搜索、点击徽标查看演示。',
+      '你好！我是 FreePalp——你的章鱼助手。一分钟教你如何与我协作。',
+      '用日常语言描述任务即可。我会自动拆解步骤，从 50+ 免费模型中挑选，并用评审智能体检查结果。也可用麦克风语音口述。',
+      '左侧是你的对话，右侧是当前会话：活跃模型、令牌、提供商配额。聊天下方：代码、研究、提供商、记忆、指标、作品。',
+      '我的记忆是活的。打开「记忆」标签：统计大脑、连接图（可拖动节点！）、按脑区排列的技能拼图，以及在脑回中搜索。',
+      '最重要的是——我会自我学习：从错误中保存技能，并谨慎地按指标调优提示词，并防止退化。当我发现可以提升时，会主动叫你。',
       '我该如何与你协作？'],
     modes: ['行动前先询问', '自主行动', '简洁', '详细'],
     next: '下一步', done: '明白了！需要时我就在这里。', set: '已记住模式：' },
 };
-let _asstStep = 0;
+// Проактивный сценарий — предложение самообучения / обучающей игры
+const ASST_IMP = {
+  ru: { intro: r => `Я тут подумал… заметил, что могу подрасти: ${r}. Запустить самоулучшение? Или поиграем — так я тоже подучусь.`,
+        run: '🧬 Запустить', play: '🎮 Поиграть-обучить', later: 'Позже',
+        soon: 'Обучающие мини-игры скоро появятся! Пока могу подтянуться сам — жми «Запустить».' },
+  en: { intro: r => `I was thinking… I noticed room to grow: ${r}. Run self-improvement? Or let us play — I will learn from that too.`,
+        run: '🧬 Run', play: '🎮 Play & teach', later: 'Later',
+        soon: 'Training mini-games are coming soon! For now I can improve myself — hit Run.' },
+  zh: { intro: r => `我在想…发现可以提升：${r}。要运行自我改进吗？或者我们玩一玩——我也能从中学习。`,
+        run: '🧬 运行', play: '🎮 玩并教我', later: '稍后',
+        soon: '训练小游戏即将推出！目前我可以自我改进——点击运行。' },
+};
+let _asstStep = 0, _asstReason = '';
 function _asstL() { return ASST[window._lang] || ASST.ru; }
+function _impL() { return ASST_IMP[window._lang] || ASST_IMP.ru; }
 function _asstEl() {
   let a = document.getElementById('assistant');
   if (a) return a;
@@ -2567,12 +2586,12 @@ function _asstSay(text) {
   speak(text, { force: true });
 }
 function renderAssistant() {
-  const L = _asstL(), acts = document.getElementById('asst-actions');
-  if (_asstStep < 3) {
+  const L = _asstL(), acts = document.getElementById('asst-actions'), last = L.steps.length - 1;
+  if (_asstStep < last) {
     _asstSay(L.steps[_asstStep]);
     acts.innerHTML = `<button class="asst-btn" onclick="assistantNext()">${escHtml(L.next)} →</button>`;
   } else {
-    _asstSay(L.steps[3]);
+    _asstSay(L.steps[last]);
     acts.innerHTML = L.modes.map((m, i) => `<button class="asst-chip" onclick="assistantSetMode(${i})">${escHtml(m)}</button>`).join('');
   }
 }
@@ -2589,6 +2608,40 @@ function openAssistant() {
   requestAnimationFrame(() => a.classList.add('open'));
   renderAssistant();
 }
+// Проактивно: осьминог сам всплывает с предложением самообучения / игры
+function renderAssistantImprove() {
+  const L = _impL();
+  _asstSay(L.intro(_asstReason || ''));
+  document.getElementById('asst-actions').innerHTML =
+    `<button class="asst-btn" onclick="assistantRunImprove()">${escHtml(L.run)}</button>
+     <button class="asst-chip" onclick="assistantPlay()">${escHtml(L.play)}</button>
+     <button class="asst-chip" onclick="closeAssistant()">${escHtml(L.later)}</button>`;
+}
+function assistantRunImprove() { closeAssistant(); if (typeof triggerImprove === 'function') triggerImprove(); }
+function assistantPlay() {
+  _asstSay(_impL().soon);
+  const L = _impL();
+  document.getElementById('asst-actions').innerHTML =
+    `<button class="asst-btn" onclick="assistantRunImprove()">${escHtml(L.run)}</button>
+     <button class="asst-chip" onclick="closeAssistant()">${escHtml(L.later)}</button>`;
+}
+function openAssistantImprove(reason) {
+  _asstReason = reason || ''; const a = _asstEl();
+  requestAnimationFrame(() => a.classList.add('open'));
+  renderAssistantImprove();
+}
+// Раз за сессию: если система готова подучиться — осьминог всплывает сам
+async function assistantProactiveCheck() {
+  try {
+    if (sessionStorage.getItem('asst-proactive') || document.getElementById('assistant')?.classList.contains('open')) return;
+    const s = await (await fetch('/api/improve/status')).json();
+    if (s && s.ready_to_improve && (s.improvement_candidates || 0) > 0) {
+      sessionStorage.setItem('asst-proactive', '1');
+      openAssistantImprove((s.candidates_preview || [])[0] || '');
+    }
+  } catch (e) {}
+}
+setTimeout(assistantProactiveCheck, 35000);   // не сразу — дать осмотреться
 function closeAssistant() {
   const a = document.getElementById('assistant'); if (a) a.classList.remove('open');
   if (window.speechSynthesis) speechSynthesis.cancel();
