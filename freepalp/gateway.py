@@ -1415,6 +1415,8 @@ _FREEPALP_MILESTONES = [
      "text": "Git-версионирование, кнопка Стоп, двухъярусный критик, BASELINE.md"},
     {"date": "2026-06-12", "label": "v1.1.0", "kind": "веха",
      "text": "Настройки, heartbeat, loop breaker, teacher→skill, каталог models.dev"},
+    {"date": "2026-06-20", "label": "v1.2.0", "kind": "веха",
+     "text": "Измеренное само-улучшение (failure-mode таргетинг + held-out гейт, Δ на 50-задачном бенчмарке), ARCHITECTURE.md, крупная перерисовка WebUI (мозг/память/навыки-пазлы/поиск/настройки-оверлей)"},
 ]
 
 
@@ -1468,9 +1470,12 @@ async def api_system_versions():
     try:
         from freepalp.core.self_improvement.version_manager import VersionManager
         for v in VersionManager().list_versions():
+            ver = v.get("version") or ""
+            n = ver.split(".")[-1] if ver else "?"   # патч-номер = индекс авто-тюна
             history.append({
                 "date": (v.get("proposed_at") or "")[:16].replace("T", " "),
-                "label": f"промпты v{v.get('version')}",
+                # «самообучение #N» вместо «v1.0.N» — чтобы не путать с semver приложения
+                "label": f"самообучение #{n}",
                 "kind": "промпты",
                 "text": v.get("changes", "") or "",
             })
