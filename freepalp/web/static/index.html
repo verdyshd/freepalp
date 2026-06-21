@@ -1744,8 +1744,8 @@
 
         <!-- ───────── ОБЩИЙ ───────── -->
         <section class="set-pane active" data-pane="general">
-          <h3 class="sp-h">⚙️ Общий</h3>
-          <p class="sp-sub">Внешний вид и базовое поведение приложения.</p>
+          <h3 class="sp-h" data-i18n="set.tab.general">⚙️ Общий</h3>
+          <p class="sp-sub" data-i18n="sp.general.sub">Внешний вид и базовое поведение приложения.</p>
           <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
             <div class="rp-title" data-i18n="set.theme">🎨 Тема</div>
             <div id="theme-switch" style="display:flex;gap:8px;margin-top:10px">
@@ -1792,32 +1792,32 @@
 
         <!-- ───────── ВОЗМОЖНОСТИ ───────── -->
         <section class="set-pane" data-pane="features">
-          <h3 class="sp-h">✨ Возможности</h3>
-          <p class="sp-sub">Что оркестратор умеет из коробки. Включаются автоматически по типу задачи.</p>
-          <div class="feat-row"><span class="feat-ic">⌨️</span><div><b>Токен-стриминг</b><span>живой вывод ответа по мере генерации</span></div><span class="feat-on">вкл</span></div>
-          <div class="feat-row"><span class="feat-ic">🪶</span><div><b>Lean-режим</b><span>короткий промпт на простых задачах — быстрее и дешевле</span></div><span class="feat-on">авто</span></div>
-          <div class="feat-row"><span class="feat-ic">🔬</span><div><b>Deep research</b><span>многоугловой веб-поиск с выжимкой и источниками</span></div><span class="feat-on">по интенту</span></div>
-          <div class="feat-row"><span class="feat-ic">🌐</span><div><b>Веб-инструменты</b><span>агент сам ходит в браузер / fetch / Reddit (наш аналог «Claude в Chrome»)</span></div><span class="feat-on">вкл</span></div>
-          <div class="feat-row"><span class="feat-ic">🎨</span><div><b>Артефакты-превью</b><span>HTML и мини-игры из песочницы играются прямо в чате</span></div><span class="feat-on">вкл</span></div>
-          <div class="feat-row"><span class="feat-ic">🧩</span><div><b>Навыки (teacher→skill)</b><span>удачные приёмы сохраняются и подставляются заранее</span></div><span class="feat-on">вкл</span></div>
+          <h3 class="sp-h" data-i18n="set.tab.features">✨ Возможности</h3>
+          <p class="sp-sub" data-i18n="sp.feat.sub">Что оркестратор умеет из коробки. Включаются автоматически по типу задачи.</p>
+          <div class="feat-row"><span class="feat-ic">⌨️</span><div><b data-i18n="sp.feat.stream.t">Токен-стриминг</b><span data-i18n="sp.feat.stream.d">живой вывод ответа по мере генерации</span></div><span class="feat-on" data-i18n="sp.on">вкл</span></div>
+          <div class="feat-row"><span class="feat-ic">🪶</span><div><b data-i18n="sp.feat.lean.t">Lean-режим</b><span data-i18n="sp.feat.lean.d">короткий промпт на простых задачах — быстрее и дешевле</span></div><span class="feat-on" data-i18n="sp.auto">авто</span></div>
+          <div class="feat-row"><span class="feat-ic">🔬</span><div><b data-i18n="sp.feat.deep.t">Deep research</b><span data-i18n="sp.feat.deep.d">многоугловой веб-поиск с выжимкой и источниками</span></div><span class="feat-on" data-i18n="sp.byIntent">по интенту</span></div>
+          <div class="feat-row"><span class="feat-ic">🌐</span><div><b data-i18n="sp.feat.web.t">Веб-инструменты</b><span data-i18n="sp.feat.web.d">агент сам ходит в браузер / fetch / Reddit (наш аналог «Claude в Chrome»)</span></div><span class="feat-on" data-i18n="sp.on">вкл</span></div>
+          <div class="feat-row"><span class="feat-ic">🎨</span><div><b data-i18n="sp.feat.art.t">Артефакты-превью</b><span data-i18n="sp.feat.art.d">HTML и мини-игры из песочницы играются прямо в чате</span></div><span class="feat-on" data-i18n="sp.on">вкл</span></div>
+          <div class="feat-row"><span class="feat-ic">🧩</span><div><b data-i18n="sp.feat.skill.t">Навыки (teacher→skill)</b><span data-i18n="sp.feat.skill.d">удачные приёмы сохраняются и подставляются заранее</span></div><span class="feat-on" data-i18n="sp.on">вкл</span></div>
         </section>
 
         <!-- ───────── КОМАНДА АГЕНТОВ ───────── -->
         <section class="set-pane" data-pane="agents">
-          <h3 class="sp-h">🤖 Команда агентов</h3>
-          <p class="sp-sub">FreePalp решает задачу не одной моделью, а конвейером ролей (наш аналог «коворкинга»).</p>
-          <div class="feat-row"><span class="feat-ic">🧱</span><div><b>Architect</b><span>декомпозирует сложную задачу в граф подзадач (DAG)</span></div></div>
-          <div class="feat-row"><span class="feat-ic">⚙️</span><div><b>Worker</b><span>выполняет шаги, вызывает инструменты, пишет файлы</span></div></div>
-          <div class="feat-row"><span class="feat-ic">🧪</span><div><b>Critic</b><span>двухъярусная проверка ответа; ниже порога score — ретрай</span></div></div>
-          <div class="feat-row"><span class="feat-ic">🔀</span><div><b>Параллельные субагенты</b><span>независимые ветки DAG считаются одновременно (лимит 2)</span></div></div>
-          <div class="feat-row"><span class="feat-ic">🛟</span><div><b>Фолбэк провайдеров</b><span>429/лимит у модели → автопереключение, вплоть до локальной Ollama</span></div></div>
-          <p class="sp-note">Порог ретрая критика настраивается во вкладке «Общий».</p>
+          <h3 class="sp-h" data-i18n="set.tab.agents">🤖 Команда агентов</h3>
+          <p class="sp-sub" data-i18n="sp.ag.sub">FreePalp решает задачу не одной моделью, а конвейером ролей (наш аналог «коворкинга»).</p>
+          <div class="feat-row"><span class="feat-ic">🧱</span><div><b data-i18n="sp.ag.arch.t">Architect</b><span data-i18n="sp.ag.arch.d">декомпозирует сложную задачу в граф подзадач (DAG)</span></div></div>
+          <div class="feat-row"><span class="feat-ic">⚙️</span><div><b data-i18n="sp.ag.work.t">Worker</b><span data-i18n="sp.ag.work.d">выполняет шаги, вызывает инструменты, пишет файлы</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🧪</span><div><b data-i18n="sp.ag.crit.t">Critic</b><span data-i18n="sp.ag.crit.d">двухъярусная проверка ответа; ниже порога score — ретрай</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🔀</span><div><b data-i18n="sp.ag.par.t">Параллельные субагенты</b><span data-i18n="sp.ag.par.d">независимые ветки DAG считаются одновременно (лимит 2)</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🛟</span><div><b data-i18n="sp.ag.fb.t">Фолбэк провайдеров</b><span data-i18n="sp.ag.fb.d">429/лимит у модели → автопереключение, вплоть до локальной Ollama</span></div></div>
+          <p class="sp-note" data-i18n="sp.ag.note">Порог ретрая критика настраивается во вкладке «Общий».</p>
         </section>
 
         <!-- ───────── САМООБУЧЕНИЕ ───────── -->
         <section class="set-pane" data-pane="selftrain">
-          <h3 class="sp-h">♻️ Самообучение</h3>
-          <p class="sp-sub">Система измеряет свои провалы, чинит промпты и гейтит изменения с защитой от регресса.</p>
+          <h3 class="sp-h" data-i18n="set.tab.selftrain">♻️ Самообучение</h3>
+          <p class="sp-sub" data-i18n="sp.self.sub">Система измеряет свои провалы, чинит промпты и гейтит изменения с защитой от регресса.</p>
           <div id="training-notice" class="rp-section" style="border-radius:var(--radius);margin-bottom:12px;border-left:3px solid var(--accent);padding:10px 12px;display:none">
             <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px" data-i18n="set.selfTraining">🧬 Самообучение</div>
             <div id="training-status" style="font-size:11px;color:var(--text-2);line-height:1.6"></div>
@@ -1841,29 +1841,29 @@
 
         <!-- ───────── ПАМЯТЬ ───────── -->
         <section class="set-pane" data-pane="memory">
-          <h3 class="sp-h">🧠 Память</h3>
-          <p class="sp-sub">Трёхъярусная память агента. Подробный разбор — на главной панели «Память».</p>
-          <div class="feat-row"><span class="feat-ic">🔥</span><div><b>HOT</b><span>активная — инжектируется в каждый промпт</span></div></div>
-          <div class="feat-row"><span class="feat-ic">🌡️</span><div><b>WARM</b><span>недавние сессии — подгружаются при продолжении</span></div></div>
-          <div class="feat-row"><span class="feat-ic">🧊</span><div><b>COLD</b><span>глубокий архив — доступен поиском по векторам</span></div></div>
-          <div class="feat-row"><span class="feat-ic">📝</span><div><b>Консолидация исправлений</b><span>на 50 накопленных уроков — авто-сведение в постоянную память</span></div></div>
+          <h3 class="sp-h" data-i18n="set.tab.memory">🧠 Память</h3>
+          <p class="sp-sub" data-i18n="sp.mem.sub">Трёхъярусная память агента. Подробный разбор — на главной панели «Память».</p>
+          <div class="feat-row"><span class="feat-ic">🔥</span><div><b>HOT</b><span data-i18n="sp.mem.hot.d">активная — инжектируется в каждый промпт</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🌡️</span><div><b>WARM</b><span data-i18n="sp.mem.warm.d">недавние сессии — подгружаются при продолжении</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🧊</span><div><b>COLD</b><span data-i18n="sp.mem.cold.d">глубокий архив — доступен поиском по векторам</span></div></div>
+          <div class="feat-row"><span class="feat-ic">📝</span><div><b data-i18n="sp.mem.cons.t">Консолидация исправлений</b><span data-i18n="sp.mem.cons.d">на 50 накопленных уроков — авто-сведение в постоянную память</span></div></div>
           <button class="btn" style="margin-top:6px" onclick="triggerMemClean()" data-i18n="set.clearmem">🧹 Очистить память</button>
         </section>
 
         <!-- ───────── КОННЕКТОРЫ И IDE ───────── -->
         <section class="set-pane" data-pane="connectors">
-          <h3 class="sp-h">🧩 Коннекторы и IDE</h3>
-          <p class="sp-sub">Подключение внешних инструментов и доступ к оркестратору из редактора.</p>
+          <h3 class="sp-h" data-i18n="set.tab.connectors">🧩 Коннекторы и IDE</h3>
+          <p class="sp-sub" data-i18n="sp.conn.sub">Подключение внешних инструментов и доступ к оркестратору из редактора.</p>
           <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-            <div class="rp-title">🔌 MCP-серверы</div>
-            <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-top:6px">
+            <div class="rp-title" data-i18n="sp.conn.mcp.t">🔌 MCP-серверы</div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-top:6px" data-i18n="sp.conn.mcp.d" data-i18n-html>
               Подключают внешние инструменты по протоколу MCP (stdio JSON-RPC). Конфиг — <code>config/mcp_servers.json</code> (пусто = выкл).
               Статус и список — на главной панели <b>MCP</b>.
             </div>
           </div>
           <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
-            <div class="rp-title">⌨️ FreePalp в IDE <span style="font-size:10px;color:var(--text-3);font-weight:400">(наш аналог «Claude Code»)</span></div>
-            <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-top:6px">
+            <div class="rp-title" data-i18n="sp.conn.ide.t" data-i18n-html>⌨️ FreePalp в IDE <span style="font-size:10px;color:var(--text-3);font-weight:400">(наш аналог «Claude Code»)</span></div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-top:6px" data-i18n="sp.conn.ide.d" data-i18n-html>
               Весь оркестратор доступен по <b>OpenAI-совместимому API</b>. Укажи в плагине редактора (Continue.dev, Cursor, любой openai-клиент):
               <div style="margin:8px 0;padding:8px 10px;background:var(--bg-3);border-radius:8px;font-family:var(--font-mono);font-size:12px">base_url: <span style="color:var(--accent)">http://localhost:28800/v1</span></div>
               Эндпоинты <code>/v1/chat/completions</code> и <code>/v1/models</code> — под капотом весь роутинг, критик и память.
@@ -1874,28 +1874,28 @@
 
         <!-- ───────── КОНФИДЕНЦИАЛЬНОСТЬ ───────── -->
         <section class="set-pane" data-pane="privacy">
-          <h3 class="sp-h">🔒 Конфиденциальность</h3>
-          <p class="sp-sub">FreePalp работает локально и не отправляет данные «домой».</p>
-          <div class="feat-row"><span class="feat-ic">🖥️</span><div><b>Всё локально</b><span>ключи в <code>.env</code> на твоём ПК, память в <code>freepalp/memory/</code> — не в облаке, не в git</span></div></div>
-          <div class="feat-row"><span class="feat-ic">🚫</span><div><b>Без телеметрии</b><span>приложение не шлёт аналитику и не «звонит домой»</span></div></div>
-          <div class="feat-row"><span class="feat-ic">🆓</span><div><b>Free-model-first</b><span>запросы идут только в выбранных тобой провайдеров; фолбэк — локальная Ollama без внешних API</span></div></div>
-          <div class="feat-row"><span class="feat-ic">🛡️</span><div><b>Санитизация инъекций</b><span>недоверенный веб-контент дефангуется и оборачивается баннером перед подачей модели</span></div></div>
+          <h3 class="sp-h" data-i18n="set.tab.privacy">🔒 Конфиденциальность</h3>
+          <p class="sp-sub" data-i18n="sp.priv.sub">FreePalp работает локально и не отправляет данные «домой».</p>
+          <div class="feat-row"><span class="feat-ic">🖥️</span><div><b data-i18n="sp.priv.local.t">Всё локально</b><span data-i18n="sp.priv.local.d" data-i18n-html>ключи в <code>.env</code> на твоём ПК, память в <code>freepalp/memory/</code> — не в облаке, не в git</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🚫</span><div><b data-i18n="sp.priv.notel.t">Без телеметрии</b><span data-i18n="sp.priv.notel.d">приложение не шлёт аналитику и не «звонит домой»</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🆓</span><div><b data-i18n="sp.priv.free.t">Free-model-first</b><span data-i18n="sp.priv.free.d">запросы идут только в выбранных тобой провайдеров; фолбэк — локальная Ollama без внешних API</span></div></div>
+          <div class="feat-row"><span class="feat-ic">🛡️</span><div><b data-i18n="sp.priv.san.t">Санитизация инъекций</b><span data-i18n="sp.priv.san.d">недоверенный веб-контент дефангуется и оборачивается баннером перед подачей модели</span></div></div>
         </section>
 
         <!-- ───────── О FREEPALP ───────── -->
         <section class="set-pane" data-pane="about">
-          <h3 class="sp-h">ℹ️ О FreePalp</h3>
-          <p class="sp-sub">Мультиагентный AI-оркестратор на бесплатных и локальных моделях.</p>
+          <h3 class="sp-h" data-i18n="set.tab.about">ℹ️ О FreePalp</h3>
+          <p class="sp-sub" data-i18n="sp.about.sub">Мультиагентный AI-оркестратор на бесплатных и локальных моделях.</p>
           <div class="rp-section" style="border-radius:var(--radius);margin-bottom:12px">
             <div class="rp-title" data-i18n="set.sysinfo">Информация о системе</div>
             <div id="settings-info" style="font-size:13px;color:var(--text-2);line-height:1.8" data-i18n="common.loading">Загрузка...</div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn" onclick="window.open('https://github.com/verdyshd/freepalp','_blank')">🐙 GitHub</button>
-            <button class="btn" onclick="gearGo('changelog')">📋 История изменений</button>
+            <button class="btn" onclick="gearGo('changelog')" data-i18n="sp.about.changelog">📋 История изменений</button>
             <button class="btn" onclick="window.open('/docs','_blank')">📖 API Docs</button>
           </div>
-          <div style="font-size:11px;color:var(--text-3);margin-top:12px">Лицензия MIT · автор: Дмитрий Вердыш (verdyshd)</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:12px" data-i18n="sp.about.license">Лицензия MIT · автор: Дмитрий Вердыш (verdyshd)</div>
         </section>
 
       </div>
@@ -3332,7 +3332,7 @@ async function loadProviders() {
     }
     grid.innerHTML = banner + allProviders.map(p => renderProviderCard(p)).join('');
   } catch(e) {
-    grid.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+    grid.innerHTML = `<div style="color:var(--accent-err)">${t('err.prefix')} ${e.message}</div>`;
   }
 }
 
@@ -3563,19 +3563,21 @@ async function loadSkills() {
         </g></svg>`;
     // Каждый тип задач → СВОЙ отдел мозга. Скилы группы собираются мини-пазлом в своей
     // области (со свечением-ореолом) → отделы специализируются = «умеющий мозг».
+    // label = i18n-ключ зоны (переводится при рендере через t('sk.reg.'+label))
     const REGION = {
-      architecture: {x:50, y:17, label:'архитектура'},
-      general:      {x:50, y:33, label:'общее'},
+      architecture: {x:50, y:17, label:'architecture'},
+      general:      {x:50, y:33, label:'general'},
       research:     {x:71, y:28, label:'research'},
-      coding_small: {x:31, y:45, label:'код'},
-      coding:       {x:31, y:45, label:'код'},
-      coding_large: {x:31, y:45, label:'код'},
-      coding_hard:  {x:31, y:45, label:'код'},
-      search:       {x:69, y:48, label:'поиск'},
+      coding_small: {x:31, y:45, label:'coding'},
+      coding:       {x:31, y:45, label:'coding'},
+      coding_large: {x:31, y:45, label:'coding'},
+      coding_hard:  {x:31, y:45, label:'coding'},
+      search:       {x:69, y:48, label:'search'},
       web:          {x:31, y:63, label:'web'},
-      shell:        {x:52, y:64, label:'мозжечок'},
+      shell:        {x:52, y:64, label:'shell'},
     };
-    const DEF = {x:50, y:50, label:'кора'};
+    const DEF = {x:50, y:50, label:'cortex'};
+    const regLabel = k => t('sk.reg.' + k);
     const cut = s => (s || '').length > 11 ? s.slice(0, 10) + '…' : s;
     // группируем по ОБЛАСТИ (coding_* сливаются в одну зону «код»)
     const groups = {};
@@ -3605,10 +3607,10 @@ async function loadSkills() {
         const sid = _sid++;
         tipHTML[sid] = `<div class="st-name" style="color:${c}">🧩 ${escHtml(s.name)}</div>`
           + `<div class="st-desc">${escHtml(s.description || '—')}</div>`
-          + `<div class="st-meta">🏷 <b>${escHtml(s.task_type)}</b> → отдел «${escHtml(g.reg.label)}»</div>`
+          + `<div class="st-meta">🏷 <b>${escHtml(s.task_type)}</b> → ${t('sk.dept')} «${escHtml(regLabel(g.reg.label))}»</div>`
           + `<div class="st-meta">🔧 ${escHtml(s.tools || '—')}</div>`
           + `<div class="st-meta">🤖 ${escHtml(s.source_model || '—')} · 📅 ${escHtml(s.created || '—')}</div>`
-          + `<div class="st-uses">подходил под задачу <b>×${s.uses}</b></div>`;
+          + `<div class="st-uses">${t('sk.usedFor')} <b>×${s.uses}</b></div>`;
         return `<div class="skill-piece placed" data-skill="${sid}" style="left:${col*W - M}px;top:${r*H - M}px;width:${W + 2*M}px;z-index:${z}">
           <svg viewBox="${-M} ${-M} ${W + 2*M} ${H + 2*M}" style="width:100%;overflow:visible"><path d="${jig(W, H, e)}" fill="${c}66" stroke="${c}ee" stroke-width="1.6"/></svg>
           <div class="skill-pc"><span class="uses">×${s.uses}</span><span class="nm">🧩 ${escHtml(cut(s.name))}</span></div>
@@ -3616,12 +3618,12 @@ async function loadSkills() {
       }).join('');
       return `<div class="skill-region" style="left:${g.reg.x}%;top:${g.reg.y}%;width:${gw}px;height:${gh}px">
         <div class="sr-halo" style="--rc:${g.color}"></div>${pcs}
-        <div class="sr-label" style="color:${g.color}">${g.reg.label} · ${n}</div>
+        <div class="sr-label" style="color:${g.color}">${regLabel(g.reg.label)} · ${n}</div>
       </div>`;
     }).join('');
     el.style.cssText = '';
     el.className = '';
-    el.innerHTML = `<div style="font-size:12px;color:var(--text-2);margin-bottom:2px">🧠 Навыки специализируют области мозга — каждый отдел осваивает свой тип задач, формируя умеющий мозг</div>
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-2);margin-bottom:2px">${t('sk.caption')}</div>
       <div class="skill-brain">${brainBg}${regionsHtml}</div>`;
 
     // Ховер-поповер с полной инфой о навыке
@@ -4049,14 +4051,14 @@ async function loadMemStats() {
         + `<animate attributeName="opacity" values="0;1;0.2;1;0" dur="${dur}s" begin="${beg}s" repeatCount="indefinite"/></circle>`;
     }
     const neural = `<g clip-path="url(#brainClip)">${_syn}${_neu}${_fire}</g>`;
-    const stage = totalMem < 100 ? 'зарождается' : totalMem < 400 ? 'развивается' : totalMem < 1200 ? 'зрелый' : 'обширный';
+    const stage = totalMem < 100 ? t('st.stage.nascent') : totalMem < 400 ? t('st.stage.growing') : totalMem < 1200 ? t('st.stage.mature') : t('st.stage.vast');
 
     // Интерактивный разбор 4 когнитивных слоёв памяти (как отделы мозга)
     const LAYER_INFO = [
-      ['working', 'Рабочая', '#ecc94b', 'текущая задача'],
-      ['episodic', 'Эпизодическая', '#9f7aea', 'события и диалоги'],
-      ['semantic', 'Семантическая', '#63b3ed', 'факты и знания'],
-      ['procedural', 'Процедурная', '#48bb78', 'навыки и приёмы'],
+      ['working',    t('st.layer.working'),    '#ecc94b', t('st.layer.working.r')],
+      ['episodic',   t('st.layer.episodic'),   '#9f7aea', t('st.layer.episodic.r')],
+      ['semantic',   t('st.layer.semantic'),   '#63b3ed', t('st.layer.semantic.r')],
+      ['procedural', t('st.layer.procedural'), '#48bb78', t('st.layer.procedural.r')],
     ];
     const layersLegend = `<div class="brain-layers">` + LAYER_INFO.map(([k, nm, c, role]) => {
       const v = L[k] || 0, pct = totalMem ? Math.round(100 * v / totalMem) : 0;
@@ -4109,18 +4111,18 @@ async function loadMemStats() {
       <!-- подписи с выносками -->
       <g font-size="12" fill="#e2e8f0">
         <line x1="190" y1="118" x2="78" y2="62" stroke="rgba(160,174,192,0.4)" stroke-width="1"/>
-        <text x="8" y="50" font-weight="700">🔥 ${hot} <tspan font-weight="400" fill="#a0aec0">HOT строк</tspan></text>
-        <text x="8" y="64" font-size="9" fill="#8b9ab8">активное мышление — в каждом промпте</text>
+        <text x="8" y="50" font-weight="700">🔥 ${hot} <tspan font-weight="400" fill="#a0aec0">${t('st.hotRows')}</tspan></text>
+        <text x="8" y="64" font-size="9" fill="#8b9ab8">${t('st.hotDesc')}</text>
 
         <line x1="152" y1="222" x2="70" y2="282" stroke="rgba(160,174,192,0.4)" stroke-width="1"/>
-        <text x="8" y="296" font-weight="700">🌡 ${warm} <tspan font-weight="400" fill="#a0aec0">WARM сессий</tspan></text>
-        <text x="8" y="310" font-size="9" fill="#8b9ab8">недавнее — подгружается при продолжении</text>
+        <text x="8" y="296" font-weight="700">🌡 ${warm} <tspan font-weight="400" fill="#a0aec0">${t('st.warmSess')}</tspan></text>
+        <text x="8" y="310" font-size="9" fill="#8b9ab8">${t('st.warmDesc')}</text>
 
         <line x1="322" y1="262" x2="396" y2="296" stroke="rgba(160,174,192,0.4)" stroke-width="1"/>
         <text x="398" y="296" font-weight="700">🧊 ${cold} <tspan font-weight="400" fill="#a0aec0">COLD</tspan></text>
-        <text x="398" y="310" font-size="9" fill="#8b9ab8">глубокий архив</text>
+        <text x="398" y="310" font-size="9" fill="#8b9ab8">${t('st.coldDesc')}</text>
 
-        <text x="356" y="40" font-size="10" fill="#8b9ab8">потоки памяти:</text>
+        <text x="356" y="40" font-size="10" fill="#8b9ab8">${t('st.flows')}</text>
         <text x="356" y="56" font-size="10" fill="#a0aec0">HOT ⤵ WARM — ${demoted}</text>
         <text x="356" y="70" font-size="10" fill="#a0aec0">WARM ⤵ COLD</text>
       </g>
@@ -4141,13 +4143,13 @@ async function loadMemStats() {
                 stroke-dasharray="${(dash*corrPct/100).toFixed(1)} ${dash.toFixed(1)}"
                 transform="rotate(-90 32 32)"/>
         <text x="32" y="30" text-anchor="middle" font-size="12" fill="currentColor" font-weight="700">${corr}</text>
-        <text x="32" y="43" text-anchor="middle" font-size="8" fill="rgba(160,174,192,.9)">из 50</text>
+        <text x="32" y="43" text-anchor="middle" font-size="8" fill="rgba(160,174,192,.9)">${t('st.of50')}</text>
       </svg>`;
     grid.innerHTML += `
       <div style="grid-column:1/-1;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:6px">
         <div style="font-size:12px;color:var(--text-2);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span>Мозг памяти — развивается с её ростом</span>
-          <span style="font-size:11px;color:var(--accent);background:rgba(159,122,234,.12);border-radius:8px;padding:1px 8px">🧠 ${totalMem} нейронов · ${stage}</span>
+          <span>${t('st.brainTitle')}</span>
+          <span style="font-size:11px;color:var(--accent);background:rgba(159,122,234,.12);border-radius:8px;padding:1px 8px">🧠 ${totalMem} ${t('st.neurons')} · ${stage}</span>
         </div>
         <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:stretch">
           <div style="flex:1;min-width:300px;display:flex;justify-content:center;align-items:center">
@@ -4158,22 +4160,22 @@ async function loadMemStats() {
             <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
               ${gauge}
               <div>
-                <div style="font-size:12px;color:var(--text-2)">📝 Исправления</div>
-                <div style="font-size:10px;color:var(--text-3);margin-top:3px;max-width:140px">уроки из ошибок; на 50 — консолидация</div>
+                <div style="font-size:12px;color:var(--text-2)">${t('st.corrTitle')}</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:3px;max-width:140px">${t('st.corrDesc')}</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
               <span style="font-size:20px">📁</span>
               <div>
-                <div style="font-size:13px;color:var(--text)"><b>${projects}</b> проект${projects===1?'':'а/ов'}</div>
-                <div style="font-size:10px;color:var(--text-3)">project memory — контекст по проектам</div>
+                <div style="font-size:13px;color:var(--text)"><b>${projects}</b> ${window._lang==='ru' ? ('проект'+(projects===1?'':'а/ов')) : t('st.projWord')}</div>
+                <div style="font-size:10px;color:var(--text-3)">${t('st.projMem')}</div>
               </div>
             </div>
           </div>
         </div>
       </div>`;
   } catch(e) {
-    grid.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+    grid.innerHTML = `<div style="color:var(--accent-err)">${t('err.prefix')} ${e.message}</div>`;
   }
 }
 
@@ -4261,7 +4263,7 @@ async function searchMemory() {
         </rect>
       </svg>
     </div>
-    <div class="dig-label" style="justify-content:center"><span class="dig-dot"></span>Ищу по извилинам памяти…</div>`;
+    <div class="dig-label" style="justify-content:center"><span class="dig-dot"></span>${t('srch.digging')}</div>`;
   const TIER = { semantic:'#63b3ed', episodic:'#9f7aea', procedural:'#48bb78' };
   sfxSearch();   // 🔉 звук скана
   const t0 = Date.now();
@@ -4278,7 +4280,7 @@ async function searchMemory() {
     const histRes = hist.results || [];
     const tierColor = r => TIER[(r.tier || '').toLowerCase()] || '#9f7aea';
     if (!memRes.length && !histRes.length) {
-      res.innerHTML = '<div style="color:var(--text-3)">Ничего не найдено ни в памяти, ни в истории</div>';
+      res.innerHTML = `<div style="color:var(--text-3)">${t('srch.nothing')}</div>`;
       return;
     }
     let idx = 0;
@@ -4327,14 +4329,14 @@ async function searchMemory() {
           </rect>
           <g id="search-nodes"></g>
         </svg>
-        <div class="search-hint">🧠 Найдено в памяти: <b>${memRes.length}</b> — узелки осели в извилинах. Наведи на узелок или карточку.</div>
+        <div class="search-hint">${t('srch.foundPre')} <b>${memRes.length}</b> ${t('srch.foundPost')}</div>
       </div>
       ${memCards ? `<div class="sr-list">${memCards}</div>` : ''}
-      ${histCards ? `<div style="font-size:11px;color:var(--text-3);margin:14px 0 8px">💬 История диалогов (${histRes.length})</div><div class="sr-list">${histCards}</div>` : ''}`;
+      ${histCards ? `<div style="font-size:11px;color:var(--text-3);margin:14px 0 8px">${t('srch.histDialogs')} (${histRes.length})</div><div class="sr-list">${histCards}</div>` : ''}`;
     requestAnimationFrame(() => placeSearchNodes(memRes, tierColor));
     if (memRes.length) sfxFound(memRes.length);   // 🔉 аккорд «нашлось»
   } catch(e) {
-    res.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+    res.innerHTML = `<div style="color:var(--accent-err)">${t('err.prefix')} ${e.message}</div>`;
   }
 }
 
@@ -4361,7 +4363,7 @@ async function loadTools() {
     state.allTools = data.tools || [];
     renderTools(state.allTools);
   } catch(e) {
-    grid.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+    grid.innerHTML = `<div style="color:var(--accent-err)">${t('err.prefix')} ${e.message}</div>`;
   }
   loadMcpStatus();
 }
@@ -5464,6 +5466,105 @@ const I18N = {
   'theme.light':    {ru:'☀️ Светлая', en:'☀️ Light', zh:'☀️ 浅色'},
   'theme.dark':     {ru:'🌙 Тёмная', en:'🌙 Dark', zh:'🌙 深色'},
   'theme.system':   {ru:'💻 Системная', en:'💻 System', zh:'💻 跟随系统'},
+  // ── Settings panes (descriptive bullets) ──
+  'sp.on':          {ru:'вкл', en:'on', zh:'开'},
+  'sp.auto':        {ru:'авто', en:'auto', zh:'自动'},
+  'sp.byIntent':    {ru:'по интенту', en:'by intent', zh:'按意图'},
+  'sp.general.sub': {ru:'Внешний вид и базовое поведение приложения.', en:'Appearance and basic app behavior.', zh:'外观与应用的基本行为。'},
+  'sp.feat.sub':    {ru:'Что оркестратор умеет из коробки. Включаются автоматически по типу задачи.', en:'What the orchestrator can do out of the box. Enabled automatically by task type.', zh:'编排器开箱即用的能力，按任务类型自动启用。'},
+  'sp.feat.stream.t':{ru:'Токен-стриминг', en:'Token streaming', zh:'令牌流式输出'},
+  'sp.feat.stream.d':{ru:'живой вывод ответа по мере генерации', en:'live answer output as it is generated', zh:'生成时实时输出回答'},
+  'sp.feat.lean.t': {ru:'Lean-режим', en:'Lean mode', zh:'精简模式'},
+  'sp.feat.lean.d': {ru:'короткий промпт на простых задачах — быстрее и дешевле', en:'short prompt for simple tasks — faster and cheaper', zh:'简单任务用短提示 —— 更快更省'},
+  'sp.feat.deep.t': {ru:'Deep research', en:'Deep research', zh:'深度研究'},
+  'sp.feat.deep.d': {ru:'многоугловой веб-поиск с выжимкой и источниками', en:'multi-angle web search with a summary and sources', zh:'多角度网络搜索，附摘要与来源'},
+  'sp.feat.web.t':  {ru:'Веб-инструменты', en:'Web tools', zh:'网络工具'},
+  'sp.feat.web.d':  {ru:'агент сам ходит в браузер / fetch / Reddit (наш аналог «Claude в Chrome»)', en:'the agent uses the browser / fetch / Reddit on its own (our take on “Claude in Chrome”)', zh:'智能体自主使用浏览器 / fetch / Reddit（我们的「Claude in Chrome」）'},
+  'sp.feat.art.t':  {ru:'Артефакты-превью', en:'Artifact preview', zh:'产物预览'},
+  'sp.feat.art.d':  {ru:'HTML и мини-игры из песочницы играются прямо в чате', en:'sandboxed HTML and mini-games run right in the chat', zh:'沙箱中的 HTML 与小游戏直接在聊天中运行'},
+  'sp.feat.skill.t':{ru:'Навыки (teacher→skill)', en:'Skills (teacher→skill)', zh:'技能（teacher→skill）'},
+  'sp.feat.skill.d':{ru:'удачные приёмы сохраняются и подставляются заранее', en:'successful techniques are saved and injected ahead of time', zh:'成功的技巧被保存并提前注入'},
+  'sp.ag.sub':      {ru:'FreePalp решает задачу не одной моделью, а конвейером ролей (наш аналог «коворкинга»).', en:'FreePalp solves a task not with one model but a pipeline of roles (our take on “co-working”).', zh:'FreePalp 不靠单一模型，而用角色流水线解决任务（我们的「协作」）。'},
+  'sp.ag.arch.t':   {ru:'Architect', en:'Architect', zh:'Architect'},
+  'sp.ag.arch.d':   {ru:'декомпозирует сложную задачу в граф подзадач (DAG)', en:'decomposes a complex task into a sub-task graph (DAG)', zh:'将复杂任务分解为子任务图（DAG）'},
+  'sp.ag.work.t':   {ru:'Worker', en:'Worker', zh:'Worker'},
+  'sp.ag.work.d':   {ru:'выполняет шаги, вызывает инструменты, пишет файлы', en:'runs steps, calls tools, writes files', zh:'执行步骤、调用工具、写入文件'},
+  'sp.ag.crit.t':   {ru:'Critic', en:'Critic', zh:'Critic'},
+  'sp.ag.crit.d':   {ru:'двухъярусная проверка ответа; ниже порога score — ретрай', en:'two-tier answer check; below the score threshold → retry', zh:'两级回答检查；低于评分阈值则重试'},
+  'sp.ag.par.t':    {ru:'Параллельные субагенты', en:'Parallel sub-agents', zh:'并行子智能体'},
+  'sp.ag.par.d':    {ru:'независимые ветки DAG считаются одновременно (лимит 2)', en:'independent DAG branches run at the same time (limit 2)', zh:'独立的 DAG 分支同时运行（上限 2）'},
+  'sp.ag.fb.t':     {ru:'Фолбэк провайдеров', en:'Provider fallback', zh:'提供商回退'},
+  'sp.ag.fb.d':     {ru:'429/лимит у модели → автопереключение, вплоть до локальной Ollama', en:'429/limit on a model → auto-switch, down to local Ollama', zh:'模型遇 429/限额 → 自动切换，直至本地 Ollama'},
+  'sp.ag.note':     {ru:'Порог ретрая критика настраивается во вкладке «Общий».', en:'The critic retry threshold is set on the “General” tab.', zh:'评审重试阈值在「常规」标签中设置。'},
+  'sp.self.sub':    {ru:'Система измеряет свои провалы, чинит промпты и гейтит изменения с защитой от регресса.', en:'The system measures its own failures, fixes prompts and gates changes with regression protection.', zh:'系统衡量自身失败、修复提示词，并以防回归门控变更。'},
+  'sp.mem.sub':     {ru:'Трёхъярусная память агента. Подробный разбор — на главной панели «Память».', en:'Three-tier agent memory. Full breakdown on the main “Memory” panel.', zh:'三层智能体记忆。完整说明见主「记忆」面板。'},
+  'sp.mem.hot.d':   {ru:'активная — инжектируется в каждый промпт', en:'active — injected into every prompt', zh:'活跃 —— 注入每条提示'},
+  'sp.mem.warm.d':  {ru:'недавние сессии — подгружаются при продолжении', en:'recent sessions — loaded when continuing', zh:'近期会话 —— 继续时加载'},
+  'sp.mem.cold.d':  {ru:'глубокий архив — доступен поиском по векторам', en:'deep archive — reachable via vector search', zh:'深层归档 —— 通过向量搜索访问'},
+  'sp.mem.cons.t':  {ru:'Консолидация исправлений', en:'Fix consolidation', zh:'修正整合'},
+  'sp.mem.cons.d':  {ru:'на 50 накопленных уроков — авто-сведение в постоянную память', en:'every 50 accumulated lessons — auto-merged into permanent memory', zh:'每累积 50 条教训 —— 自动并入长期记忆'},
+  'sp.conn.sub':    {ru:'Подключение внешних инструментов и доступ к оркестратору из редактора.', en:'Connecting external tools and reaching the orchestrator from your editor.', zh:'接入外部工具，并从编辑器访问编排器。'},
+  'sp.conn.mcp.t':  {ru:'🔌 MCP-серверы', en:'🔌 MCP servers', zh:'🔌 MCP 服务器'},
+  'sp.conn.mcp.d':  {ru:'Подключают внешние инструменты по протоколу MCP (stdio JSON-RPC). Конфиг — <code>config/mcp_servers.json</code> (пусто = выкл). Статус и список — на главной панели <b>MCP</b>.', en:'They connect external tools via the MCP protocol (stdio JSON-RPC). Config — <code>config/mcp_servers.json</code> (empty = off). Status and list on the main <b>MCP</b> panel.', zh:'它们通过 MCP 协议（stdio JSON-RPC）接入外部工具。配置见 <code>config/mcp_servers.json</code>（空 = 关闭）。状态与列表见主 <b>MCP</b> 面板。'},
+  'sp.conn.ide.t':  {ru:'⌨️ FreePalp в IDE <span style="font-size:10px;color:var(--text-3);font-weight:400">(наш аналог «Claude Code»)</span>', en:'⌨️ FreePalp in the IDE <span style="font-size:10px;color:var(--text-3);font-weight:400">(our take on “Claude Code”)</span>', zh:'⌨️ IDE 中的 FreePalp <span style="font-size:10px;color:var(--text-3);font-weight:400">（我们的「Claude Code」）</span>'},
+  'sp.conn.ide.d':  {ru:'Весь оркестратор доступен по <b>OpenAI-совместимому API</b>. Укажи в плагине редактора (Continue.dev, Cursor, любой openai-клиент):<div style="margin:8px 0;padding:8px 10px;background:var(--bg-3);border-radius:8px;font-family:var(--font-mono);font-size:12px">base_url: <span style="color:var(--accent)">http://localhost:28800/v1</span></div>Эндпоинты <code>/v1/chat/completions</code> и <code>/v1/models</code> — под капотом весь роутинг, критик и память.', en:'The whole orchestrator is exposed via an <b>OpenAI-compatible API</b>. Point your editor plugin (Continue.dev, Cursor, any openai client) at it:<div style="margin:8px 0;padding:8px 10px;background:var(--bg-3);border-radius:8px;font-family:var(--font-mono);font-size:12px">base_url: <span style="color:var(--accent)">http://localhost:28800/v1</span></div>The <code>/v1/chat/completions</code> and <code>/v1/models</code> endpoints carry the full routing, critic and memory under the hood.', zh:'整个编排器通过 <b>OpenAI 兼容 API</b> 暴露。在编辑器插件（Continue.dev、Cursor 或任意 openai 客户端）中指向它：<div style="margin:8px 0;padding:8px 10px;background:var(--bg-3);border-radius:8px;font-family:var(--font-mono);font-size:12px">base_url: <span style="color:var(--accent)">http://localhost:28800/v1</span></div><code>/v1/chat/completions</code> 与 <code>/v1/models</code> 端点在底层承载完整的路由、评审与记忆。'},
+  'sp.priv.sub':    {ru:'FreePalp работает локально и не отправляет данные «домой».', en:'FreePalp runs locally and does not phone data “home”.', zh:'FreePalp 在本地运行，不会把数据「回传」。'},
+  'sp.priv.local.t':{ru:'Всё локально', en:'Everything local', zh:'全部本地'},
+  'sp.priv.local.d':{ru:'ключи в <code>.env</code> на твоём ПК, память в <code>freepalp/memory/</code> — не в облаке, не в git', en:'keys in <code>.env</code> on your PC, memory in <code>freepalp/memory/</code> — not in the cloud, not in git', zh:'密钥存于你电脑的 <code>.env</code>，记忆存于 <code>freepalp/memory/</code> —— 不上云、不入 git'},
+  'sp.priv.notel.t':{ru:'Без телеметрии', en:'No telemetry', zh:'无遥测'},
+  'sp.priv.notel.d':{ru:'приложение не шлёт аналитику и не «звонит домой»', en:'the app sends no analytics and never “calls home”', zh:'应用不发送分析数据，也绝不「回拨总部」'},
+  'sp.priv.free.t': {ru:'Free-model-first', en:'Free-model-first', zh:'免费模型优先'},
+  'sp.priv.free.d': {ru:'запросы идут только в выбранных тобой провайдеров; фолбэк — локальная Ollama без внешних API', en:'requests go only to providers you choose; fallback is local Ollama with no external APIs', zh:'请求仅发往你选择的提供商；回退为本地 Ollama，无外部 API'},
+  'sp.priv.san.t':  {ru:'Санитизация инъекций', en:'Injection sanitization', zh:'注入消毒'},
+  'sp.priv.san.d':  {ru:'недоверенный веб-контент дефангуется и оборачивается баннером перед подачей модели', en:'untrusted web content is defanged and wrapped in a banner before reaching the model', zh:'不可信网页内容在送入模型前被消毒并加上横幅'},
+  'sp.about.sub':   {ru:'Мультиагентный AI-оркестратор на бесплатных и локальных моделях.', en:'A multi-agent AI orchestrator on free and local models.', zh:'基于免费与本地模型的多智能体 AI 编排器。'},
+  'sp.about.changelog':{ru:'📋 История изменений', en:'📋 Changelog', zh:'📋 更新日志'},
+  'sp.about.license':{ru:'Лицензия MIT · автор: Дмитрий Вердыш (verdyshd)', en:'MIT License · author: Dmitry Verdysh (verdyshd)', zh:'MIT 许可证 · 作者：Dmitry Verdysh (verdyshd)'},
+  // ── Skills brain (JS-rendered) ──
+  'sk.caption':     {ru:'🧠 Навыки специализируют области мозга — каждый отдел осваивает свой тип задач, формируя умеющий мозг', en:'🧠 Skills specialize brain regions — each region masters its own task type, forming a capable brain', zh:'🧠 技能让脑区专门化 —— 每个区域掌握自己的任务类型，形成有本领的大脑'},
+  'sk.dept':        {ru:'отдел', en:'region', zh:'脑区'},
+  'sk.usedFor':     {ru:'подходил под задачу', en:'matched a task', zh:'匹配任务'},
+  'sk.reg.architecture':{ru:'архитектура', en:'architecture', zh:'架构'},
+  'sk.reg.general': {ru:'общее', en:'general', zh:'通用'},
+  'sk.reg.research':{ru:'research', en:'research', zh:'研究'},
+  'sk.reg.coding':  {ru:'код', en:'code', zh:'代码'},
+  'sk.reg.search':  {ru:'поиск', en:'search', zh:'搜索'},
+  'sk.reg.web':     {ru:'web', en:'web', zh:'网络'},
+  'sk.reg.shell':   {ru:'мозжечок', en:'cerebellum', zh:'小脑'},
+  'sk.reg.cortex':  {ru:'кора', en:'cortex', zh:'皮层'},
+  // ── Brain stats (JS-rendered) ──
+  'st.layer.working':   {ru:'Рабочая', en:'Working', zh:'工作'},
+  'st.layer.working.r': {ru:'текущая задача', en:'current task', zh:'当前任务'},
+  'st.layer.episodic':  {ru:'Эпизодическая', en:'Episodic', zh:'情景'},
+  'st.layer.episodic.r':{ru:'события и диалоги', en:'events and chats', zh:'事件与对话'},
+  'st.layer.semantic':  {ru:'Семантическая', en:'Semantic', zh:'语义'},
+  'st.layer.semantic.r':{ru:'факты и знания', en:'facts and knowledge', zh:'事实与知识'},
+  'st.layer.procedural':{ru:'Процедурная', en:'Procedural', zh:'程序'},
+  'st.layer.procedural.r':{ru:'навыки и приёмы', en:'skills and techniques', zh:'技能与方法'},
+  'st.hotRows':     {ru:'HOT строк', en:'HOT lines', zh:'HOT 行'},
+  'st.hotDesc':     {ru:'активное мышление — в каждом промпте', en:'active thinking — in every prompt', zh:'活跃思维 —— 存在于每条提示'},
+  'st.warmSess':    {ru:'WARM сессий', en:'WARM sessions', zh:'WARM 会话'},
+  'st.warmDesc':    {ru:'недавнее — подгружается при продолжении', en:'recent — loaded when continuing', zh:'近期 —— 继续时加载'},
+  'st.coldDesc':    {ru:'глубокий архив', en:'deep archive', zh:'深层归档'},
+  'st.flows':       {ru:'потоки памяти:', en:'memory flows:', zh:'记忆流：'},
+  'st.brainTitle':  {ru:'Мозг памяти — развивается с её ростом', en:'Memory brain — grows as memory grows', zh:'记忆大脑 —— 随记忆增长而发育'},
+  'st.neurons':     {ru:'нейронов', en:'neurons', zh:'神经元'},
+  'st.of50':        {ru:'из 50', en:'of 50', zh:'/ 50'},
+  'st.corrTitle':   {ru:'📝 Исправления', en:'📝 Fixes', zh:'📝 修正'},
+  'st.corrDesc':    {ru:'уроки из ошибок; на 50 — консолидация', en:'lessons from mistakes; at 50 — consolidation', zh:'错误中的教训；满 50 即整合'},
+  'st.projWord':    {ru:'проектов', en:'projects', zh:'个项目'},
+  'st.projMem':     {ru:'project memory — контекст по проектам', en:'project memory — per-project context', zh:'项目记忆 —— 按项目的上下文'},
+  'st.stage.nascent':{ru:'зарождается', en:'nascent', zh:'萌芽'},
+  'st.stage.growing':{ru:'развивается', en:'growing', zh:'发育中'},
+  'st.stage.mature': {ru:'зрелый', en:'mature', zh:'成熟'},
+  'st.stage.vast':   {ru:'обширный', en:'vast', zh:'广博'},
+  // ── Search scene (JS-rendered) ──
+  'srch.digging':   {ru:'Ищу по извилинам памяти…', en:'Digging through memory folds…', zh:'正在记忆的沟回中挖掘……'},
+  'srch.nothing':   {ru:'Ничего не найдено ни в памяти, ни в истории', en:'Nothing found in memory or history', zh:'记忆与历史中均无结果'},
+  'srch.foundPre':  {ru:'🧠 Найдено в памяти:', en:'🧠 Found in memory:', zh:'🧠 记忆中找到：'},
+  'srch.foundPost': {ru:'— узелки осели в извилинах. Наведи на узелок или карточку.', en:'— nodes settled into the folds. Hover a node or a card.', zh:'—— 节点落入沟回。悬停节点或卡片查看。'},
+  'srch.histDialogs':{ru:'💬 История диалогов', en:'💬 Chat history', zh:'💬 对话历史'},
+  'err.prefix':     {ru:'Ошибка:', en:'Error:', zh:'错误：'},
 };
 
 function detectLang() {
@@ -5511,6 +5612,14 @@ function setLang(lang) {
   try { if (typeof loadTokenBudget === 'function') loadTokenBudget(); } catch(e) {}
   try { if (typeof loadSettings === 'function') loadSettings(); } catch(e) {}
   try { if (typeof loadImproveStatus === 'function') loadImproveStatus(); } catch(e) {}
+  // Перерисовать открытую вкладку памяти (мозг/навыки/граф строятся в JS через t()).
+  try {
+    if (typeof currentMemTab === 'string') {
+      if (currentMemTab === 'stats'  && typeof loadMemStats === 'function') loadMemStats();
+      else if (currentMemTab === 'skills' && typeof loadSkills === 'function') loadSkills();
+      else if (currentMemTab === 'graph'  && typeof loadMemGraph === 'function') loadMemGraph();
+    }
+  } catch(e) {}
 }
 function initLang() {
   let l = null;
