@@ -789,6 +789,17 @@
     .skill-tip .st-meta { color:var(--text-3); font-size:11px; margin-top:2px; }
     .skill-tip .st-meta b { color:var(--text-2); }
     .skill-tip .st-uses { color:var(--accent-3); font-size:11px; margin-top:6px; }
+    /* Поиск «по извилинам»: сцена-мозг с узлами-результатами */
+    .search-stage { display:flex; flex-direction:column; align-items:center; margin-bottom:12px; }
+    .search-stage .search-hint { font-size:11px; color:var(--text-3); margin-top:2px; }
+    .search-node { cursor:pointer; animation:snFade .45s ease both;
+      transform-box:fill-box; transform-origin:center; transition:transform .12s ease; }
+    @keyframes snFade { from{opacity:0} to{opacity:1} }
+    .search-node.hot { transform:scale(1.8); }
+    .sr-list { display:flex; flex-direction:column; gap:6px; }
+    .sr-card { transition:border-color .15s ease, background .15s ease; }
+    .sr-card.hot { border-color:var(--accent);
+      background:color-mix(in srgb, var(--accent) 9%, var(--bg-glass)); }
     .skill-piece.placed { position:absolute; width:80px; z-index:1;
       transition:transform .15s ease, filter .15s ease; }
     .skill-piece.placed:hover { z-index:80; transform:scale(1.1);
@@ -3654,6 +3665,60 @@ async function loadMemStats() {
   }
 }
 
+// Поиск «по извилинам»: узлы-результаты садятся на складки коры; узел↔карточка связаны
+let _searchNodeEls = {};
+function _searchTipEl() {
+  return document.getElementById('search-tip') ||
+    document.body.appendChild(Object.assign(document.createElement('div'), { id: 'search-tip', className: 'skill-tip' }));
+}
+function hlSearchNode(i, on) {
+  const e = _searchNodeEls[i];
+  if (e) { e.dot.classList.toggle('hot', on); e.glow.style.opacity = on ? '0.45' : '0.16'; }
+  const card = document.querySelector(`.sr-card[data-ri="${i}"]`);
+  if (card) card.classList.toggle('hot', on);
+  if (!on) _searchTipEl().style.display = 'none';
+}
+function placeSearchNodes(memRes, tierColor) {
+  const svg = document.getElementById('search-brain-svg');
+  if (!svg) return;
+  const NS = 'http://www.w3.org/2000/svg';
+  const g = document.getElementById('search-nodes');
+  const gyri = [...svg.querySelectorAll('.gyrus')];
+  const pts = [];
+  gyri.forEach(p => { const L = p.getTotalLength(); const n = 6;
+    for (let k = 1; k <= n; k++) { const pt = p.getPointAtLength(L * k / (n + 1)); pts.push([pt.x, pt.y]); } });
+  let seed = 1234567;                                  // детерминированная перетасовка точек
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  for (let i = pts.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pts[i], pts[j]] = [pts[j], pts[i]]; }
+  _searchNodeEls = {};
+  memRes.forEach((r, i) => {
+    const [x, y] = pts[i % pts.length];
+    const c = tierColor(r), rad = 2.4 + (r.score || 0) * 6;
+    const glow = document.createElementNS(NS, 'circle');
+    glow.setAttribute('cx', x); glow.setAttribute('cy', y); glow.setAttribute('r', rad * 2.3);
+    glow.setAttribute('fill', c); glow.setAttribute('opacity', '0.16'); glow.style.transition = 'opacity .15s';
+    const dot = document.createElementNS(NS, 'circle');
+    dot.setAttribute('cx', x); dot.setAttribute('cy', y); dot.setAttribute('r', rad);
+    dot.setAttribute('fill', c); dot.setAttribute('class', 'search-node'); dot.setAttribute('data-ri', i);
+    dot.style.animationDelay = (i * 40) + 'ms';
+    g.appendChild(glow); g.appendChild(dot);
+    _searchNodeEls[i] = { dot, glow };
+    dot.addEventListener('mouseenter', () => {
+      hlSearchNode(i, true);
+      const tip = _searchTipEl();
+      tip.innerHTML = `<div class="st-meta" style="color:${c};font-weight:600">[${escHtml((r.tier || '?').toUpperCase())}] близость ${(r.score || 0).toFixed(2)}</div>`
+        + `<div class="st-desc">${escHtml(r.snippet || '')}</div>`;
+      tip.style.display = 'block';
+      const rc = dot.getBoundingClientRect();
+      tip.style.left = Math.min(innerWidth - tip.offsetWidth - 8, rc.right + 12) + 'px';
+      tip.style.top = Math.max(8, rc.top - 8) + 'px';
+      const card = document.querySelector(`.sr-card[data-ri="${i}"]`);
+      if (card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+    dot.addEventListener('mouseleave', () => hlSearchNode(i, false));
+  });
+}
+
 async function searchMemory() {
   const q = document.getElementById('mem-search-input').value.trim();
   if (!q) return;
@@ -3696,32 +3761,64 @@ async function searchMemory() {
     const wait = Math.max(0, 600 - (Date.now() - t0));
     if (wait) await new Promise(r => setTimeout(r, wait));
 
-    const memRes = mem.results || [], histRes = hist.results || [];
-    let html = '', idx = 0;
-    const delay = () => `style="animation-delay:${(idx++ * 45)}ms"`;
-    if (memRes.length) {
-      html += '<div style="font-size:11px;color:var(--text-3);margin:4px 0 8px">🧠 Найдено в памяти (по близости векторов)</div>';
-      html += memRes.map(r => {
-        const c = TIER[(r.tier||'').toLowerCase()] || '#9f7aea';
-        const pct = Math.max(4, Math.min(100, Math.round((r.score||0) * 100)));
-        return `<div class="sr-card" ${delay()}>
-          <div class="sr-head">
-            <span class="sr-tier" style="color:${c};background:${c}22">${escHtml((r.tier||'?').toUpperCase())}</span>
-            <span class="sr-bar"><i style="width:${pct}%;background:${c}"></i></span>
-            <span class="sr-score">${(r.score||0).toFixed(2)}</span>
-          </div>
-          <div class="sr-snip">${escHtml(r.snippet || '')}</div>
-        </div>`;
-      }).join('');
+    const memRes = (mem.results || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0));
+    const histRes = hist.results || [];
+    const tierColor = r => TIER[(r.tier || '').toLowerCase()] || '#9f7aea';
+    if (!memRes.length && !histRes.length) {
+      res.innerHTML = '<div style="color:var(--text-3)">Ничего не найдено ни в памяти, ни в истории</div>';
+      return;
     }
-    if (histRes.length) {
-      html += '<div style="font-size:11px;color:var(--text-3);margin:14px 0 8px">💬 История диалогов (' + histRes.length + ')</div>';
-      html += histRes.map(r => `<div class="sr-card" ${delay()}>
-          <div style="font-size:10px;color:var(--accent-2);margin-bottom:4px">📅 ${escHtml((r.ts||'').slice(0,16).replace('T',' '))} · ${escHtml(r.preview||'')}</div>
-          <div class="sr-snip">${escHtml(r.snippet || '')}</div>
-        </div>`).join('');
-    }
-    res.innerHTML = html || '<div style="color:var(--text-3)">Ничего не найдено ни в памяти, ни в истории</div>';
+    let idx = 0;
+    const memCards = memRes.map((r, i) => {
+      const c = tierColor(r), pct = Math.max(4, Math.min(100, Math.round((r.score || 0) * 100)));
+      return `<div class="sr-card" data-ri="${i}" style="animation-delay:${idx++ * 45}ms"
+                onmouseenter="hlSearchNode(${i},true)" onmouseleave="hlSearchNode(${i},false)">
+        <div class="sr-head">
+          <span class="sr-tier" style="color:${c};background:${c}22">${escHtml((r.tier || '?').toUpperCase())}</span>
+          <span class="sr-bar"><i style="width:${pct}%;background:${c}"></i></span>
+          <span class="sr-score">${(r.score || 0).toFixed(2)}</span>
+        </div>
+        <div class="sr-snip">${escHtml(r.snippet || '')}</div>
+      </div>`;
+    }).join('');
+    const histCards = histRes.map(r => `<div class="sr-card" style="animation-delay:${idx++ * 45}ms">
+        <div style="font-size:10px;color:var(--accent-2);margin-bottom:4px">📅 ${escHtml((r.ts || '').slice(0,16).replace('T',' '))} · ${escHtml(r.preview || '')}</div>
+        <div class="sr-snip">${escHtml(r.snippet || '')}</div>
+      </div>`).join('');
+
+    const brainPath = 'M 96,162 C 88,108 142,62 212,58 C 286,53 350,92 354,150 C 357,188 336,220 298,231 C 293,253 266,269 239,261 C 228,279 196,281 183,266 C 152,274 124,257 121,235 C 96,224 80,193 96,162 Z';
+    const gyri = [
+      'M 130,118 C 160,98 180,128 210,106 C 235,90 260,113 286,98',
+      'M 116,148 C 150,133 166,163 200,146 C 235,129 256,158 296,140',
+      'M 115,180 C 150,165 165,195 200,178 C 235,162 255,190 296,172',
+      'M 128,210 C 164,192 190,219 222,202 C 248,189 268,211 300,195',
+      'M 140,236 C 170,218 196,244 226,228 C 250,215 270,234 300,218',
+      'M 198,72 C 214,92 240,77 256,98',
+      'M 322,128 C 306,150 332,166 318,186',
+    ];
+    res.innerHTML = `
+      <div class="search-stage">
+        <svg id="search-brain-svg" viewBox="78 46 286 244" preserveAspectRatio="xMidYMid meet" style="width:100%;max-width:520px;max-height:240px">
+          <defs>
+            <clipPath id="sbrainClip2"><path d="${brainPath}"/></clipPath>
+            <linearGradient id="sbeam2" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#9f7aea" stop-opacity="0"/><stop offset="50%" stop-color="#9f7aea" stop-opacity="0.5"/><stop offset="100%" stop-color="#9f7aea" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="${brainPath}" fill="rgba(255,255,255,0.025)" stroke="rgba(160,174,192,0.4)" stroke-width="1.5"/>
+          <g clip-path="url(#sbrainClip2)" fill="none" stroke="rgba(159,122,234,0.30)" stroke-width="1.2">
+            ${gyri.map(d => `<path class="gyrus" d="${d}"/>`).join('')}
+          </g>
+          <rect clip-path="url(#sbrainClip2)" y="46" height="244" width="58" fill="url(#sbeam2)">
+            <animate attributeName="x" values="50;366" dur="0.9s" begin="0s" fill="freeze"/>
+          </rect>
+          <g id="search-nodes"></g>
+        </svg>
+        <div class="search-hint">🧠 Найдено в памяти: <b>${memRes.length}</b> — узелки осели в извилинах. Наведи на узелок или карточку.</div>
+      </div>
+      ${memCards ? `<div class="sr-list">${memCards}</div>` : ''}
+      ${histCards ? `<div style="font-size:11px;color:var(--text-3);margin:14px 0 8px">💬 История диалогов (${histRes.length})</div><div class="sr-list">${histCards}</div>` : ''}`;
+    requestAnimationFrame(() => placeSearchNodes(memRes, tierColor));
   } catch(e) {
     res.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
   }
