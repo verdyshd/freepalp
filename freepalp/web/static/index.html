@@ -3180,7 +3180,7 @@ async function loadMemGraph(upto = 0) {
   }
 
   // Прогрев: даём раскладке устояться (как раньше), потом auto-fit
-  for (let it = 0; it < 170; it++) simStep(1 - it/190);
+  for (let it = 0; it < 230; it++) simStep(1 - it/250);
 
   // Auto-fit: вписываем bbox активных узлов в canvas. Дальше — зум/пан/перетаскивание.
   let minX=1e9, minY=1e9, maxX=-1e9, maxY=-1e9;
@@ -3239,7 +3239,7 @@ async function loadMemGraph(upto = 0) {
   const reheat = (a = 0.6) => { _alpha = Math.max(_alpha, a); ensureRunning(); };
 
   draw(null);
-  _graphState = { nodes, draw, total: N,
+  _graphState = { nodes, draw, total: N, view,
     // Проигрывание развития: меняем число активных узлов → живая раскладка
     // перестраивает подграф (видно, как структура росла и пересобиралась).
     setReveal: v => { _active = Math.max(1, Math.min(N, v)); reheat(0.5); } };
@@ -3262,7 +3262,7 @@ async function loadMemGraph(upto = 0) {
     const rect = canvas.getBoundingClientRect();
     const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
     const factor = ev.deltaY < 0 ? 1.18 : 1/1.18;
-    const ns = Math.max(0.5, Math.min(8, view.scale * factor));
+    const ns = Math.max(0.12, Math.min(8, view.scale * factor));
     view.ox = mx - (mx - view.ox) * (ns / view.scale);
     view.oy = my - (my - view.oy) * (ns / view.scale);
     view.scale = ns;
