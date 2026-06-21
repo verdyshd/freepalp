@@ -2194,7 +2194,7 @@ function renderChatList() {
     (a, b) => (_chatSessions[b].created || 0) - (_chatSessions[a].created || 0)
   );
   if (!ids.length) {
-    el.innerHTML = '<div class="chat-list-empty">Нет диалогов</div>';
+    el.innerHTML = `<div class="chat-list-empty">${t('chat.noDialogs')}</div>`;
     return;
   }
   el.innerHTML = ids.map(id => {
@@ -2818,7 +2818,7 @@ function _presEl() {
   let o = document.getElementById('pres-overlay');
   if (o) return o;
   o = document.createElement('div'); o.id = 'pres-overlay'; o.className = 'pres-overlay';
-  o.innerHTML = `<button class="pres-x" onclick="closePresentation()" aria-label="Закрыть">✕</button>
+  o.innerHTML = `<button class="pres-x" onclick="closePresentation()" aria-label="${t('tip.close')}">✕</button>
     <div class="pres-card" id="pres-card"></div>
     <div class="pres-nav">
       <button class="pres-arrow" onclick="presNav(-1)" aria-label="Назад">‹</button>
@@ -3700,7 +3700,7 @@ async function addKey(provider, slot, inputId, resultId) {
   } catch(e) {
     showKeyResult(resultId, false, '❌ ' + e.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '+ Добавить'; }
+    if (btn) { btn.disabled = false; btn.textContent = t('prov.addKey'); }
   }
 }
 
@@ -3771,7 +3771,7 @@ async function loadSkills() {
   const el = document.getElementById('mem-skills-list');
   try {
     const d = await fetch('/api/skills').then(r => r.json());
-    if (!d.ok) { el.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${d.error}</div>`; return; }
+    if (!d.ok) { el.innerHTML = `<div style="color:var(--accent-err)">${tf('common.errMsg',{msg:d.error})}</div>`; return; }
     if (!d.skills.length) {
       el.innerHTML = `<div style="color:var(--text-3);font-size:13px;padding:20px;text-align:center;background:var(--bg-glass);border:1px dashed var(--border);border-radius:var(--radius)">
         Пока ни одного навыка. Они появятся, когда система решит задачу не с первой
@@ -4239,7 +4239,7 @@ async function loadMemory() {
     const data = await (await fetch('/api/memory')).json();
     el.innerHTML = renderHot(data.hot || '');
   } catch(e) {
-    el.innerHTML = '<div class="hot-item">Ошибка загрузки: ' + _escHtml(e.message) + '</div>';
+    el.innerHTML = `<div class="hot-item">${tf('common.loadError',{msg:_escHtml(e.message)})}</div>`;
   }
 }
 
@@ -4972,7 +4972,7 @@ async function loadMcpStatus() {
   if (!el) return;
   try {
     const d = await fetch('/api/mcp').then(r => r.json());
-    if (!d.ok) { el.innerHTML = `<span style="color:var(--accent-err)">Ошибка: ${d.error}</span>`; return; }
+    if (!d.ok) { el.innerHTML = `<span style="color:var(--accent-err)">${tf('common.errMsg',{msg:d.error})}</span>`; return; }
     if (!d.total_servers) {
       el.innerHTML = `${t('tools.mcpNone')} <code style="color:var(--accent-2)">freepalp/config/mcp_servers.json</code> ${t('tools.mcpNoneTail')}`;
       return;
@@ -4989,7 +4989,7 @@ async function loadMcpStatus() {
 
 async function reconnectMcp() {
   const el = document.getElementById('mcp-status');
-  el.innerHTML = 'Переподключение...';
+  el.innerHTML = t('tools.reconnecting');
   try {
     const d = await fetch('/api/mcp/reconnect', {method:'POST'}).then(r => r.json());
     if (d.ok) showToast(tf('toast.mcpStatus', { servers: d.summary.connected.length, tools: d.summary.tools }));
@@ -5062,7 +5062,7 @@ function renderBudgetMini(providers, activeSet) {
   const el = document.getElementById('rp-budget');
   if (!el) return;
   if (!providers || !providers.length) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--text-3)">Нет данных</div>';
+    el.innerHTML = `<div style="font-size:11px;color:var(--text-3)">${t('bud.noData')}</div>`;
     return;
   }
   // Show top 7 providers (skip ollama if not running)
@@ -5158,7 +5158,7 @@ async function loadTokenBudget() {
     }
   } catch(e) {
     const el = document.getElementById('rp-budget');
-    if (el) el.innerHTML = '<div style="font-size:11px;color:var(--text-3)">Недоступно</div>';
+    if (el) el.innerHTML = `<div style="font-size:11px;color:var(--text-3)">${t('common.unavailable')}</div>`;
   }
 }
 
@@ -5321,7 +5321,7 @@ async function loadMetrics() {
     // ── Пометки: кандидаты на улучшение ──────────────────────
     loadImprovementNotes();
   } catch(e) {
-    document.getElementById('metrics-big').innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
+    document.getElementById('metrics-big').innerHTML = `<div style="color:var(--accent-err)">${tf('common.errMsg',{msg:e.message})}</div>`;
   }
 }
 
@@ -5423,7 +5423,7 @@ async function loadUnifiedVersions() {
   if (!el) return;
   try {
     const d = await (await fetch('/api/system/versions')).json();
-    if (!d.ok) { el.innerHTML = '⚠️ ' + (d.error || 'история недоступна'); return; }
+    if (!d.ok) { el.innerHTML = '⚠️ ' + (d.error || t('met.histUnavail')); return; }
     if (verEl) verEl.textContent = 'v' + d.version + (d.commit ? ' · ' + d.commit : '');
     const KIND = {
       'веха':    {icon: '🏁', color: 'var(--accent)'},
@@ -5566,10 +5566,10 @@ async function loadSidebarData() {
         }).join('');
         if (badge) { badge.style.display = 'inline'; }
       } else {
-        el.innerHTML = '<div style="color:var(--text-3)">Нет предыдущих сессий</div>';
+        el.innerHTML = `<div style="color:var(--text-3)">${t('chat.noPrevSessions')}</div>`;
       }
     } else {
-      el.innerHTML = '<div style="color:var(--text-3)">Нет предыдущих сессий</div>';
+      el.innerHTML = `<div style="color:var(--text-3)">${t('chat.noPrevSessions')}</div>`;
     }
   } catch(e) {
     document.getElementById('rp-digest').innerHTML = '<div style="color:var(--text-3)">—</div>';
@@ -5591,14 +5591,12 @@ async function loadSidebarData() {
       if (total < MIN_SESSIONS) {
         const need = MIN_SESSIONS - total;
         notice.style.borderLeftColor = 'var(--text-3)';
-        status.innerHTML = `Для запуска самообучения нужно минимум <b>${MIN_SESSIONS} сессий</b>.<br>
-          Сейчас: <b>${total}</b> из ${MIN_SESSIONS} — ещё <b>${need}</b> диалог${need===1?'':'а/ов'}.`;
+        status.innerHTML = tf('self.needSessions', { min: MIN_SESSIONS, total, need });
       } else {
         notice.style.borderLeftColor = 'var(--accent-3)';
         const avg = m.avg_score ? (m.avg_score * 100).toFixed(0) : '?';
-        const tok = m.total_tokens ? `${(m.total_tokens/1000).toFixed(1)}k токенов` : '';
-        status.innerHTML = `✅ ${total} сессий · ср. оценка <b>${avg}%</b>${tok ? ' · ' + tok : ''}<br>
-          Авто-улучшение <span style="color:var(--accent-3)">активно</span> — запускается каждые 10 сессий.`;
+        const tok = m.total_tokens ? ' · ' + tf('self.tokensSuffix', { k: (m.total_tokens/1000).toFixed(1) }) : '';
+        status.innerHTML = tf('self.statusActive', { total, avg, tok });
       }
     }
   } catch(e) {}
@@ -5775,7 +5773,7 @@ window.addEventListener('beforeunload', () => {
   setInterval(() => {
     const idleSec  = Math.round((Date.now() - lastActivity) / 1000);
     const remaining = idleMinutes * 60 - idleSec;
-    if (remaining <= 0) { el.textContent = 'скоро...'; el.style.color = 'var(--accent-err)'; return; }
+    if (remaining <= 0) { el.textContent = t('common.soon'); el.style.color = 'var(--accent-err)'; return; }
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
     el.textContent = m > 0 ? `${m}м ${s}с` : `${s}с`;
@@ -6046,6 +6044,17 @@ const I18N = {
   'shutdown.title': {ru:'FreePalp выключен', en:'FreePalp is shut down', zh:'FreePalp 已关闭'},
   'shutdown.sub':   {ru:'Память сохранена. Закройте вкладку или перезапустите сервер.', en:'Memory saved. Close the tab or restart the server.', zh:'记忆已保存。关闭此标签页或重启服务器。'},
   'shutdown.reconnect':{ru:'↺ Переподключиться', en:'↺ Reconnect', zh:'↺ 重新连接'},
+  'common.unavailable':{ru:'Недоступно', en:'Unavailable', zh:'不可用'},
+  'common.soon':    {ru:'скоро...', en:'soon...', zh:'即将……'},
+  'common.errMsg':  {ru:'Ошибка: {msg}', en:'Error: {msg}', zh:'错误：{msg}'},
+  'common.loadError':{ru:'Ошибка загрузки: {msg}', en:'Load error: {msg}', zh:'加载错误：{msg}'},
+  'chat.noDialogs': {ru:'Нет диалогов', en:'No chats', zh:'暂无对话'},
+  'chat.noPrevSessions':{ru:'Нет предыдущих сессий', en:'No previous sessions', zh:'暂无历史会话'},
+  'tools.reconnecting':{ru:'Переподключение...', en:'Reconnecting...', zh:'重新连接中……'},
+  'met.histUnavail':{ru:'история недоступна', en:'history unavailable', zh:'历史不可用'},
+  'self.needSessions':{ru:'Для запуска самообучения нужно минимум <b>{min} сессий</b>.<br>Сейчас: <b>{total}</b> из {min} — ещё <b>{need}</b> диалог(ов).', en:'Self-learning needs at least <b>{min} sessions</b>.<br>Now: <b>{total}</b> of {min} — <b>{need}</b> more to go.', zh:'自我学习至少需要 <b>{min} 次会话</b>。<br>当前：<b>{total}</b> / {min} —— 还差 <b>{need}</b> 次。'},
+  'self.statusActive':{ru:'✅ {total} сессий · ср. оценка <b>{avg}%</b>{tok}<br>Авто-улучшение <span style="color:var(--accent-3)">активно</span> — запускается каждые 10 сессий.', en:'✅ {total} sessions · avg score <b>{avg}%</b>{tok}<br>Auto-improvement is <span style="color:var(--accent-3)">active</span> — runs every 10 sessions.', zh:'✅ {total} 次会话 · 平均分 <b>{avg}%</b>{tok}<br>自动改进<span style="color:var(--accent-3)">已启用</span> —— 每 10 次会话运行一次。'},
+  'self.tokensSuffix':{ru:'{k}k токенов', en:'{k}k tokens', zh:'{k}k 令牌'},
   'modal.help': {
     ru:`<p><b>FreePalp</b> — мульти-агентный AI-оркестратор на <b>бесплатных и локальных</b> LLM.</p><p style="margin-top:10px">• Слева — <b>чат</b>: задай вопрос или задачу.<br>• Навигация слева: Чат · Провайдеры (ключи) · Память (HOT / граф / навыки / поиск) · Инструменты · Метрики.<br>• Эта шестерёнка — настройки, язык, справка.</p><p style="margin-top:10px">Без единого ключа работает на локальном Ollama. Добавь бесплатные ключи провайдеров в разделе «Провайдеры».</p><p style="margin-top:10px">Исходники и документация: <a href="{repo}" target="_blank">{repo}</a></p>`,
     en:`<p><b>FreePalp</b> is a multi-agent AI orchestrator on <b>free and local</b> LLMs.</p><p style="margin-top:10px">• On the left — <b>chat</b>: ask a question or give a task.<br>• Left nav: Chat · Providers (keys) · Memory (HOT / graph / skills / search) · Tools · Metrics.<br>• This gear — settings, language, help.</p><p style="margin-top:10px">Runs on local Ollama with zero keys. Add free provider keys in the “Providers” section.</p><p style="margin-top:10px">Source & docs: <a href="{repo}" target="_blank">{repo}</a></p>`,
