@@ -808,6 +808,36 @@
     .msg-avatar img.octo-tickle { animation:octoTickle .72s ease; }
     #mic-btn.rec { color:#fc8181; animation:micPulse 1s ease-in-out infinite; }
     @keyframes micPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    /* Полировка вкладок настроек */
+    .set-tab { position:relative; }
+    .set-tab:hover { transform:translateX(2px); }
+    .set-tab.active { box-shadow:inset 2px 0 0 var(--accent); }
+    /* Презентация FreePalp (клик по лого) */
+    .pres-overlay { position:fixed; inset:0; z-index:700; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:26px; padding:40px;
+      background:radial-gradient(1200px 620px at 50% -5%, color-mix(in srgb, var(--accent) 16%, var(--bg)) 0%, var(--bg) 72%);
+      opacity:0; pointer-events:none; transition:opacity .25s ease; }
+    .pres-overlay.open { opacity:1; pointer-events:auto; }
+    .pres-x { position:absolute; top:18px; right:22px; background:none; border:none;
+      color:var(--text-2); font-size:22px; cursor:pointer; line-height:1; }
+    .pres-x:hover { color:var(--text); }
+    .pres-card { max-width:640px; text-align:center; }
+    #pres-card { animation:presIn .35s ease; }
+    @keyframes presIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+    .pres-ic { font-size:64px; line-height:1; margin-bottom:14px; }
+    .pres-title { font-size:32px; font-weight:800; color:var(--text); margin-bottom:8px; }
+    .pres-sub { font-size:16px; color:var(--accent); margin-bottom:20px; }
+    .pres-list { list-style:none; padding:0; margin:0; display:inline-block; text-align:left; }
+    .pres-list li { font-size:15px; color:var(--text-2); margin:11px 0; padding-left:26px; position:relative; }
+    .pres-list li::before { content:'🔹'; position:absolute; left:0; }
+    .pres-nav { display:flex; align-items:center; gap:18px; }
+    .pres-arrow { width:42px; height:42px; border-radius:50%; border:1px solid var(--border);
+      background:var(--bg-2); color:var(--text); font-size:20px; cursor:pointer; transition:background .15s; }
+    .pres-arrow:hover { background:var(--bg-3); }
+    .pres-dots { display:flex; gap:8px; }
+    .pres-dot { width:9px; height:9px; border-radius:50%; background:var(--border); cursor:pointer;
+      transition:background .15s, transform .15s; }
+    .pres-dot.on { background:var(--accent); transform:scale(1.25); }
     .skill-piece.placed { position:absolute; width:80px; z-index:1;
       transition:transform .15s ease, filter .15s ease; }
     .skill-piece.placed:hover { z-index:80; transform:scale(1.1);
@@ -1257,7 +1287,7 @@
 
 <!-- ═══════════ SIDEBAR ═══════════ -->
 <nav class="sidebar">
-  <div class="logo">
+  <div class="logo" onclick="openPresentation()" title="О FreePalp — презентация" style="cursor:pointer">
     <img src="/static/freepalp-mark.svg?v=1" alt="FreePalp">
   </div>
 
@@ -2327,6 +2357,32 @@ function octoGiggle() {
     });
   } catch (e) {}
 }
+// ── Звуковые эффекты (под тумблером «Звук») — WebAudio, без файлов ──
+function _sfxCtx() {
+  if (!_soundOn()) return null;
+  try { _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume(); return _audioCtx; } catch (e) { return null; }
+}
+function _tone(f, dur, when, vol, type, glideTo) {
+  const ctx = _audioCtx; if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain(), t0 = ctx.currentTime + (when || 0);
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f, t0);
+  if (glideTo) o.frequency.exponentialRampToValueAtTime(glideTo, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || 0.07, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + dur + 0.03);
+}
+function sfxSearch() { if (!_sfxCtx()) return; _tone(280, 0.55, 0, 0.05, 'sine', 880); }      // скан-свип
+function sfxFound(n) { if (!_sfxCtx()) return; [523, 659, 784].forEach((f, i) => _tone(f, 0.13, i * 0.07, 0.055, 'triangle')); } // аккорд «нашлось»
+let _neuronT = 0;
+function sfxNeuron() {                                  // «эхо знаний» — блип с затухающими отголосками
+  if (!_sfxCtx()) return;
+  const now = performance.now(); if (now - _neuronT < 60) return; _neuronT = now;  // не частить
+  _tone(720, 0.09, 0, 0.06, 'sine', 1080);
+  _tone(960, 0.07, 0.12, 0.03, 'sine');
+  _tone(960, 0.06, 0.26, 0.016, 'sine');
+}
+
 // Клик по эмодзи-осьминожке в чате → подрыгивается + «щекотно» голосом
 const _TICKLE = { ru: 'Хи-хи, щекотно!', en: 'Hee-hee, that tickles!', zh: '嘻嘻，好痒！' };
 document.getElementById('messages')?.addEventListener('click', e => {
@@ -2359,6 +2415,65 @@ function toggleVoiceInput() {
   _recog.onend = stop; _recog.onerror = stop;
   try { _recog.start(); } catch (e) { stop(); }
 }
+
+// ── Презентация FreePalp (по клику на лого) — слайды-оверлей ──
+const PRES_SLIDES = [
+  { icon:'🐙', title:'FreePalp', sub:'Мультиагентный AI-оркестратор на бесплатных и локальных моделях', bullets:[] },
+  { icon:'🆓', title:'Бесплатно и локально', sub:'Free-model-first', bullets:[
+    'Авто-роутинг 14+ провайдеров (Groq, Cerebras, Gemini, Mistral…)',
+    'Фолбэк на локальную Ollama — без внешних API',
+    'Кулдауны и обход лимитов из коробки'] },
+  { icon:'🤖', title:'Команда агентов', sub:'Не одна модель, а конвейер ролей', bullets:[
+    'Architect → Worker → Critic',
+    'Параллельные субагенты (DAG)',
+    'Детерминированная обвязка вместо слепого доверия LLM'] },
+  { icon:'♻️', title:'Самообучение с измеренным Δ', sub:'Безопасное само-изменение', bullets:[
+    'Система находит свой провал и чинит промпт',
+    'Двойной гейт (test + held-out) с защитой от регресса',
+    'На бенчмарке 84%→92%, holdout стабилен'] },
+  { icon:'🧠', title:'Живая память', sub:'Прозрачно и наглядно', bullets:[
+    'Ярусы HOT / WARM / COLD',
+    'Граф связей по реальным векторам — с физикой',
+    'Навыки складываются в «умеющий мозг»'] },
+  { icon:'⭐', title:'Открыто', sub:'MIT · github.com/verdyshd/freepalp', bullets:[
+    'Воспроизводимый eval прямо в репозитории',
+    'Присоединяйся — звезда, issue, PR'] },
+];
+let _presI = 0;
+function _presEl() {
+  let o = document.getElementById('pres-overlay');
+  if (o) return o;
+  o = document.createElement('div'); o.id = 'pres-overlay'; o.className = 'pres-overlay';
+  o.innerHTML = `<button class="pres-x" onclick="closePresentation()" aria-label="Закрыть">✕</button>
+    <div class="pres-card" id="pres-card"></div>
+    <div class="pres-nav">
+      <button class="pres-arrow" onclick="presNav(-1)" aria-label="Назад">‹</button>
+      <div class="pres-dots" id="pres-dots"></div>
+      <button class="pres-arrow" onclick="presNav(1)" aria-label="Вперёд">›</button>
+    </div>`;
+  o.addEventListener('click', e => { if (e.target === o) closePresentation(); });
+  document.body.appendChild(o); return o;
+}
+function presRender() {
+  const s = PRES_SLIDES[_presI];
+  document.getElementById('pres-card').innerHTML =
+    `<div class="pres-ic">${s.icon}</div>
+     <div class="pres-title">${escHtml(s.title)}</div>
+     ${s.sub ? `<div class="pres-sub">${escHtml(s.sub)}</div>` : ''}
+     ${s.bullets.length ? `<ul class="pres-list">${s.bullets.map(b => `<li>${escHtml(b)}</li>`).join('')}</ul>` : ''}`;
+  document.getElementById('pres-dots').innerHTML =
+    PRES_SLIDES.map((_, i) => `<span class="pres-dot${i === _presI ? ' on' : ''}" onclick="_presI=${i};presRender()"></span>`).join('');
+}
+function openPresentation() { _presI = 0; const o = _presEl(); presRender(); requestAnimationFrame(() => o.classList.add('open')); }
+function closePresentation() { const o = document.getElementById('pres-overlay'); if (o) o.classList.remove('open'); }
+function presNav(d) { _presI = (_presI + d + PRES_SLIDES.length) % PRES_SLIDES.length; presRender(); }
+document.addEventListener('keydown', e => {
+  const o = document.getElementById('pres-overlay');
+  if (!o || !o.classList.contains('open')) return;
+  if (e.key === 'Escape') closePresentation();
+  else if (e.key === 'ArrowRight') presNav(1);
+  else if (e.key === 'ArrowLeft') presNav(-1);
+});
 
 // Токен-стриминг: живой вывод ответа в прогресс-панель, пока модель печатает
 function appendStreamToken(msgId, delta) {
@@ -3469,6 +3584,7 @@ async function loadMemGraph(upto = 0) {
       draw(_hover); return;
     }
     const hit = pickNode(mx, my);
+    if (hit && hit !== _hover) sfxNeuron();   // 🔉 «эхо знаний» при касании нового нейрона
     _hover = hit;
     canvas.style.cursor = hit ? 'grab' : 'grab';
     if (hit) {
@@ -3850,6 +3966,7 @@ async function searchMemory() {
     </div>
     <div class="dig-label" style="justify-content:center"><span class="dig-dot"></span>Ищу по извилинам памяти…</div>`;
   const TIER = { semantic:'#63b3ed', episodic:'#9f7aea', procedural:'#48bb78' };
+  sfxSearch();   // 🔉 звук скана
   const t0 = Date.now();
   try {
     const [mem, hist] = await Promise.all([
@@ -3918,6 +4035,7 @@ async function searchMemory() {
       ${memCards ? `<div class="sr-list">${memCards}</div>` : ''}
       ${histCards ? `<div style="font-size:11px;color:var(--text-3);margin:14px 0 8px">💬 История диалогов (${histRes.length})</div><div class="sr-list">${histCards}</div>` : ''}`;
     requestAnimationFrame(() => placeSearchNodes(memRes, tierColor));
+    if (memRes.length) sfxFound(memRes.length);   // 🔉 аккорд «нашлось»
   } catch(e) {
     res.innerHTML = `<div style="color:var(--accent-err)">Ошибка: ${e.message}</div>`;
   }
