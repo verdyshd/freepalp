@@ -39,6 +39,39 @@ ALL_TOOLS: dict = {
     **BROWSER_CONTROL_TOOLS,
 }
 
+# ── Резолвер имён инструментов: модели часто галлюцинируют названия
+#    (fetch, fetch_data, search…). Маппим к реальным вместо «не найден». ──
+import difflib
+
+_TOOL_ALIASES = {
+    "fetch": "fetch_page", "fetch_data": "fetch_page", "fetch_url": "fetch_page",
+    "fetch_page_content": "fetch_page", "get_url": "fetch_page", "get_page": "fetch_page",
+    "read_page": "fetch_page", "read_url": "fetch_page", "http_get": "fetch_page", "curl": "fetch_page",
+    "search": "web_search", "google": "web_search", "google_search": "web_search",
+    "web": "web_search", "search_web": "web_search", "websearch": "web_search", "duckduckgo": "web_search",
+    "browse": "browser_open", "open_browser": "browser_open", "goto": "browser_open", "open_url": "browser_open",
+    "click": "browser_click", "type": "browser_fill", "fill": "browser_fill", "input": "browser_fill",
+    "screenshot": "browser_screenshot", "extract": "browser_extract", "eval_js": "browser_eval",
+    "run": "run_command", "shell": "run_command", "bash": "run_command", "exec": "run_command", "cmd": "run_command",
+    "read": "read_file", "write": "write_file", "list": "list_files", "ls": "list_files", "dir": "list_files",
+    "remember": "memory_write", "recall": "memory_search", "note": "memory_write", "save_memory": "memory_write",
+}
+
+
+def resolve_tool_name(name: str):
+    """Возвращает реальное имя инструмента (точное → нижний регистр → алиас → фаззи) или None."""
+    if not name:
+        return None
+    if name in ALL_TOOLS:
+        return name
+    low = name.strip().lower()
+    if low in ALL_TOOLS:
+        return low
+    if low in _TOOL_ALIASES and _TOOL_ALIASES[low] in ALL_TOOLS:
+        return _TOOL_ALIASES[low]
+    cand = difflib.get_close_matches(low, list(ALL_TOOLS.keys()), n=1, cutoff=0.74)
+    return cand[0] if cand else None
+
 TOOL_DESCRIPTIONS = "\n".join([
     f"  {name}: {info['description']}"
     for name, info in ALL_TOOLS.items()
@@ -83,11 +116,16 @@ class ToolAgent:
         с экспоненциальной задержкой (1s → 2s → 4s). Побочно-эффектные инструменты не повторяются.
         """
         if tool_name not in ALL_TOOLS:
-            return {
-                "ok": False,
-                "error": f"Инструмент '{tool_name}' не найден. "
-                         f"Доступны: {', '.join(sorted(ALL_TOOLS.keys()))}",
-            }
+            resolved = resolve_tool_name(tool_name)
+            if resolved:
+                # модель промахнулась мимо имени — мягко исправляем (fetch→fetch_page и т.п.)
+                tool_name = resolved
+            else:
+                return {
+                    "ok": False,
+                    "error": f"Инструмент '{tool_name}' не найден. "
+                             f"Доступны: {', '.join(sorted(ALL_TOOLS.keys()))}",
+                }
 
         # Pre-execution валидация аргументов (ловим галлюцинации ДО исполнения)
         precheck_err = _precheck_args(tool_name, kwargs)
