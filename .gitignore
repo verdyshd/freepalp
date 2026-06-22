@@ -44,6 +44,10 @@ dist/
 
 # Локальные (приватные) инструменты — не в публичный репо
 freepalp/tools/reddit_tools.py
+freepalp/tools/reddit_answers.py
+freepalp/tools/reddit_capture_ext/
+# Залогиненная сессия Reddit (СЕКРЕТ) — никогда не коммитить
+freepalp/.reddit_profile/
 
 # Эвал-прогоны (runtime); публикуемые eval/scorecard.md и eval/hard_tasks.json добавлять явно (git add -f)
 eval/*.json
@@ -54,3 +58,5 @@ _qa/
 # Piper TTS voice models (large, downloaded locally)
 freepalp/voices/
 *.onnx
+freepalp/tools/browser_control.py
+freepalp/.fp_browser_profile/

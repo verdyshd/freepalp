@@ -18,6 +18,12 @@ try:
     from ..tools.reddit_tools import REDDIT_TOOLS
 except ImportError:
     REDDIT_TOOLS = {}
+# browser_control — ЛОКАЛЬНЫЙ (browser_control.py в .gitignore): управление реальным
+# браузером пользователя (его сессия). В публичном клоне модуля нет → инструментов нет.
+try:
+    from ..tools.browser_control import BROWSER_CONTROL_TOOLS
+except ImportError:
+    BROWSER_CONTROL_TOOLS = {}
 from ..core.models import AgentMessage
 
 # Объединённый реестр всех инструментов
@@ -30,6 +36,7 @@ ALL_TOOLS: dict = {
     **NOTIFICATION_TOOLS,
     **SYSTEM_TOOLS,
     **REDDIT_TOOLS,
+    **BROWSER_CONTROL_TOOLS,
 }
 
 TOOL_DESCRIPTIONS = "\n".join([

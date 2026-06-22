@@ -53,6 +53,15 @@ _TOOL_TO_CATEGORY: Mapping[str, str] = {
     "browser_fill":       "browser_tools",
     "browser_extract":    "browser_tools",
     "browser_eval":       "browser_tools",
+    # browser_control (приватный): управление реальным браузером пользователя
+    "bc_navigate":   "browser_tools",
+    "bc_snapshot":   "browser_tools",
+    "bc_click":      "browser_tools",
+    "bc_type":       "browser_tools",
+    "bc_scroll":     "browser_tools",
+    "bc_read":       "browser_tools",
+    "bc_screenshot": "browser_tools",
+    "bc_eval":       "browser_tools",
     # memory-tools
     "memory_read":   "memory_tools",
     "memory_write":  "memory_tools",
