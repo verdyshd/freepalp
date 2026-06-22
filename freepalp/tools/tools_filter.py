@@ -18,9 +18,12 @@ _TASK_TYPE_TO_CATEGORIES: Mapping[str, Set[str]] = {
     "review":        {"file_tools", "memory_tools", "shell_tools"},
     "architecture":  {"file_tools", "memory_tools"},
     "text":          {"memory_tools", "file_tools"},
-    # general теперь включает file_tools — агент должен мочь читать/писать код
-    "general":       {"memory_tools", "file_tools"},
-    "search":        {"web_tools", "memory_tools", "file_tools"},
+    # general — +web_tools: агент должен мочь искать/фетчить, когда это нужно
+    "general":       {"memory_tools", "file_tools", "web_tools"},
+    # search/research — полный веб: поиск, fetch И интерактивный браузер
+    "search":        {"web_tools", "browser_tools", "memory_tools", "file_tools"},
+    "research":      {"web_tools", "browser_tools", "memory_tools", "file_tools"},
+    "web":           {"web_tools", "browser_tools", "memory_tools", "file_tools"},
     "file_ops":      {"file_tools", "memory_tools"},
     "shell":         {"shell_tools", "file_tools"},
 }
