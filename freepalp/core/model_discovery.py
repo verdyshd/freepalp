@@ -350,6 +350,41 @@ _OPENAI_COMPAT_PROVIDERS = {
             {"id": "glm-4.5-flash", "tier": "cloud_fast", "max_tokens": 4096, "cost": 0.0, "context_window": 131072},
         ],
     },
+    # DeepSeek — официальный API, OpenAI-совместимый. Платный, но дёшево; контекст 64K.
+    # deepseek-chat (V3) и deepseek-reasoner (R1). /models есть, но проверяем chat/completions.
+    "deepseek": {
+        "env_key":  "DEEPSEEK_API_KEY",
+        "base_url": "https://api.deepseek.com",
+        "free_check": False,
+        "auth_check_url": "https://api.deepseek.com/chat/completions",
+        "auth_check_body": {
+            "model": "deepseek-chat",
+            "messages": [{"role": "user", "content": "x"}],
+            "max_tokens": 1,
+        },
+        "models": [
+            {"id": "deepseek-chat",     "tier": "cloud_heavy", "max_tokens": 8192, "cost": 0.0008, "context_window": 65536},
+            {"id": "deepseek-reasoner", "tier": "cloud_heavy", "max_tokens": 8192, "cost": 0.0014, "context_window": 65536},
+        ],
+    },
+    # OpenModel — OpenAI-совместимый релей (base /v1). DeepSeek-V4-Flash БЕСПЛАТНА на время
+    # ивента (вход+выход $0, 10 RPM / 100K TPM, контекст 1M). Дата конца TBA, после — платно.
+    # /models не дёргаем — авторизацию проверяем через chat/completions (как zai). ⚠ релей:
+    # трафик идёт через OpenModel. Регистрация без карты ($1 кредитов): openmodel.ai/event.
+    "openmodel": {
+        "env_key":  "OPENMODEL_API_KEY",
+        "base_url": "https://api.openmodel.ai/v1",
+        "free_check": False,
+        "auth_check_url": "https://api.openmodel.ai/v1/chat/completions",
+        "auth_check_body": {
+            "model": "deepseek-v4-flash",
+            "messages": [{"role": "user", "content": "x"}],
+            "max_tokens": 1,
+        },
+        "models": [
+            {"id": "deepseek-v4-flash", "tier": "cloud_heavy", "max_tokens": 4096, "cost": 0.0, "context_window": 1000000},
+        ],
+    },
     # NVIDIA NIM — 100+ open-моделей, OpenAI-совместимый, бесплатно без карты. /models есть.
     "nvidia": {
         "env_key":  "NVIDIA_API_KEY",
@@ -720,6 +755,16 @@ PROVIDERS_CATALOG = [
         "limits":   "glm-4.5-flash бесплатна",
         "models":   "glm-4.5-flash (Zhipu, OpenAI-совместимый paas/v4)",
         "notes":    "Бесплатная GLM-флэш модель",
+    },
+    {
+        "name":     "openmodel",   # совпадает с discovery-ключом "openmodel" для статуса
+        "env_key":  "OPENMODEL_API_KEY",
+        "url":      "https://www.openmodel.ai/",
+        "signup":   "https://openmodel.ai/event",
+        "free":     True,
+        "limits":   "DeepSeek-V4-Flash бесплатна на время ивента (10 RPM / 100K TPM); после — платно",
+        "models":   "deepseek-v4-flash (OpenAI-совместимый релей, контекст 1M)",
+        "notes":    "⚠ TIME-BOXED: дата конца TBA. Релей — трафик через OpenModel.",
     },
     {
         "name":     "NVIDIA NIM",
