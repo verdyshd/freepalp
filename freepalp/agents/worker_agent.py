@@ -141,6 +141,11 @@ class WorkerAgent:
         total_tokens_in  = 0
         total_tokens_out = 0
         tools_called: list[str] = []
+        # Анти-галлюцинация источников + принуждение веб-поиска для research-задач
+        _research_task = task_key in ("search", "research", "web")
+        _web_used = False
+        _forced_search = False
+        _tool_result_blob: list[str] = []   # тексты веб-результатов (проверка ссылок)
 
         # ReAct loop: [LLM] → [tool_call?] → [execute] → [LLM] → ...
         # Начинаем с system prompt, затем история диалога, затем текущий запрос
@@ -201,6 +206,15 @@ class WorkerAgent:
             tool_call = self._extract_tool_call(content)
 
             if not tool_call or not self.tool_agent:
+                # research-задача, но агент НЕ искал → принуждаем (один раз)
+                if _research_task and not _web_used and not _forced_search and not _lean:
+                    _forced_search = True
+                    messages.append({"role": "user", "content": (
+                        "Ты не вызвал ни одного веб-инструмента, но это research-задача. "
+                        "СНАЧАЛА выполни web_search по теме (выведи tool_call), и только ПОТОМ отвечай. "
+                        "Указывай ТОЛЬКО те URL, что пришли из результатов инструментов — не выдумывай источники."
+                    )})
+                    continue
                 # Нет вызова инструмента — это финальный ответ
                 # Убираем незавершённые tool_call блоки если есть
                 final_content = self._strip_incomplete_tool_calls(content)
@@ -269,6 +283,13 @@ class WorkerAgent:
             print(f"    [ReAct] RESULT {tool_name}: {result_text[:100]}{'...' if len(result_text) > 100 else ''}")
             self._trace("tool_result", tool_name, {}, result_text[:300])
 
+            # Веб-инструмент реально отработал? (имя резолвится: fetch→fetch_page)
+            from ..agents.tool_agent import resolve_tool_name as _rtn
+            _rn = _rtn(tool_name) or tool_name
+            if (_rn in ("web_search", "fetch_page") or _rn.startswith("browser_") or _rn.startswith("bc_")) and result.get("ok", True):
+                _web_used = True
+                _tool_result_blob.append(result_text)
+
             # Добавляем результат в историю — формат зависит от режима
             if self._pending_call_id:
                 messages.append({
@@ -294,6 +315,10 @@ class WorkerAgent:
             total_tokens_out += t_out
             final_content = self._strip_incomplete_tool_calls(content)
 
+        # Анти-галлюцинация источников: ссылки, которых НЕ было в реальных
+        # tool-результатах, помечаем как непроверенные (или ответ был без поиска).
+        final_content = self._flag_unverified_sources(final_content, "".join(_tool_result_blob), _web_used)
+
         elapsed      = time.time() - start
         total_tokens = total_tokens_in + total_tokens_out
         cost_usd     = (total_tokens / 1000) * self.model.cost_per_1k
@@ -312,6 +337,23 @@ class WorkerAgent:
                 "tools_called": tools_called,
             },
         )
+
+    @staticmethod
+    def _flag_unverified_sources(answer: str, tool_blob: str, web_used: bool) -> str:
+        """Помечает ссылки в ответе, которых не было в результатах инструментов."""
+        if not answer:
+            return answer
+        import re
+        urls = re.findall(r'https?://[^\s)\]\}<>"\']+', answer)
+        if not urls:
+            return answer
+        unver = [u for u in urls if u.rstrip('.,);:') not in tool_blob]
+        if not unver:
+            return answer
+        if not web_used:
+            return answer + "\n\n⚠️ _Ответ дан без веб-поиска — ссылки не проверены и могут быть выдуманы._"
+        uniq = list(dict.fromkeys(unver))[:4]
+        return answer + "\n\n⚠️ _Эти ссылки не из результатов поиска, проверь вручную:_ " + ", ".join(uniq)
 
     # ──────────────────────────────────────────────────────────────────
     # ReAct helpers
